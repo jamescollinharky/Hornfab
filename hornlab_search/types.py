@@ -119,6 +119,13 @@ class Response:
     backend: str = ""
     n_dof: int | None = None
     meta: dict = field(default_factory=dict)
+    # ---- MEH additive fields (docs/meh/00_MEH_CONTRACTS.md C5). Every one defaults to None,
+    # so a single-source response and every record written before them are unchanged.
+    channel_tags: tuple[int, ...] | None = None          # sorted source tags
+    channel_pressure: np.ndarray | None = None           # (nf, C, P, A), complex128
+    channel_sphere_pressure: np.ndarray | None = None    # (nf, C, N_sphere), complex128
+    impedance_matrix: np.ndarray | None = None           # (nf, C, C), complex128, [f, i, j]
+    tag_areas_m2: dict[int, float] | None = None         # full-domain area per tag
 
     @property
     def axis_index(self) -> int:

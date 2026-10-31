@@ -45,6 +45,21 @@ log = logging.getLogger("hornlab_search.solve.bempp")
 ANGLE_TOL_DEG = 1e-9
 
 
+def _refuse_source_tags(spec: SolveSpec) -> None:
+    """MEH multi-source solves are BEAT-only for now (C4 is the fork's contract); bempp has no
+    channel_pressure / impedance_matrix path, so refuse before any assembly rather than return a
+    silent single-source cross-check of a multi-source design."""
+    tags = (spec.extra or {}).get("source_tags")
+    if tags is None:
+        return
+    from ..config import ConfigError
+    raise ConfigError(
+        f"bempp_cpu does not support solve.extra['source_tags']={list(tags)!r}: multi-source "
+        f"(MEH) solves are implemented only by the hornlab-beat-bem fork (task M2), so the "
+        f"bempp cross-check cannot verify this design yet. Run the MEH solve on beat_cuda/"
+        f"beat_cpu, or omit source_tags for a single-source cross-check.")
+
+
 def _to_response(raw, spec: SolveSpec, mesh: MeshResult, formulation: str = "unknown") -> Response:
     """Build a ``Response`` from a bempp ``SolveResult``. Raises ``ResponseSanityError``."""
     n_ang = int(spec.observation.angle_count)
@@ -153,6 +168,7 @@ class BemppBackend:
         return None
 
     def make_config(self, mesh: MeshResult, spec: SolveSpec):
+        _refuse_source_tags(spec)
         import hornlab_bempp_bem as bempp
         check_symmetry_pairing(mesh)
         obs_kw = {}
@@ -179,6 +195,7 @@ class BemppBackend:
         )
 
     def solve(self, mesh: MeshResult, spec: SolveSpec) -> SolveOutcome:
+        _refuse_source_tags(spec)          # raises: never a silent single-source cross-check
         t0 = time.perf_counter()
         check_symmetry_pairing(mesh)
         try:
