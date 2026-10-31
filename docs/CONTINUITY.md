@@ -23,6 +23,22 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - MEH WAVE 1 MERGE 4/7: M6 OBJECTIVE v5 ("meh") + THE BRIEF `meh:` BLOCK
+
+- **`objective/scalar_meh.py`**: `objective_meh(metrics, resp, ok, target, weights, params, meh_ctx)` = the v4 pattern
+  terms on the SYNTHESISED response (re-using the v4 functions, no duplicated maths) plus `lw_resid`, `notch`,
+  `xo_lob`, `headroom` per C11; tolerances/weights from the brief block, defaults = the C11 table; graded penalty,
+  never nan/inf. `inner_score(meh_ctx, weights)` is the cheap same-terms call M4's inner optimiser uses via M7.
+- **`objective/versions.py`**: 5 registered in `SUPPORTED_OBJECTIVE_VERSIONS`.
+- **`config.py`**: additive `meh:` block validation (exact keys/types, the C10 ranges, unknown keys refuse, driver
+  stems that do not exist yet warn instead of failing while M1 is landing). v1-v4 briefs and hashes unchanged.
+- **Coupled touch points in `search/evaluate.py`** (M7's file, unavoidable for the version/scorer gate):
+  `_OBJECTIVE_SCORERS` gains 5 and `MehParams` is the v5 params class. The MEH evaluation BRANCH (building
+  `meh_ctx`, synthesis, inner optimiser, recording) is still M7's; until it lands, `_score_v5` raises when no
+  `meh_ctx` is available rather than silently scoring a half-empty context.
+- **Tests:** `tests/test_objective_meh_terms.py`, `tests/test_objective_meh_scalar.py`, `tests/test_config_meh.py`;
+  `tests/test_dataset_record.py` updated only where version 5 becomes a supported value.
+
 ## 2026-10-31 - MEH WAVE 1 MERGE 3/7: M1 DRIVER FILES (8 files, C8)
 
 - **`examples/drivers/`**: 8 new files (5 `cone`: bc_6ndl38, faitalpro_6pr160, eighteensound_6nmb420, bc_4ndf34,

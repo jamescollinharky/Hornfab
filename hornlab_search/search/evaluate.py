@@ -43,6 +43,7 @@ from ..mesh.build import MeshConsistencyError, build_mesh, mounting_of
 from ..metrics.compute import compute_metrics
 from ..metrics.di import di_from_balloon, sin_theta_weights
 from ..objective import PENALTY_FAILED, PENALTY_INVALID, objective, penalty_result
+from ..objective.scalar_meh import MehParams, objective_meh
 from ..objective.scalar_v2 import objective_v2, objective_v3
 from ..objective.scalar_v4 import V4Params, objective_v4
 from ..objective.versions import SUPPORTED_OBJECTIVE_VERSIONS
@@ -168,7 +169,14 @@ def make_context(cfg, store=None, *, cache_dir=None, lib_shas=None,
                       trace_fraction=float(trace_fraction))
     ctx.objective_version = int(getattr(cfg, "objective_version", 1))
     block = getattr(cfg, "objective_params", None)
-    ctx.objective_params = None if block is None else V4Params.from_block(block)
+    if block is None:
+        ctx.objective_params = None
+    elif ctx.objective_version == 5:
+        # M6 bridge (M7 owns the MEH context): the v5 block carries the four C11 tolerances that
+        # V4Params does not know, so it is validated with its own params class.
+        ctx.objective_params = MehParams.from_block(block)
+    else:
+        ctx.objective_params = V4Params.from_block(block)
     ctx.provenance = record_provenance(cfg)
     if store is not None:
         ctx.store_seen = {(e.get("design_hash"), e.get("mode"), bool(e.get("ok"))) for e in store.index}
@@ -766,11 +774,25 @@ def _score_v4(metrics, resp, target, weights, params):
     return objective_v4(metrics, resp, True, target, weights, params)
 
 
+def _score_v5(metrics, resp, target, weights, params):
+    # Bridge only: M6 registers version 5 so the version tuple and this dispatch table stay in
+    # lock-step (the module-level gate below).  M7 owns the MEH branch that builds ``meh_ctx`` on
+    # the evaluation context and passes it here; until that lands none is available, so the four
+    # system terms score their unmeasurable fill while the v4 pattern terms are real.
+    if params is None:
+        raise ValueError("objective_version 5 needs the brief's objective block; the evaluation "
+                         "context carries none")
+    if not isinstance(params, MehParams):
+        params = MehParams.from_block(params)
+    return objective_meh(metrics, resp, True, target, weights, params, None)
+
+
 _OBJECTIVE_SCORERS = {
     1: lambda metrics, resp, target, weights, params: objective(metrics, True, target, weights),
     2: lambda metrics, resp, target, weights, params: objective_v2(metrics, resp, True, target, weights),
     3: lambda metrics, resp, target, weights, params: objective_v3(metrics, resp, True, target, weights),
     4: _score_v4,
+    5: _score_v5,
 }
 if tuple(sorted(_OBJECTIVE_SCORERS)) != SUPPORTED_OBJECTIVE_VERSIONS:
     raise RuntimeError(

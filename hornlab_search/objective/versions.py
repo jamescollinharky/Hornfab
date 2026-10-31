@@ -10,7 +10,9 @@ from __future__ import annotations
 #: 1 = the original objective; 2 = detrended terms (2026-10-24); 3 = per-plane ``f0_v``
 #: plus the K-law ``f0`` mask (2026-10-26). 4 = tolerance-normalised terms plus asymmetric
 #: coverage, DI standard deviation and the diagonal term (2026-10-27, ``objective/scalar_v4.py``).
-SUPPORTED_OBJECTIVE_VERSIONS: tuple[int, ...] = (1, 2, 3, 4)
+#: 5 = the MEH system objective: v4's pattern terms on the synthesised response plus lw_resid,
+#: notch, xo_lob and headroom (2026-10-30, ``objective/scalar_meh.py``).
+SUPPORTED_OBJECTIVE_VERSIONS: tuple[int, ...] = (1, 2, 3, 4, 5)
 
 
 def is_supported_objective_version(value: object) -> bool:
