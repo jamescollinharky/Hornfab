@@ -103,6 +103,19 @@ DRIVER_TAG = int(SOURCE_TAG)          # 2 == SD1D1001 (hornlab_mesher.tags.Physi
 WALL_TAG = 1                          # 1 == SD1G0
 LABELS = (DRIVER_LABEL, WALL_LABEL)
 
+#: MEH multi-label contract (00_MEH_CONTRACTS C3). ``entry_mid`` is a flush port patch IMPRINTED on
+#: the horn inner wall; ``entry_aux`` is reserved (tag 11) and never used by T1/T2 v1. These labels
+#: exist for the ``meh`` tool ONLY: multicell/plughorn keep their "exactly one driver, labels
+#: {driver, wall}" contract byte-for-byte.
+ENTRY_MID_LABEL = "entry_mid"
+ENTRY_AUX_LABEL = "entry_aux"
+ENTRY_MID_TAG = 10                    # mid_port_exit_left
+ENTRY_AUX_TAG = 11                    # mid_port_exit_right
+MEH_LABELS = (DRIVER_LABEL, WALL_LABEL, ENTRY_MID_LABEL, ENTRY_AUX_LABEL)
+MEH_TAGS = {DRIVER_LABEL: DRIVER_TAG, WALL_LABEL: WALL_TAG,
+            ENTRY_MID_LABEL: ENTRY_MID_TAG, ENTRY_AUX_LABEL: ENTRY_AUX_TAG}
+MEH_DRIVEN_TAGS = (DRIVER_TAG, ENTRY_MID_TAG, ENTRY_AUX_TAG)
+
 #: Source adjacency distance for the fine size region. Matches the default
 #: ``transition_mm`` of ``mesh_validation.mesh_frequency_validation`` so the region
 #: that is refined is exactly the region the "source wall" check measures.
@@ -118,9 +131,16 @@ STEP_FILENAME = "multicell.step"
 #: plug clearance itself. Registry: tool name -> (tool file, STEP file name).
 PLUGHORN_TOOL = "plughorn"
 PLUGHORN_TOOL_RELPATH = "tools/cad/plughorn.py"
+#: 2026-10-30: the multiple-entry horn L1 CAD tool (``tools/cad/meh.py``). It is a QUARTER open
+#: shell (the symmetry cut planes are not BEM faces), exports four labels, and solves with
+#: ``quadrants="1"`` / ``native_symmetry_plane="yz+xz"``.
+MEH_TOOL = "meh"
+MEH_TOOL_RELPATH = "tools/cad/meh.py"
+MEH_STEP_FILENAME = "meh.step"
 CAD_TOOLS = {
     CAD_TOOL: (CAD_TOOL_RELPATH, STEP_FILENAME),
     PLUGHORN_TOOL: (PLUGHORN_TOOL_RELPATH, "plughorn.step"),
+    MEH_TOOL: (MEH_TOOL_RELPATH, MEH_STEP_FILENAME),
 }
 
 
@@ -151,6 +171,9 @@ def validate_cad_params(block) -> None:
         raise CadParamsError(f"cad params must be a mapping, got {type(block).__name__}")
     if block.get("tool") == PLUGHORN_TOOL:
         _validate_plughorn(block)
+        return
+    if block.get("tool") == MEH_TOOL:
+        _validate_meh(block)
         return
     unknown = sorted(set(block) - set(CAD_KEYS))
     if unknown:
@@ -212,6 +235,23 @@ def _validate_plughorn(block: dict) -> None:
         raise CadParamsError(f"cad: plughorn key(s) {bad} must be finite numbers")
 
 
+def _validate_meh(block: dict) -> None:
+    """Exact C9 keys, finite numbers + a legal ``walls`` string; the tool owns ranges and reasons."""
+    keys = tuple(load_cad_tool(tool=MEH_TOOL).KEYS)
+    unknown = sorted(set(block) - set(keys) - {"tool"})
+    if unknown:
+        raise CadParamsError(f"cad: unknown meh key(s) {unknown} (legal: {list(keys)})")
+    missing = [k for k in keys if k not in block]
+    if missing:
+        raise CadParamsError(
+            f"cad: missing required meh key(s) {missing}; the recipe carries every key")
+    if block["walls"] not in ("tb", "tblr"):
+        raise CadParamsError(f"cad.walls must be 'tb' or 'tblr', got {block['walls']!r}")
+    bad = [k for k in keys if k != "walls" and not _isnum(block[k])]
+    if bad:
+        raise CadParamsError(f"cad: meh key(s) {bad} must be finite numbers")
+
+
 # ------------------------------------------------------------------ the CAD tool
 
 
@@ -260,7 +300,8 @@ def build_cad_step(recipe: dict, out_step: Path) -> dict:
     labels do not round-trip, so a returned path always satisfies the contract.
     """
     validate_cad_params(recipe)
-    tool = load_cad_tool(tool=str(recipe.get("tool", CAD_TOOL)))
+    tool_name = str(recipe.get("tool", CAD_TOOL))
+    tool = load_cad_tool(tool=tool_name)
     out_step = Path(out_step)
     out_step.parent.mkdir(parents=True, exist_ok=True)
     params = _tool_params(tool, recipe)
@@ -269,14 +310,28 @@ def build_cad_step(recipe: dict, out_step: Path) -> dict:
     except (ValueError, RuntimeError) as exc:
         raise GeometryInvalidError(f"cad: {exc}") from exc
     inventory = dict(result["inventory"])
-    if set(inventory) - set(LABELS):
-        raise GeometryInvalidError(
-            f"cad: STEP carries unexpected face labels {sorted(inventory)}; "
-            f"the adapter knows {list(LABELS)}")
-    if inventory.get(DRIVER_LABEL, 0) != 1:
-        raise GeometryInvalidError(
-            f"cad: STEP must carry exactly one {DRIVER_LABEL!r} face, got "
-            f"{inventory.get(DRIVER_LABEL, 0)}")
+    if tool_name == MEH_TOOL:
+        if set(inventory) - set(MEH_LABELS):
+            raise GeometryInvalidError(
+                f"cad: STEP carries unexpected face labels {sorted(inventory)}; "
+                f"the adapter knows {list(MEH_LABELS)}")
+        if inventory.get(DRIVER_LABEL, 0) != 1:
+            raise GeometryInvalidError(
+                f"cad: STEP must carry exactly one {DRIVER_LABEL!r} face, got "
+                f"{inventory.get(DRIVER_LABEL, 0)}")
+        if inventory.get(ENTRY_MID_LABEL, 0) < 1:
+            raise GeometryInvalidError(
+                "cad: a meh STEP must carry at least one "
+                f"{ENTRY_MID_LABEL!r} (mid-port) face, got {inventory}")
+    else:
+        if set(inventory) - set(LABELS):
+            raise GeometryInvalidError(
+                f"cad: STEP carries unexpected face labels {sorted(inventory)}; "
+                f"the adapter knows {list(LABELS)}")
+        if inventory.get(DRIVER_LABEL, 0) != 1:
+            raise GeometryInvalidError(
+                f"cad: STEP must carry exactly one {DRIVER_LABEL!r} face, got "
+                f"{inventory.get(DRIVER_LABEL, 0)}")
     result["tool_path"] = str(Path(tool.__file__).resolve())
     return result
 
@@ -292,13 +347,18 @@ def _sha256(path: Path) -> str:
 # ------------------------------------------------------------------ gmsh session
 
 
-def _import_and_mark(step_path: Path, raw_path: Path, res_mm: dict) -> dict:
+def _import_and_mark(step_path: Path, raw_path: Path, res_mm: dict, tool_name: str = CAD_TOOL) -> dict:
     """OCC-import the STEP, map labels to surfaces, tag them, mesh to ``raw_path`` (mm).
 
     Runs inside the mesher's own ``_GMSH_LOCK`` and opens/finalizes its own gmsh
     session. A session that was already open is cleared like ``hornlab_mesher``'s own
     build does (its model is replaced) but its options are left alone. Every surface
     must be in exactly one physical group before meshing (``step_prepare``'s contract).
+
+    ``meh`` is a QUARTER open shell: it imports with no volume and carries four labels
+    (driver -> 2, wall -> 1, entry_mid -> 10, entry_aux -> 11). Every driven face (the CD
+    disc and every mid-port patch) gets the fine size region. multicell/plughorn keep the
+    one-volume, driver/wall-only path unchanged.
     """
     import gmsh
     from hornlab_mesher.builders._occ import add_physical_groups
@@ -310,6 +370,9 @@ def _import_and_mark(step_path: Path, raw_path: Path, res_mm: dict) -> dict:
     step_path, raw_path = Path(step_path), Path(raw_path)
     h_fine = float(res_mm["throat"])
     h_coarse = float(res_mm["mouth"])
+    meh = tool_name == MEH_TOOL
+    tag_of_label = MEH_TAGS if meh else {DRIVER_LABEL: DRIVER_TAG, WALL_LABEL: WALL_TAG}
+    allowed = set(MEH_LABELS) if meh else set(LABELS)
 
     with _GMSH_LOCK:
         initialized_here = False
@@ -325,7 +388,12 @@ def _import_and_mark(step_path: Path, raw_path: Path, res_mm: dict) -> dict:
             gmsh.model.occ.synchronize()
 
             volumes = [int(tag) for dim, tag in gmsh.model.getEntities(3)]
-            if len(volumes) != 1:
+            if meh:
+                if volumes:
+                    raise GeometryInvalidError(
+                        f"cad: the meh STEP imports as {len(volumes)} volume(s); it must be a "
+                        "quarter OPEN shell (the symmetry cut planes are not BEM faces)")
+            elif len(volumes) != 1:
                 raise GeometryInvalidError(
                     f"cad: the STEP imports as {len(volumes)} volume(s); the BEM surface "
                     "contract needs exactly one closed solid (the CAD tool guarantees it)")
@@ -351,27 +419,29 @@ def _import_and_mark(step_path: Path, raw_path: Path, res_mm: dict) -> dict:
                     f"cad: {len(unlabelled)} of {len(surfaces)} imported surface(s) carry no "
                     f"STEP label (first: {unlabelled[:8]}); every surface must be grouped")
             bad = sorted({label for label in per_surface
-                          if label is not None and label not in LABELS})
+                          if label is not None and label not in allowed})
             if bad:
                 raise GeometryInvalidError(
                     f"cad: STEP carries unexpected face label(s) {bad}; the adapter knows "
-                    f"{list(LABELS)} (driver -> tag {DRIVER_TAG}, wall -> tag {WALL_TAG})")
+                    f"{sorted(allowed)} for the {tool_name!r} tool")
 
             groups: dict[int, list[int]] = {}
             for tag, label in zip(surfaces, per_surface):
-                groups.setdefault(DRIVER_TAG if label == DRIVER_LABEL else WALL_TAG, []).append(tag)
+                groups.setdefault(tag_of_label[label], []).append(tag)
             driver_surfaces = groups.get(DRIVER_TAG, [])
             if len(driver_surfaces) != 1:
                 raise GeometryInvalidError(
                     f"cad: exactly one surface must carry the {DRIVER_LABEL!r} label, got "
                     f"{len(driver_surfaces)}")
+            driven_surfaces = ([tag for t in MEH_DRIVEN_TAGS for tag in groups.get(t, [])]
+                               if meh else list(driver_surfaces))
             add_physical_groups(groups)
 
-            # Uniform fine region around the driven face, the recipe's mouth resolution
+            # Uniform fine region around EVERY driven face, the recipe's mouth resolution
             # elsewhere (the mesher's throat = mouth / 2 convention).
             field = gmsh.model.mesh.field
             distance = field.add("Distance")
-            field.setNumbers(distance, "SurfacesList", [int(t) for t in driver_surfaces])
+            field.setNumbers(distance, "SurfacesList", [int(t) for t in driven_surfaces])
             field.setNumber(distance, "Sampling", 100)
             threshold = field.add("Threshold")
             field.setNumber(threshold, "InField", distance)
@@ -406,6 +476,8 @@ def _import_and_mark(step_path: Path, raw_path: Path, res_mm: dict) -> dict:
         "gmsh_surfaces": len(surfaces),
         "driver_surfaces": len(driver_surfaces),
         "wall_surfaces": len(groups.get(WALL_TAG, [])),
+        "entry_mid_surfaces": len(groups.get(ENTRY_MID_TAG, [])),
+        "entry_aux_surfaces": len(groups.get(ENTRY_AUX_TAG, [])),
     }
 
 
@@ -423,24 +495,64 @@ def _triangle_arrays(mesh):
         np.asarray(tags, dtype=np.int64)
 
 
-def postprocess_cad_raw(raw_path: Path, res_mm: dict):
-    """``postprocess_mesh`` + the driver-face spec, in millimetres."""
+def _tag_areas_centroids(points_mm: np.ndarray, triangles: np.ndarray, tags: np.ndarray):
+    """Per-tag AREA (m^2) and area-weighted centroid (m) of the written reduced mesh."""
+    pts = np.asarray(points_mm, dtype=float) * 1e-3
+    tri = np.asarray(triangles, dtype=np.int64).reshape(-1, 3)
+    tag_a = np.asarray(tags, dtype=np.int64)
+    areas: dict[int, float] = {}
+    centroids: dict[int, np.ndarray] = {}
+    for tag in sorted({int(t) for t in tag_a.tolist()}):
+        rows = tri[tag_a == tag]
+        if not len(rows):
+            continue
+        p0, p1, p2 = pts[rows[:, 0]], pts[rows[:, 1]], pts[rows[:, 2]]
+        a = 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0), axis=1)
+        total = float(a.sum())
+        areas[tag] = total
+        centroids[tag] = (a[:, None] * (p0 + p1 + p2) / 3.0).sum(axis=0) / max(total, 1e-30)
+    return areas, centroids
+
+
+def postprocess_cad_raw(raw_path: Path, res_mm: dict, tool_name: str = CAD_TOOL):
+    """``postprocess_mesh`` + the driven-face specs, in millimetres.
+
+    For ``meh`` every driven label that is present becomes a ``StepFaceGroup`` (driver -> tag 2,
+    entry_mid -> 10, entry_aux -> 11) and the quarter's two cut planes are declared as the
+    symmetry planes. The other tools keep the single driver-face spec and no symmetry planes.
+    """
     import meshio
     from hornlab_mesher.mesh_repair import postprocess_mesh
     from hornlab_mesher.step_mapping import StepFaceGroup, StepLabelSelector
     from hornlab_mesher.step_prepare import OccSurfaceRole
 
-    source_specs = [StepFaceGroup(
-        DRIVER_LABEL,
-        StepLabelSelector(DRIVER_LABEL),
-        OccSurfaceRole("source"),
-        tag=DRIVER_TAG,
-        resolution_mm=float(res_mm["throat"]),
-    )]
     raw = meshio.read(Path(raw_path))
+    present = set()
+    try:
+        present = {int(v) for v in np.unique(raw.cell_data_dict["gmsh:physical"]["triangle"])}
+    except (KeyError, AttributeError):
+        pass
+    if tool_name == MEH_TOOL:
+        wanted = [(DRIVER_LABEL, DRIVER_TAG), (ENTRY_MID_LABEL, ENTRY_MID_TAG),
+                  (ENTRY_AUX_LABEL, ENTRY_AUX_TAG)]
+        source_specs = [
+            StepFaceGroup(label, StepLabelSelector(label), OccSurfaceRole("source"),
+                          tag=tag, resolution_mm=float(res_mm["throat"]))
+            for label, tag in wanted if tag in present
+        ]
+        symmetry_planes = ("x0", "y0")
+    else:
+        source_specs = [StepFaceGroup(
+            DRIVER_LABEL,
+            StepLabelSelector(DRIVER_LABEL),
+            OccSurfaceRole("source"),
+            tag=DRIVER_TAG,
+            resolution_mm=float(res_mm["throat"]),
+        )]
+        symmetry_planes = ()
     repaired, repair, topo = postprocess_mesh(
         raw, source_specs,
-        symmetry_planes=(),
+        symmetry_planes=symmetry_planes,
         tolerance=POSTPROCESS_TOLERANCE_MM,
         unit_scale_to_m=1e-3,
     )
@@ -533,7 +645,15 @@ def build_mesh_from_cad(recipe: dict, mesh, cfg, out_dir: Path, *,
 
     t0 = time.perf_counter()
     validate_cad_params(recipe)
-    if not isinstance(mesh.quadrants, str) or mesh.quadrants != "1234":
+    tool_name = str(recipe.get("tool", CAD_TOOL))
+    meh = tool_name == MEH_TOOL
+    if meh:
+        if not isinstance(mesh.quadrants, str) or mesh.quadrants != "1":
+            raise GeometryInvalidError(
+                "cad: the meh STEP is a QUARTER open shell (x >= 0, y >= 0; the symmetry cut "
+                f"planes are not BEM faces), so mesh.quadrants must be '1'; got "
+                f"{mesh.quadrants!r}. Solving it as a full model would double-count the domain.")
+    elif not isinstance(mesh.quadrants, str) or mesh.quadrants != "1234":
         raise GeometryInvalidError(
             "cad: the CAD STEP is a FULL solid (mirror-symmetric but not reduced), "
             f"so mesh.quadrants must be '1234'; got {mesh.quadrants!r}. A reduced solve of a "
@@ -541,7 +661,6 @@ def build_mesh_from_cad(recipe: dict, mesh, cfg, out_dir: Path, *,
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    tool_name = str(recipe.get("tool", CAD_TOOL))
     tool_relpath, step_name = CAD_TOOLS[tool_name]
     step_path = out_dir / "cad" / step_name
     built = build_cad_step(recipe, step_path)
@@ -553,8 +672,8 @@ def build_mesh_from_cad(recipe: dict, mesh, cfg, out_dir: Path, *,
            "rear": float(res["rear"])}
     raw_path = out_dir / "cad" / f"{tool_name}_raw_mm.msh"
     try:
-        mapped = _import_and_mark(step_path, raw_path, res)
-        repaired, repair, topo_report, source_specs = postprocess_cad_raw(raw_path, res)
+        mapped = _import_and_mark(step_path, raw_path, res, tool_name)
+        repaired, repair, topo_report, source_specs = postprocess_cad_raw(raw_path, res, tool_name)
         points_mm, triangles, tags = _triangle_arrays(repaired)
 
         freq = mesh_frequency_validation(
@@ -562,14 +681,17 @@ def build_mesh_from_cad(recipe: dict, mesh, cfg, out_dir: Path, *,
             unit_scale_to_m=1e-3,
             requested_max_frequency_hz=float(mesh.f_max_hz),
         )
-        patch = freq["per_source"].get(DRIVER_LABEL, {})
-        patch_limit = float(patch.get("max_valid_frequency_hz", 0.0))
-        if patch_limit < float(mesh.f_max_hz):
-            raise GeometryInvalidError(
-                f"cad: the driver patch resolves {patch_limit:.0f} Hz but the recipe asks for "
-                f"{float(mesh.f_max_hz):.0f} Hz ({patch.get('triangle_count', 0)} triangle(s), "
-                f"requested {patch.get('requested_resolution_mm', 0.0):.2f} mm); lower "
-                "mesh.f_max_hz or epw")
+        checked = ([(spec.name, spec.tag) for spec in source_specs] if meh
+                   else [(DRIVER_LABEL, DRIVER_TAG)])
+        for name, _tag in checked:
+            patch = freq["per_source"].get(name, {})
+            patch_limit = float(patch.get("max_valid_frequency_hz", 0.0))
+            if patch_limit < float(mesh.f_max_hz):
+                raise GeometryInvalidError(
+                    f"cad: the {name!r} face resolves {patch_limit:.0f} Hz but the recipe asks "
+                    f"for {float(mesh.f_max_hz):.0f} Hz ({patch.get('triangle_count', 0)} "
+                    f"triangle(s), requested {patch.get('requested_resolution_mm', 0.0):.2f} mm); "
+                    "lower mesh.f_max_hz or epw")
         if freq.get("status") != "valid":
             log.warning(
                 "cad mesh: %s; the mesh is written with the frequency report on its record",
@@ -600,6 +722,38 @@ def build_mesh_from_cad(recipe: dict, mesh, cfg, out_dir: Path, *,
 
         key = (f"{design_hash}-{mesh.hash()}" if design_hash
                else f"cad-{mesh.hash()}")
+        physical_tags = ({str(tag): name for tag, name in sorted(summary["tag_names"].items())}
+                         if meh else
+                         {str(WALL_TAG): "SD1G0", str(DRIVER_TAG): "SD1D1001"})
+        cad_meta = {
+            "tool": tool_relpath,
+            "tool_path": built["tool_path"],
+            "tool_sha256": _sha256(Path(built["tool_path"])),
+            "recipe": dict(recipe),
+            "derived": built["derived"],
+            "solid": {k: v for k, v in built["solid"].items()},
+            "step_path": str(step_path),
+            "step_sha256": step_sha,
+            "step_bytes": int(step_path.stat().st_size),
+            "face_inventory": inventory,
+            "gmsh_surfaces": int(mapped["gmsh_surfaces"]),
+            "driver_surfaces": int(mapped["driver_surfaces"]),
+            "wall_surfaces": int(mapped["wall_surfaces"]),
+            "physical_tags": physical_tags,
+            "frequency_validation": freq,
+            "repair": repair,
+            "topology": topo_report,
+        }
+        if meh:
+            # The C4 tag contract echoed on the mesh record: full-domain-equivalent area and the
+            # reduced-mesh area-weighted centroid per physical tag (metres).
+            areas, centroids = _tag_areas_centroids(points_mm, triangles, tags)
+            cad_meta.update({
+                "entry_mid_surfaces": int(mapped["entry_mid_surfaces"]),
+                "entry_aux_surfaces": int(mapped["entry_aux_surfaces"]),
+                "tag_areas_m2": {str(t): float(a) for t, a in areas.items()},
+                "tag_centroids_m": {str(t): [float(v) for v in c] for t, c in centroids.items()},
+            })
         provenance = _jsonable({
             "key": key,
             "result": {
@@ -609,25 +763,7 @@ def build_mesh_from_cad(recipe: dict, mesh, cfg, out_dir: Path, *,
                 "bbox_m": list(result.bbox_m), "seconds": result.seconds,
             },
             "summary": summary,
-            "cad": {
-                "tool": tool_relpath,
-                "tool_path": built["tool_path"],
-                "tool_sha256": _sha256(Path(built["tool_path"])),
-                "recipe": dict(recipe),
-                "derived": built["derived"],
-                "solid": {k: v for k, v in built["solid"].items()},
-                "step_path": str(step_path),
-                "step_sha256": step_sha,
-                "step_bytes": int(step_path.stat().st_size),
-                "face_inventory": inventory,
-                "gmsh_surfaces": int(mapped["gmsh_surfaces"]),
-                "driver_surfaces": int(mapped["driver_surfaces"]),
-                "wall_surfaces": int(mapped["wall_surfaces"]),
-                "physical_tags": {str(WALL_TAG): "SD1G0", str(DRIVER_TAG): "SD1D1001"},
-                "frequency_validation": freq,
-                "repair": repair,
-                "topology": topo_report,
-            },
+            "cad": cad_meta,
         })
         _meta_path(out_dir).write_text(
             json.dumps(provenance, indent=1, sort_keys=True), encoding="utf-8")
