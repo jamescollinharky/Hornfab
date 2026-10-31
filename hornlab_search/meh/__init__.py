@@ -4,10 +4,11 @@ This package is the lumped, CPU-side model that sits on top of a multi-source BE
 Part 1 (``drivers`` + ``network``) provides driver loading, the BEM -> network convention conversion,
 entry Norton equivalents, the CD source and the exact coupling. Part 2 adds ``dsp`` (Linkwitz-Riley,
 delay, peaking, smoothing, system EQ), ``synthesis`` (the summed metrics-ready ``Response``) and
-``limits`` (SPL_max per C11). ``inner`` belongs to a later part.
+``limits`` (SPL_max per C11). Part 3 adds ``inner``, the CMA inner optimiser over the network knobs.
 """
 from .drivers import CDSource, ConeDriver, load_cd, load_cone, mmd_from_mms
 from .dsp import delay, lr, peaking, polarity, smooth_oct, system_eq
+from .inner import optimise_network
 from .limits import binding_limits, spl_max
 from .network import (
     cd_volume_velocity,
@@ -45,4 +46,5 @@ __all__ = [
     "system_response",
     "spl_max",
     "binding_limits",
+    "optimise_network",
 ]

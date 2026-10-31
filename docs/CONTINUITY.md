@@ -23,6 +23,47 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - M8 STEPS 1-2 [measured]: FORK VALIDATED CPU+CUDA, SINGLE-TAG PARITY 1.1e-5 / 5.9e-5 dB
+
+- **Step 1, fork validation (branch `hornlab-search/meh-multisource`, fork working tree
+  `C:\Users\hunte\Hrns\forks\hornlab-beat-bem`):** the fork's Python suite 329 passed / 1 skipped. The full Julia
+  suite (`julia --project=.../julia tests/runtests.jl`) exits 0; the CUDA-gated testsets report "broken" there
+  because `julia/Project.toml` has no CUDA dependency (by design, the CUDA project is separate).
+- **The M2 Julia testset had never been executed and did not pass.** Three defects, all in the test, fixed in
+  commits `93ef848` + `1efdc6f`: the wire blocks are nested per channel and per plane (flatten before comparing),
+  two comparisons broadcast `abs` over a `Vector`, and the hand-built request forced
+  `quadrature_order=1, singular_order=1` - coarser than the app's payload - which destroyed reciprocity on the
+  4-triangle fixture. Measured: 3.7e-4 reciprocity error at 100 Hz with the coarse orders and 2.2e-7 with the app's
+  defaults through the real Python payload; 31.6 % in-test before the fix. Tolerances and the four properties are
+  unchanged.
+- **Step 1 result [measured]:** the same four properties (superposition, reciprocity, single-tag parity with the
+  legacy impedance, reduced-vs-full symmetry) pass on the CPU backend (14.3 s) and on the CUDA backend (28.4 s,
+  `CUDA.functional() = true`, RTX 4060 Laptop). Driver-level reciprocity 7/7 both arms.
+- **Step 2, single-tag parity [measured]:** same meshes, same config, pin `760a1ec` vs fork `1efdc6f`, 5 frequencies
+  200 Hz-4 kHz, 2 planes x 37 angles, CUDA. max |dSPL| = **1.12e-5 dB** (atlas finalist 92bb8946b380) and
+  **5.91e-5 dB** (elite 0ae06187dc7d); max relative |dP| = 1.3e-6 / 6.9e-6. Both far inside the 0.039 dB noise floor.
+  Not bitwise identical (separate GPU runs, reduction order); the request payload IS byte-identical (fork golden
+  test). Pin bump awaits the owner's approval.
+- **GPU hygiene:** worker hosts cleared between the pin and fork runs; baseline VRAM recorded (1.5 GB before, 0.43 GB
+  after clearing); one solve at a time; `HORNLAB_BEAT_PERSISTENT_HOST=0` for the two one-off measurements.
+
+## 2026-10-31 - MEH WAVE 1 MERGE 6/7: M4 PART 3 (INNER OPTIMISER)
+
+- **`hornlab_search/meh/inner.py`**: `optimise_network(resp, layout_derived, brief, drivers, score=None)` enumerates
+  the brief's CD x mid combinations (capped at 9), every `xo_orders` value and both mid polarities; CMA-ES
+  (popsize 8, <= 160 evals, seed = brief / `search.seed` / 1234) over
+  `[log xo_hz, mid_delay_ms, mid_gain_db, fill, v_rear_l]` inside the brief ranges. Default score = a local proxy of
+  the C11 `lw_resid + notch + xo_lob + headroom`; `score=` receives M7's `objective_meh.inner_score` with the same
+  `meh_ctx`; `inner.py` imports no objective code. Returns the C12 `NetworkSolution` (stems, xo, delay, polarity,
+  gains, volumes, EQ and spl_max curves, inner_J, n_evals, seed), deterministic for a fixed seed, `ValueError` on
+  hostile input.
+- **Tests:** `tests/test_meh_inner_optimiser.py` (8): synthetic sources recover 0.3 ms delay (<= 0.02 ms), polarity
+  -1, xo within 5 % (measured 908.58 Hz, +0.95 %, delay 0.3037 ms, 306 evals); determinism; JSON round trip;
+  caller-score integration; enumeration; hostile inputs; one 60f x 2 planes x 37 angles x 2 channels candidate in
+  0.0025 s (< 2 s budget). Suite: 1964 passed, 2 skipped, 20 deselected.
+- **Known gap for M7:** `derived()` does not echo `dish_mm`/`spacer_mm`/`wall_t_mm`, so inner falls back to the
+  reference dish placeholder `0.2 x cutout_mm`; passing them through makes `V_front` exact.
+
 ## 2026-10-31 - MEH WAVE 1 MERGE 5/7: M4 NETWORK LAYER (drivers, lumped network, DSP, limits, synthesis)
 
 - **`hornlab_search/meh/drivers.py`**: `ConeDriver`, `CDSource`, `load_cone`, `load_cd`, `mmd_from_mms`; SI C7

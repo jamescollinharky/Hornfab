@@ -34,8 +34,12 @@ Local-only, pushed 2026-10-30 late (**chief-implementer hand-off; no GitHub issu
 
 Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; no GitHub issue state changed**):
 - **DONE:** M4 network layer (merged, `meh/M4-network` parts 1+2: drivers, network, dsp, limits, synthesis).
-- **OPEN (M4 follow-up):** `meh/inner.py` (CMA inner optimiser, task build step 6) is not written yet; the end-to-end
-  MEH evaluate path needs it.
+- **DONE:** M4 inner optimiser (`hornlab_search/meh/inner.py`; merged `meh/M4c-inner`, commit `0cdfd7a`).
+- **DONE (M8 step 1):** solver fork validated on CPU and CUDA - superposition, reciprocity, single-tag parity,
+  reduced-vs-full symmetry all pass. The M2 Julia testset needed three fixture fixes (commit `93ef848`/`1efdc6f`);
+  properties and tolerances unchanged.
+- **DONE (M8 step 2):** single-tag parity vs the current pin <= 5.91e-5 dB on two finalists (floor 0.039 dB).
+- **OPEN (owner decision):** approve or refuse the `hornlab-beat-bem` pin bump to the M2 fork branch.
 - **DONE:** M6 objective v5 + brief `meh:` block (merged, `meh/M6-objective-v5`).
 - **OPEN (M7):** `search/evaluate.py` currently only bridges version 5 (params class + scorer registration); the MEH
   evaluation branch that builds `meh_ctx`, runs the inner optimiser and synthesises the response is M7's.
