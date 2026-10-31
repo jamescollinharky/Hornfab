@@ -1,0 +1,30 @@
+# FaitalPRO 6PR160 — T2 alternative mid (6.5 in; publishes Mmd, Cms and Rms).
+# Transcribed from docs/research/typologies/mini_meh_2026-10-29/appendix_A_web_survey_raw.md
+# section 8(a), row labelled V (manufacturer datasheet PDF read 2026-10-29).
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md. Existing files are untouched.
+name: FaitalPRO 6PR160
+kind: cone
+source: https://faitalpro.com/products/files/6PR160/8/6PR160_datasheet_8.pdf
+notes: >-
+  Datasheet row V; appendix A s8 gives Mms, Mmd, Cms and Rms as published values, so no
+  key is derived. The URL is abbreviated in the table as .../6PR160/8/6PR160_datasheet_8.pdf
+  and is expanded here to the full datasheet path used by this maker's 4FE32 row.
+  frame_od_mm / motor_od_mm / dish_mm are not published in the appendix A s8 table;
+  omitted, so M5 keeps its [inferred] placeholders. Sens is the appendix A s8
+  "Sens dB" column.
+re_ohm: 5.9
+le_mh: 0.28
+bl_tm: 11.0
+sd_cm2: 130
+xmax_mm: 5.0
+p_aes_w: 120
+fs_hz: 90
+qms: 6.6
+rms_kg_s: 1.1
+mms_g: 12.5
+mmd_g: 10.8
+cms_mm_per_n: 0.25
+vas_l: 5.9
+cutout_mm: 147
+depth_mm: 73
+sens_db_2v83: 95

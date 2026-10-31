@@ -1,0 +1,27 @@
+# FaitalPRO 4FE32 — T1 alternative mid (4 in; publishes Mmd).
+# Transcribed from docs/research/typologies/mini_meh_2026-10-29/appendix_A_web_survey_raw.md
+# section 8(a), row labelled V (manufacturer datasheet PDF read 2026-10-29).
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md. Existing files are untouched.
+name: FaitalPRO 4FE32
+kind: cone
+source: https://faitalpro.com/products/files/4FE32/8/4FE32_datasheet_8.pdf
+notes: >-
+  Datasheet row V; appendix A s8 gives Mms, Mmd, Cms and Rms as published values, so no
+  key is derived. frame_od_mm / motor_od_mm / dish_mm are not published in the appendix
+  A s8 table; omitted, so M5 keeps its [inferred] placeholders. Sens is the appendix A
+  s8 "Sens dB" column.
+re_ohm: 6.5
+le_mh: 0.18
+bl_tm: 4.8
+sd_cm2: 51.9
+xmax_mm: 2.73
+p_aes_w: 30
+fs_hz: 100
+qms: 4.9
+mms_g: 4.2
+mmd_g: 3.8
+cms_mm_per_n: 0.60
+vas_l: 2.3
+cutout_mm: 91.5
+depth_mm: 49.8
+sens_db_2v83: 91

@@ -1,0 +1,30 @@
+# B&C 4NDF34 — T1 mid (4 in).
+# Transcribed from docs/research/typologies/mini_meh_2026-10-29/appendix_A_web_survey_raw.md
+# section 8(a), row labelled V (manufacturer datasheet PDF read 2026-10-29).
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md. Existing files are untouched.
+name: B&C 4NDF34
+kind: cone
+source: https://www.bcspeakers.com/en/products/lf-driver/4/8/4ndf34.pdf
+notes: >-
+  Datasheet row V. Mmd and Cms are marked as derived in appendix A s8, not printed on the
+  sheet: Mmd = Mms - 2*(8/3)*rho*a^3 with a = sqrt(Sd/pi), using Mms = 6.1 g and
+  Sd = 57 cm2; Cms = Vas/(rho*c^2*Sd^2) with Vas = 1.6 L and Sd = 57 cm2.
+  Rms is not carried because Qms is published. frame_od_mm / motor_od_mm / dish_mm are
+  not published in the appendix A s8 table; omitted, so M5 keeps its [inferred]
+  placeholders. Sens is the appendix A s8 "Sens dB" column.
+derived: [mmd_g, cms_mm_per_n]
+re_ohm: 5.5
+le_mh: 0.23
+bl_tm: 9.0
+sd_cm2: 57
+xmax_mm: 3.8
+p_aes_w: 100
+fs_hz: 110
+qms: 4.2
+mms_g: 6.1
+mmd_g: 5.6
+cms_mm_per_n: 0.35
+vas_l: 1.6
+cutout_mm: 103
+depth_mm: 66
+sens_db_2v83: 92

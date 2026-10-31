@@ -23,6 +23,19 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - MEH WAVE 1 MERGE 3/7: M1 DRIVER FILES (8 files, C8)
+
+- **`examples/drivers/`**: 8 new files (5 `cone`: bc_6ndl38, faitalpro_6pr160, eighteensound_6nmb420, bc_4ndf34,
+  faitalpro_4fe32; 3 `compression_meh`: faitalpro_hf1440, faitalpro_hf108, bc_dh450) + `tests/test_meh_driver_files.py`
+  (29 tests). Every number transcribed from the repo's own datasheet extraction
+  (`docs/research/typologies/mini_meh_2026-10-29/appendix_A_web_survey_raw.md` s8, rows read from the maker PDFs and
+  labelled `V`); `mmd_g`/`cms_mm_per_n` are marked `derived` with the formula in `notes`; unpublished mechanicals
+  (`frame_od_mm`, `motor_od_mm`, `dish_mm`, CD `duct_mm`) are omitted and named, never guessed.
+- **Deviation recorded:** M1's task file says to open each datasheet PDF. This lane had no web access, so it
+  transcribed the repo's verified s8 table instead. The CD duct depths stay at the C9 [inferred] 40/25/25 mm until a
+  drawing read or the M8 measurement.
+- **Tests:** `tests/test_meh_driver_files.py` 29/29 (re-run by the integrator).
+
 ## 2026-10-31 - MEH WAVE 1 MERGE 2/7: M3 SEVERAL-SOURCE-TAG SOLVE ADAPTER
 
 - **`types.py::Response`** gains the five optional C5 fields (`channel_tags`, `channel_pressure`,
