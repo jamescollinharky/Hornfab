@@ -33,6 +33,9 @@ Local-only, pushed 2026-10-30 late (**chief-implementer hand-off; no GitHub issu
 - **OPEN:** owner/lead agent to pull branch `ccr-4978c80b-tvvcgv` locally and run `docs/meh/CHIEF_IMPLEMENTER_HANDOFF.md`.
 
 Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; no GitHub issue state changed**):
+- **DONE:** M4 network layer (merged, `meh/M4-network` parts 1+2: drivers, network, dsp, limits, synthesis).
+- **OPEN (M4 follow-up):** `meh/inner.py` (CMA inner optimiser, task build step 6) is not written yet; the end-to-end
+  MEH evaluate path needs it.
 - **DONE:** M6 objective v5 + brief `meh:` block (merged, `meh/M6-objective-v5`).
 - **OPEN (M7):** `search/evaluate.py` currently only bridges version 5 (params class + scorer registration); the MEH
   evaluation branch that builds `meh_ctx`, runs the inner optimiser and synthesises the response is M7's.

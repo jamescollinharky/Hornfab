@@ -23,6 +23,26 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - MEH WAVE 1 MERGE 5/7: M4 NETWORK LAYER (drivers, lumped network, DSP, limits, synthesis)
+
+- **`hornlab_search/meh/drivers.py`**: `ConeDriver`, `CDSource`, `load_cone`, `load_cd`, `mmd_from_mms`; SI C7
+  derivations; wrong-`kind` refusal; defaults for CD `fs_cd_hz`/`q_cd`/`di_ref_db` per C8.
+- **`hornlab_search/meh/network.py`**: `from_bem` (exp(-iwt) per-acceleration -> exp(+iwt) per-volume-velocity),
+  `entry_norton` (C7, incl. `Mmd_eff`, `L_eff`, `Q_port`, `n_end`), `cd_volume_velocity`, `couple` (the C6 Norton
+  solve), `cone_excursion_peak_mm`, `port_velocity_peak`. Parity [measured, re-run by the integrator]:
+  `entry_norton(n_end=2)` == `calc/meh_1d_sketch.py::Entry.norton` for MID4/MID65 at rtol 1e-12 over 60 frequencies;
+  `couple` reproduces `calc/meh_zmatrix_check.py`'s direct solve at 1e-9 for one and two entry groups; `mmd_from_mms`
+  gives 11.9 g (6FE100) and 3.8 g (4FE32); one-entry resistive-load energy balance at 1e-9.
+- **`hornlab_search/meh/dsp.py`**: Linkwitz-Riley (orders 2/4/8 via squared Butterworth), Butterworth, delay,
+  polarity, peaking biquad, `smooth_oct`, `system_eq` (1/3-octave power smoothing, boost clipped at `max_boost_db`,
+  unlimited cut). LR4 low+high sum to unit magnitude within 1e-9.
+- **`hornlab_search/meh/limits.py`**: `spl_max` with the five C11 limits (Xmax, cone P_AES, port air 17 m/s, amp
+  volts, CD P_AES via sens + DI delta), first limit wins per frequency, binding limit reported.
+- **`hornlab_search/meh/synthesis.py`**: `system_response` sums `H_net * U` per plane/angle (+ sphere), returns a
+  `Response` `metrics/compute.py` consumes unchanged, `impedance` = nan.
+- **Not yet in this layer:** `inner.py` (CMA inner optimiser) is a separate follow-up branch; M7 must not be blocked
+  on it for the config/brief work, but the end-to-end path needs it.
+
 ## 2026-10-31 - MEH WAVE 1 MERGE 4/7: M6 OBJECTIVE v5 ("meh") + THE BRIEF `meh:` BLOCK
 
 - **`objective/scalar_meh.py`**: `objective_meh(metrics, resp, ok, target, weights, params, meh_ctx)` = the v4 pattern
