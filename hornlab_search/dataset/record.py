@@ -30,11 +30,17 @@ from ..objective.versions import SUPPORTED_OBJECTIVE_VERSIONS, is_supported_obje
 from ..types import Evaluation, SolveSpec
 
 SCHEMA_VERSION = 1
+#: MEH (2026-10-30) adds OPTIONAL record content but does NOT bump the schema version: the
+#: additive per-channel arrays below live in ARRAY_KEYS and the matching metadata keys
+#: (channel_tags, tag_areas_m2, network_solution) are written only when present, so every
+#: older record still validates and loads unchanged (docs/meh/00_MEH_CONTRACTS.md C5/C12).
 
 ARRAY_KEYS = ("freqs_hz", "h_angles_deg", "v_angles_deg",
               "spl_h_db", "spl_v_db", "balloon_dirs", "spl_balloon_db",
               "z_throat", "bw_h_deg", "bw_v_deg", "di_db",
-              "ripple_h_db", "ripple_v_db", "on_axis_db")
+              "ripple_h_db", "ripple_v_db", "on_axis_db",
+              # MEH multi-source (C4/C5): complex arrays, absent on single-source records.
+              "channel_pressure", "channel_sphere_pressure", "impedance_matrix")
 
 #: Every record carries all five. The four HornLab packages pinned in TOOLCHAIN.md, plus this
 #: package's own commit ("unknown" is a legal value when it cannot be determined; absence is not).
@@ -240,7 +246,11 @@ def _arrays_for(ev: Evaluation) -> dict:
         src = {"freqs_hz": resp.freqs_hz, "h_angles_deg": resp.h_angles_deg,
                "v_angles_deg": resp.v_angles_deg, "spl_h_db": resp.spl_h_db,
                "spl_v_db": resp.spl_v_db, "balloon_dirs": resp.balloon_dirs,
-               "spl_balloon_db": resp.spl_balloon_db, "z_throat": resp.z_throat}
+               "spl_balloon_db": resp.spl_balloon_db, "z_throat": resp.z_throat,
+               # MEH (C5): None on a single-source response -> absent from the record.
+               "channel_pressure": getattr(resp, "channel_pressure", None),
+               "channel_sphere_pressure": getattr(resp, "channel_sphere_pressure", None),
+               "impedance_matrix": getattr(resp, "impedance_matrix", None)}
         arrays.update({k: v for k, v in src.items() if v is not None})
     if met is not None:
         src = {"bw_h_deg": met.bw_h_deg, "bw_v_deg": met.bw_v_deg, "di_db": met.di_db,
@@ -268,7 +278,8 @@ def build_record(ev: Evaluation, target, lib_shas: dict, *,
                  excitation: dict | None = None,
                  created_utc: str | None = None,
                  objective_version: int = 1,
-                 provenance: dict | None = None) -> tuple[dict, dict]:
+                 provenance: dict | None = None,
+                 network_solution: dict | None = None) -> tuple[dict, dict]:
     """Returns (metadata_dict, arrays_dict).
 
     metadata is JSON-serializable with NO numpy types anywhere and no NaN/Inf (those become null).
@@ -295,6 +306,8 @@ def build_record(ev: Evaluation, target, lib_shas: dict, *,
                     one of ``objective.versions.SUPPORTED_OBJECTIVE_VERSIONS`` (the same tuple
                     ``search/evaluate.py`` dispatches on). Always written; older records lack it
                     and read as version 1 (``record_objective_version``).
+       network_solution  optional, additive (MEH, C12): the JSON form of the chosen
+                    ``NetworkSolution`` (M7/objective v5 fills it). Older records lack it.
        provenance   optional, additive (plan R8): {"config", "brief", "brief_hash", "generator"} -
                    which config / design brief scored this record and which typology generator (if
                    any) produced the design. Older records lack it; readers must treat it as optional.
@@ -354,6 +367,17 @@ def build_record(ev: Evaluation, target, lib_shas: dict, *,
     }
     if provenance:
         meta["provenance"] = to_jsonable(provenance, "$.provenance")
+    # MEH (C5/C12): additive, written only when present, so a single-source record is unchanged.
+    if resp is not None:
+        channel_tags = getattr(resp, "channel_tags", None)
+        if channel_tags is not None:
+            meta["channel_tags"] = [int(t) for t in channel_tags]
+        tag_areas = getattr(resp, "tag_areas_m2", None)
+        if tag_areas is not None:
+            meta["tag_areas_m2"] = to_jsonable(
+                {str(int(k)): float(v) for k, v in tag_areas.items()}, "$.tag_areas_m2")
+    if network_solution is not None:
+        meta["network_solution"] = to_jsonable(network_solution, "$.network_solution")
     arrays = _arrays_for(ev) if ok else {}
     return meta, arrays
 

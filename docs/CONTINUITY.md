@@ -23,6 +23,22 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - MEH WAVE 1 MERGE 2/7: M3 SEVERAL-SOURCE-TAG SOLVE ADAPTER
+
+- **`types.py::Response`** gains the five optional C5 fields (`channel_tags`, `channel_pressure`,
+  `channel_sphere_pressure`, `impedance_matrix`, `tag_areas_m2`), default `None`; no existing field changed.
+- **`solve/beat.py`**: `SolveSpec.extra["source_tags"]` -> `velocity_sources = {t: 1.0}` + `impedance_matrix=True`;
+  absent key keeps today's config byte-for-byte (golden solve-hash test); an installed `SolveConfig` without
+  `impedance_matrix` raises ConfigError naming M8's pin bump; per-tag mesh pre-flight from `mesh_meta.json`;
+  `channel_*` copied into `Response` with legacy fields = channel 0. `solve/bempp.py` refuses `source_tags`.
+- **`dataset/record.py`** stores the three MEH complex arrays plus `channel_tags`/`tag_areas_m2`/`network_solution`
+  (schema stays 1; old records load unchanged). `solve/cache.py` npz round trip extended because its module-level
+  field assertion would otherwise fail at import - a required coupled change, no test fixture edited.
+- **Tests:** `tests/test_solve_meh_fake.py` (golden single-tag config + hash, multi-tag payload, old-pin refusal,
+  tag pre-flight, 2-channel -> Response shapes, bempp refusal, cache round trip) and
+  `tests/test_dataset_meh_record.py`.
+- **Carried (ISSUES):** multi-tag solves raise ConfigError until M8 bumps the solver pin to M2's fork branch.
+
 ## 2026-10-31 - MEH WAVE 1 MERGE 1/7: M5 MEH L1 CAD TOOL + MULTI-LABEL STEP ROUTE
 
 - **New `tools/cad/meh.py` (822 lines)**: ports `calc/meh_layout.py` (`geometry`, `_wall_frame`, `check`,

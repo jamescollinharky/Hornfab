@@ -34,6 +34,9 @@ Local-only, pushed 2026-10-30 late (**chief-implementer hand-off; no GitHub issu
 
 Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; no GitHub issue state changed**):
 - **DONE:** M5 MEH CAD + multi-label STEP (merged, `meh/M5-cad-mesh`).
+- **DONE:** M3 multi-tag solve adapter (merged, `meh/M3-solve-adapter`).
+- **OPEN (M8 gate):** the installed `hornlab-beat-bem` has no `SolveConfig.impedance_matrix`; every multi-tag solve
+  raises ConfigError until M2's fork branch is validated on the GPU and the pin is bumped (owner approves the bump).
 - **OPEN (M5 follow-up):** seed renders not produced - `hornlab-render` needs `pyvista`, absent from the venv and no
   installs are permitted. `cd_duct_mm = 0` is not modelled (no disc face without a bore). Unknown cone
   (cutout, depth) pairs are refused until M1's driver files land.
