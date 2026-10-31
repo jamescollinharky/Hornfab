@@ -2,6 +2,22 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-10-31 - MEH WAVE 1 MERGE 1/7: M5 MEH L1 CAD TOOL + MULTI-LABEL STEP ROUTE
+
+- **New `tools/cad/meh.py` (822 lines)**: ports `calc/meh_layout.py` (`geometry`, `_wall_frame`, `check`,
+  `from_fractions`, `_narrowest`) with identical numbers; the deterministic slide repair is logged in
+  `derived()["repairs"]`; T2-A and T1 `derived()` match the reference for z_c, z_m, mouth W x H, port z, path to
+  diaphragm and f_h within 0.2 mm / 1 Hz [agent-reported, tests re-run below].
+- **L1 solid**: outer box minus horn air (planar-quad frustum + mouth roundover) minus the CD bore; full port
+  outlines imprinted as flush coplanar patches, then quarter-cut at x = 0 / y = 0 and exported as an OPEN shell (the
+  symmetry planes are not BEM faces). Quarter inventory: T2 driver 1 + entry_mid 1; T1 driver 1 + entry_mid 2.
+- **`mesh/step_build.py`**: `meh` registry entry, `entry_mid` -> tag 10 / `entry_aux` -> 11, quarter import with
+  `quadrants="1"`, fine sizing near every driven face, frequency hard-fail on every driven face, per-tag area +
+  centroid in `mesh_meta.json`. `multicell`/`plughorn` paths unchanged.
+- **Known gaps (carried to ISSUES):** seed renders not produced (`pyvista` absent from the venv, no installs
+  permitted); `cd_duct_mm = 0` refused (no disc face without a bore); unknown cone (cutout, depth) pairs refused
+  until M1 lands.
+
 ## 2026-10-30 (18:10 EDT) - MEH INTEGRATION BRANCH PULLED; BASELINE GREEN AFTER TWO PRE-EXISTING REDS
 
 - **Local work preserved first.** `feat/hardened-plan-2026-10-29` had uncommitted night-result work (CONTINUITY

@@ -23,6 +23,15 @@ Local-only items (no GitHub issue): band edges capped by the measured dof cap (c
 Local-only, pushed 2026-10-30 late (**chief-implementer hand-off; no GitHub issue state changed**):
 - **OPEN:** owner/lead agent to pull branch `ccr-4978c80b-tvvcgv` locally and run `docs/meh/CHIEF_IMPLEMENTER_HANDOFF.md`.
 
+Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; no GitHub issue state changed**):
+- **DONE:** M5 MEH CAD + multi-label STEP (merged, `meh/M5-cad-mesh`).
+- **OPEN (M5 follow-up):** seed renders not produced - `hornlab-render` needs `pyvista`, absent from the venv and no
+  installs are permitted. `cd_duct_mm = 0` is not modelled (no disc face without a bore). Unknown cone
+  (cutout, depth) pairs are refused until M1's driver files land.
+- **OPEN (local, not mine to commit):** the integrator's checkout carried unrelated regenerated catalog work
+  (cone_plughorn_2026-10-28 entries typed 2026-10-31 in `examples/catalog.yaml`, `docs/reference/PARAMETERS.md`,
+  `TYPOLOGIES.md`, `param-catalog.v1.json`); preserved as a patch outside the MEH branch.
+
 Local-only, pushed 2026-10-30 18:10 EDT (**MEH integration started on the owner's box; no GitHub issue state changed**):
 - **IN PROGRESS:** `meh/integration` created from `origin/ccr-4978c80b-tvvcgv` (hand-off section 0); baseline suite
   green after fixing two pre-existing reds (stale sandbox.js dispose pin, CRLF-committed `param-catalog.v1.json`).
