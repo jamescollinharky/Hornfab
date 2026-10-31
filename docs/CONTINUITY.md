@@ -23,6 +23,36 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - M8 STEP 2b [owner-approved]: SOLVER PIN BUMPED TO 1efdc6f
+
+- **Pin:** `pyproject.toml` and `TOOLCHAIN.md` now name `hornlab-beat-bem @ 1efdc6f934e16f288880b6d68e8dce8480b7a421`
+  (branch `hornlab-search/meh-multisource`, pushed to `github.com/llevaachingada/hornlab-beat-bem` so the SHA is
+  fetchable). Reinstalled with `pip install --force-reinstall --no-deps`; `SolveConfig` now has `impedance_matrix`
+  and `source_tags` returns `(2, 10)` for a two-tag request.
+- **Owner decision recorded:** the bump was approved after the M8 step-2 evidence (single-tag parity
+  1.12e-5 / 5.91e-5 dB vs the 0.039 dB floor, request payload byte-identical, fork suites green on CPU and CUDA).
+- **Gate:** full offline suite after the reinstall -> exit 0, no failures.
+
+## 2026-10-31 - MEH WAVE 1 MERGE 7/7: M10 BASS BOX (7 woofer files, lumped model, build sheet)
+
+- **`tools/bassbox.py`**: lumped sealed/vented box from a C8 cone file (C7 port branch: `L_eff`, `Q_port = 10`,
+  `n_end = 2`, `Ql = 7`), electrical `Z_in`, SPL at 2.83 V and at the limit, cone excursion, port peak velocity, DSP
+  (LR4 15 Hz + Linkwitz transform + five PEQ bands), `spl_max(f)` from Xmax / P_AES / 17 m/s; deterministic grids and
+  a "smallest meeting the targets" search; CLI/JSON.
+- **7 new `examples/drivers/*.yaml`** (`kind: cone`): bc_15tbx100, bc_18tbw100, bc_18sw115, faitalpro_15xl1400,
+  faitalpro_18xl1800, eighteensound_18nlw9601, beyma_15lx60v2. Mmd/Cms derived only where the maker does not print
+  them; the Beyma 8 mm vs +/-9 mm Xmax conflict and the 15TBX100 / 18NLW9601 Vas-vs-Fs inconsistencies are recorded
+  in `notes` instead of being smoothed over.
+- **Recommendation** (`BASSBOX_2026-10-31.md`): 1 x FaitalPRO 18XL1800, sealed 54.9 L net / 61.8 L gross
+  (516 x 516 x 304 mm), LT 64.6/0.89 -> 26/0.71, five PEQ, +12.2 dB max boost; 116.4 dB at 40 Hz and
+  123.1-126.6 dB at 63-120 Hz, flat 30-120 within 0.44 dB; stereo pair = +6 dB. Smallest that meets: 1 x 15XL1400
+  sealed 38.0 L (113.3 dB @ 40, 119.3 dB @ 63).
+- **Task-text correction:** "B4 (fs = fb, Qts 0.383, alpha 1) is -3 dB at fs" is wrong for the lossless vented box
+  (alpha = 1 gives 0.0 dB at fs); the B4 constant is alpha = Vas/Vb = sqrt(2). The test asserts -3.01 dB at the
+  sqrt(2) alignment (tolerance unchanged) and separately pins the literal alpha = 1 case at 0.0 dB, so the arithmetic
+  is auditable. Task text should be amended.
+- **Tests:** `tests/test_bassbox.py` 65 tests; full offline suite 2021 passed, 2 skipped, 20 deselected.
+
 ## 2026-10-31 - M8 STEPS 1-2 [measured]: FORK VALIDATED CPU+CUDA, SINGLE-TAG PARITY 1.1e-5 / 5.9e-5 dB
 
 - **Step 1, fork validation (branch `hornlab-search/meh-multisource`, fork working tree

@@ -39,7 +39,14 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   reduced-vs-full symmetry all pass. The M2 Julia testset needed three fixture fixes (commit `93ef848`/`1efdc6f`);
   properties and tolerances unchanged.
 - **DONE (M8 step 2):** single-tag parity vs the current pin <= 5.91e-5 dB on two finalists (floor 0.039 dB).
-- **OPEN (owner decision):** approve or refuse the `hornlab-beat-bem` pin bump to the M2 fork branch.
+- **DONE (M8 step 2b, owner-approved):** solver pin bumped to `1efdc6f` (fork branch pushed); reinstalled, full
+  offline suite green. `SolveConfig.impedance_matrix` and `source_tags` are live.
+- **DONE (M10):** bass box - 7 woofer files, `tools/bassbox.py`, 65 tests, `BASSBOX_2026-10-31.md`. Recommendation:
+  1 x FaitalPRO 18XL1800 sealed 55 L net + LT; pair = +6 dB; smallest = 1 x 15XL1400 sealed 38 L.
+- **OPEN (task text):** M10's "B4 (fs = fb, Qts 0.383, alpha 1) is -3 dB at fs" is wrong for the lossless vented
+  box (alpha = 1 gives 0.0 dB at fs; the B4 constant is alpha = sqrt(2)). The test asserts both; amend the task file.
+- **OPEN (datasheets):** 15TBX100 (7.8 %) and 18NLW9601 (4.5 %) Vas/Mms vs Fs are internally inconsistent; Beyma
+  15LX60V2 Xmax 8 mm vs +/-9 mm. Files follow C8 and say so in `notes`.
 - **DONE:** M6 objective v5 + brief `meh:` block (merged, `meh/M6-objective-v5`).
 - **OPEN (M7):** `search/evaluate.py` currently only bridges version 5 (params class + scorer registration); the MEH
   evaluation branch that builds `meh_ctx`, runs the inner optimiser and synthesises the response is M7's.
