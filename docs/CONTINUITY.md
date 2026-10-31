@@ -2,6 +2,28 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-10-30 (18:10 EDT) - MEH INTEGRATION BRANCH PULLED; BASELINE GREEN AFTER TWO PRE-EXISTING REDS
+
+- **Local work preserved first.** `feat/hardened-plan-2026-10-29` had uncommitted night-result work (CONTINUITY
+  16:04Z entry, INDEX rows, `HANDOFF_NEXT_RUNS_2026-10-30.md`, `SWARM_PLAN_2026-10-30.md`,
+  `examples/typologies/atlas_2026-10-30/atlas__osse_ext_throat.yaml`) -> committed as `97f1490` before switching.
+- **Hand-off section 0 done.** `meh/integration` created from `origin/ccr-4978c80b-tvvcgv`; `origin/main` merge was
+  already up to date (no CONTINUITY/ISSUES entries lost).
+- **Baseline was RED on two tests unrelated to MEH** (both pre-existing at the hand-off commit):
+  1. `test_gui_sandbox_page.py::test_3d_hot_swap_never_scenes_per_frame` pinned the pre-1bdd1b7 one-liner
+     `if (curGeo) curGeo.dispose();`; the ridge-overlay commit folded the ridge-cache eviction into that statement.
+     The assertion now pins the current, stricter contract (evict `ridgeCache` **and** dispose) - not a loosening.
+  2. `test_param_catalog.py::test_committed_json_is_byte_identical_to_a_fresh_build` failed on CRLF vs LF: this
+     checkout had `core.autocrlf=true` while the generator writes LF. Fixed by setting `core.autocrlf=false` locally
+     and re-checking-out the tree (index content unchanged, 0 tracked files with CRLF), not by touching the test.
+- **Baseline after the fixes [measured]:** `.venv\Scripts\python.exe -m pytest -m "not slow and not gpu and not
+  crosscheck" -q` -> exit 0, 100 % (no failures). Research scripts reproduce: `meh_1d_sketch.py` conical-horn check
+  4.45e-16; `meh_zmatrix_check.py` 4.44e-16 (one group) / 5.86e-16 (two groups); `meh_layout.py` prints the
+  layout_out.md seed table (T2-A/HF1440 and T1 OK, the three known-bad seeds unchanged).
+- **GPU is busy:** night queue `n2_gapfill_2026-10-30` (started 16:56, 7 jobs, no cutoff) is running
+  `search --resume runs/20261030T111108Z-screen-377bbe` with a live Julia host. Per CLAUDE.md no MEH GPU job starts
+  until that queue finishes - wave 1 (CPU/cloud code) proceeds meanwhile.
+
 ## 2026-10-30 (late) - MEH CHIEF-IMPLEMENTER HAND-OFF
 
 - `docs/meh/CHIEF_IMPLEMENTER_HANDOFF.md`: pull steps for `C:\Users\hunte\Hrns\hornlab-search`, wave order with gates,

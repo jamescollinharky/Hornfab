@@ -23,6 +23,13 @@ Local-only items (no GitHub issue): band edges capped by the measured dof cap (c
 Local-only, pushed 2026-10-30 late (**chief-implementer hand-off; no GitHub issue state changed**):
 - **OPEN:** owner/lead agent to pull branch `ccr-4978c80b-tvvcgv` locally and run `docs/meh/CHIEF_IMPLEMENTER_HANDOFF.md`.
 
+Local-only, pushed 2026-10-30 18:10 EDT (**MEH integration started on the owner's box; no GitHub issue state changed**):
+- **IN PROGRESS:** `meh/integration` created from `origin/ccr-4978c80b-tvvcgv` (hand-off section 0); baseline suite
+  green after fixing two pre-existing reds (stale sandbox.js dispose pin, CRLF-committed `param-catalog.v1.json`).
+- **OPEN (blocker, GPU):** night queue `n2_gapfill_2026-10-30` occupies the only GPU; M8 GPU validation/pin bump waits
+  for it to finish (CLAUDE.md: never start GPU work while a night queue runs).
+- **OPEN (owner):** confirm the 380 mm box depth assumption (M8 readiness step 1 + layout feasibility depend on it).
+
 Local-only, pushed 2026-10-30 (**MEH implementation hand-off; no GitHub issue state changed**):
 - **OPEN (wave 1, dispatch-ready):** M1 driver files, M2 solver fork multi-tag + impedance matrix, M3 solve adapter,
   M4 network + inner optimiser, M5 CAD tool + multi-label STEP, M6 objective v5 + brief block, M10 bass box
