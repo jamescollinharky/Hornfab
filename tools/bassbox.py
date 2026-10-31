@@ -746,14 +746,18 @@ def design_sealed(cone: ConeDriver, stem: str = "", *, vb_grid=None,
     if vb_grid is None:
         vb_grid = vas * np.geomspace(0.25, 1.20, 10)
 
-    qes = 2.0 * math.pi * cone.fs_hz * cone.mms_kg * cone.re_ohm / cone.bl_tm ** 2
-    qts = 1.0 / (1.0 / cone.qms + 1.0 / qes) if cone.qms else qes
+    # The box resonance and Q are taken from the model's own Mms/Cms/Rms, not from the published
+    # fs: the C8 rule derives Cms from Vas, and for a few files the published fs disagrees with the
+    # derived pair (see the driver-file notes). Using the model's f0/Q0 keeps the LT consistent with
+    # the response it is flattening.
+    r_total = cone.rms_kg_s + cone.bl_tm ** 2 / cone.re_ohm
 
     candidates = []
     for vb in vb_grid:
         alpha = vas / vb
-        f0 = cone.fs_hz * math.sqrt(1.0 + alpha)
-        q0 = qts * math.sqrt(1.0 + alpha)
+        c_total = cone.cms_m_per_n / (1.0 + alpha)     # driver Cms in series with the box spring
+        f0 = 1.0 / (2.0 * math.pi * math.sqrt(cone.mms_kg * c_total))
+        q0 = 2.0 * math.pi * f0 * cone.mms_kg / r_total
         for fc in fc_grid:
             box = Box("sealed", float(vb))
             lt = (f0, q0, float(fc), float(qc))
