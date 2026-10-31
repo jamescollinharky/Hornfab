@@ -299,10 +299,11 @@ def test_a_v3_evaluation_writes_objective_version_3():
 
 def test_validate_rejects_an_unknown_objective_version():
     meta, _ = _built()
-    for bad in (0, 5, 99, "2", True):
+    # 5 is the MEH objective (2026-10-30), so the first UNKNOWN version is now 6.
+    for bad in (0, 6, 99, "2", True):
         with pytest.raises(ValueError, match="objective_version"):
             validate_record(dict(meta, objective_version=bad))
-    for bad in (0, 5, 99, "2", True):
+    for bad in (0, 6, 99, "2", True):
         assert not is_supported_objective_version(bad)
 
 
