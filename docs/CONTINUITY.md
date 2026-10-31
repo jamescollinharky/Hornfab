@@ -2,6 +2,27 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-10-31 (20:28Z) - 3D EVOLUTION TRANSPARENCY: FIX RE-LANDED ON meh/integration + LIVE SERVER RESTARTED
+
+- **Owner report (run `20261031T202159Z-screen-ba7648`, 2 improvement frames):** the 3D time-lapse still
+  showed shredded / see-through triangles, caption "mesh decimated to 5781 tris".
+- **Root cause was not a new renderer bug.** The hole-free decimation fix (`64ccb20`, authored on
+  `feat/hardened-plan-2026-10-29`) had never reached the branch the GUI runs from: this worktree is on
+  `meh/integration` (merge-base `a6bb725`), whose `gui/data.py` still had `M3D_VERSION=1`,
+  `M3D_DEFAULT_CAP=6000` and the stride sampler `tris[::k]`. The live GUI (PID 7176 on 127.0.0.1:8765)
+  had imported that old module, and `runs/.gui_cache/evolution_20261031T202159Z-screen-ba7648_m3d.json`
+  was still `key=[1,6000]` -> 11,562-tri frames cut to 5,781/5,902 (k=2), i.e. half the surface deleted
+  as scattered single-triangle holes.
+- **Fix re-landed here:** cherry-picked the two code files from `64ccb20`
+  (`hornlab_search/gui/data.py` `_cluster_decimate`/`_cluster_once`, `tests/test_gui_integration_phases.py`
+  hole-free contract). `M3D_VERSION` 2 / `M3D_DEFAULT_CAP` 30000; stale cache regenerated for the run and
+  now reads back **11,562 / 11,804 tris, `decimated:false`** (no decimation, complete surface).
+  131 GUI/reader tests pass.
+- **Live server:** the old `:8765` process is being restarted so it loads this module; the new process
+  re-reads the regenerated cache (version 2 key) instead of the stride one.
+- **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
+  switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
+
 ## 2026-10-31 - MEH WAVE 1 MERGE 1/7: M5 MEH L1 CAD TOOL + MULTI-LABEL STEP ROUTE
 
 - **New `tools/cad/meh.py` (822 lines)**: ports `calc/meh_layout.py` (`geometry`, `_wall_frame`, `check`,

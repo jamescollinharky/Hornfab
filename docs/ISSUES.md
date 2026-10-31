@@ -20,6 +20,15 @@ Updated in the same commit as `docs/CONTINUITY.md` on every push. Last synced 20
 
 Local-only items (no GitHub issue): band edges capped by the measured dof cap (confirmed, user "keep lowered edges"); task 07 test-17 disk-latency flake risk (do not loosen); residual CP-7 risks (epw=6 above 2.5 kHz unmeasured; f11 unexercised; DI-vs-beamwidth not a regression test) — see `NOTES_FOR_SENIOR.md` task-09 block and CONTINUITY 06:20.
 
+Local-only, 2026-10-31 (**3D evolution transparency, re-landed on `meh/integration`**):
+- **Recurring owner report (run `20261031T202159Z-screen-ba7648`): mesh renders as see-through triangles.**
+  Not a renderer regression: the hole-free decimation fix (`64ccb20`) lived only on
+  `feat/hardened-plan-2026-10-29`; this worktree is `meh/integration`, whose `gui/data.py` still stride-sampled
+  (`M3D_VERSION=1`, cap 6000 -> 11.5k-tri frames cut to 5.8k). Code files cherry-picked here, cache key bumped
+  to `[2,30000]`, stale per-run cache regenerated (`decimated:false`). The long-running GUI on :8765 must be
+  restarted after any such change; a branch switch also silently reverts the working tree. 131 GUI tests pass.
+  Detail: CONTINUITY 20:28Z.
+
 Local-only, pushed 2026-10-30 late (**chief-implementer hand-off; no GitHub issue state changed**):
 - **OPEN:** owner/lead agent to pull branch `ccr-4978c80b-tvvcgv` locally and run `docs/meh/CHIEF_IMPLEMENTER_HANDOFF.md`.
 
