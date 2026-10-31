@@ -1,0 +1,61 @@
+# T2-B MEH seed: 2 x B&C 6NDL38 top/bottom + FaitalPRO HF1440, 60 % front-chamber fill
+# reference point (C1, C9, C11). The layout_out.md T2-B row (z_frac 0.2, across_frac 0.85)
+# shifted the port to z 41 mm, path 66 mm, f_h 847 Hz; the 60 % fill itself is a SEARCHED
+# inner-optimiser knob (brief meh.v_front_fill 0..0.7), not a CAD recipe key, so it is not
+# fixed here.
+#
+# The reference T2-B row was computed with HF108 (exit 25.4 mm). The T2 brief's CD group is
+# HF1440 (C1: T2 is the 1.4 in variant), so this seed keeps the brief's CD and varies only
+# the port placement knobs; using HF108 here would mesh a 1 in bore while the network models
+# a 1.4 in source. The T1 seed/brief is the coherent HF108 variant.
+name: meh_t2b
+family: FREEFORM
+brief_file: ../../briefs/meh_2026-10-30/meh_home_90x60_t2.yaml
+seed_params:
+  cad:
+    tool: meh
+    cov_h_deg: 90.0
+    cov_v_deg: 60.0
+    z_frac: 0.2
+    across_frac: 0.85
+    port_along_mm: 30.0
+    slide_mm: 10.0
+    walls: tb
+    env_w_mm: 406.4
+    env_h_mm: 406.4
+    env_d_mm: 380.0
+    box_t_mm: 18.0
+    roll_mm: 20.0
+    wall_t_mm: 6.0
+    spacer_mm: 3.0
+    exit_mm: 35.8          # FaitalPRO HF1440 (the T2 brief's CD)
+    cd_duct_mm: 40.0
+    cd_body_d_mm: 124.0
+    cd_body_len_mm: 75.0
+    cone_cutout_mm: 145.0  # B&C 6NDL38
+    cone_depth_mm: 85.0
+    clearance_mm: 3.0
+bounds: {}
+mesh:
+  epw: 4.2
+  quadrants: '1'
+  dof_cap_screen: 9000
+  dof_cap_verify: 9000
+  dof_cap_final: 9000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_cuda
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 900
+search:
+  algorithm: cma
+  sigma0: 0.2
+  seed: 1234
+  budget: 80
+  popsize: null
+  tolfun: 0.001

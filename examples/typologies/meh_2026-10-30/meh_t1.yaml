@@ -1,0 +1,60 @@
+# T1 MEH seed: 4 x B&C 4NDF34, one per wall + FaitalPRO HF108 (C1, C9, C11).
+#
+# layout_out.md "Final seeds" T1 row after repair: mouth 330 x 191 mm, horn length 150 mm,
+# port z 44 mm, path to diaphragm 69 mm, V_front 89 cm^3, f_h 872 Hz. walls: tblr means all
+# four walls, so the quarter mesh carries two entry_mid faces (top + right, C3).
+#
+# CAD-authored like the T2 seeds (`family: FREEFORM` + seed_params.cad); the `meh:` block in
+# the brief turns on search/evaluate.py's MEH branch. See meh_t2a.yaml for the generator
+# dispatch note (design/generated.py, outside M7's file scope).
+name: meh_t1
+family: FREEFORM
+brief_file: ../../briefs/meh_2026-10-30/meh_home_90x60_t1.yaml
+seed_params:
+  cad:
+    tool: meh
+    cov_h_deg: 90.0
+    cov_v_deg: 60.0
+    z_frac: 0.25
+    across_frac: 0.7
+    port_along_mm: 20.0
+    slide_mm: 10.0
+    walls: tblr
+    env_w_mm: 406.4
+    env_h_mm: 406.4
+    env_d_mm: 380.0
+    box_t_mm: 18.0
+    roll_mm: 20.0
+    wall_t_mm: 6.0
+    spacer_mm: 3.0
+    exit_mm: 25.4          # FaitalPRO HF108
+    cd_duct_mm: 25.0
+    cd_body_d_mm: 87.0
+    cd_body_len_mm: 41.0
+    cone_cutout_mm: 103.0  # B&C 4NDF34
+    cone_depth_mm: 66.0
+    clearance_mm: 3.0
+bounds: {}
+mesh:
+  epw: 4.2
+  quadrants: '1'
+  dof_cap_screen: 9000
+  dof_cap_verify: 9000
+  dof_cap_final: 9000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_cuda
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 900
+search:
+  algorithm: cma
+  sigma0: 0.2
+  seed: 1234
+  budget: 80
+  popsize: null
+  tolfun: 0.001
