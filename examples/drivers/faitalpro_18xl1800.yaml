@@ -1,0 +1,31 @@
+# FaitalPRO 18XL1800 — 18 in high-excursion woofer (M10 bass-box shortlist).
+# Transcribed from the maker's product page, read 2026-10-31:
+#   https://faitalpro.com/en/products/LF_Loudspeakers/product_details/index.php?id=201070150
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md.
+name: FaitalPRO 18XL1800
+kind: cone
+source: https://faitalpro.com/en/products/LF_Loudspeakers/product_details/index.php?id=201070150
+notes: >-
+  Datasheet transcription (2026-10-31). Cms (0.11 mm/N) and Mmd (228.8 g) are both published,
+  so neither key is derived here; Mms = 275 g is published as well.
+  Xmax is the maker's one-way figure. The published Mmd is 1.0 g above Mms minus the C7 air load
+  (227.8 g) - the datasheet's own rounding - and the model uses the published 228.8 g.
+  motor_od_mm and dish_mm are not published on the page; omitted. Sens is the table's
+  sensitivity column (the maker's published figure; the 2.83 V condition is not restated in the
+  extraction).
+re_ohm: 5.35
+le_mh: 2.04
+bl_tm: 25.4
+sd_cm2: 1187
+xmax_mm: 20.17
+p_aes_w: 1600
+fs_hz: 29
+qms: 9.9
+mms_g: 275
+mmd_g: 228.8
+cms_mm_per_n: 0.11
+vas_l: 215.5
+cutout_mm: 422
+depth_mm: 233
+frame_od_mm: 460
+sens_db_2v83: 95

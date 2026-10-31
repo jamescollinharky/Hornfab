@@ -1,0 +1,36 @@
+# 18 Sound 18NLW9601 — 18 in long-throw woofer (M10 bass-box shortlist).
+# Transcribed from the maker's product page, read 2026-10-31:
+#   https://www.eighteensound.it/en/products/lf-driver/18-0/8/18NLW9601
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md.
+name: 18 Sound 18NLW9601
+kind: cone
+source: https://www.eighteensound.it/en/products/lf-driver/18-0/8/18NLW9601
+notes: >-
+  Datasheet transcription (2026-10-31). Cms is not printed on the page and is derived:
+  Cms = Vas/(rho*c^2*Sd^2) with Vas = 120 L, Sd = 1130 cm2, rho = 1.2041, c = 343.
+  Mms = 275 g is published and Mmd is not printed separately, so
+  Mmd = Mms - 2*(8/3)*rho*a^3 with a = sqrt(Sd/pi).
+  Xmax is printed by 18 Sound as a peak value; it is used here as the one-way peak limit.
+  Consistency check: the derived pair puts the driver's own resonance at 37.3 Hz, 4.5 % below
+  the published Fs = 39 Hz; the published Vas/Mms pair is internally inconsistent, and the
+  derived values above follow the C8 formulas as instructed.
+  motor_od_mm and dish_mm are not published on the page; omitted. Sens is the table's
+  sensitivity column (the maker's published figure; the 2.83 V condition is not restated in the
+  extraction).
+derived: [mmd_g, cms_mm_per_n]
+re_ohm: 4.7
+le_mh: 2.19
+bl_tm: 31.0
+sd_cm2: 1130
+xmax_mm: 14.0
+p_aes_w: 1800
+fs_hz: 39
+qms: 5.7
+mms_g: 275
+mmd_g: 231.192
+cms_mm_per_n: 0.066340
+vas_l: 120
+cutout_mm: 416
+depth_mm: 236
+frame_od_mm: 462
+sens_db_2v83: 96
