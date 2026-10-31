@@ -1,0 +1,31 @@
+# FaitalPRO 15XL1400 — 15 in high-excursion woofer (M10 bass-box shortlist).
+# Transcribed from the maker's product page, read 2026-10-31:
+#   https://faitalpro.com/en/products/LF_Loudspeakers/product_details/index.php?id=201060150
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md.
+name: FaitalPRO 15XL1400
+kind: cone
+source: https://faitalpro.com/en/products/LF_Loudspeakers/product_details/index.php?id=201060150
+notes: >-
+  Datasheet transcription (2026-10-31). Cms (0.09 mm/N) and Mmd (162.4 g) are both published,
+  so neither key is derived here; Mms = 190 g is published as well.
+  Xmax is the maker's one-way figure. The published Mmd is 0.5 g above Mms minus the C7 air load
+  (161.9 g) - the datasheet's own rounding - and the model uses the published 162.4 g.
+  motor_od_mm and dish_mm are not published on the page; omitted. Sens is the table's
+  sensitivity column (the maker's published figure; the 2.83 V condition is not restated in the
+  extraction).
+re_ohm: 5.4
+le_mh: 1.6
+bl_tm: 26.7
+sd_cm2: 841
+xmax_mm: 12.92
+p_aes_w: 1400
+fs_hz: 38
+qms: 10.4
+mms_g: 190
+mmd_g: 162.4
+cms_mm_per_n: 0.09
+vas_l: 91.2
+cutout_mm: 354
+depth_mm: 217
+frame_od_mm: 393
+sens_db_2v83: 96

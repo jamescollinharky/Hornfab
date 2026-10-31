@@ -1,0 +1,35 @@
+# Beyma 15LX60V2 — 15 in low-mid woofer (M10 bass-box shortlist).
+# Transcribed from the maker's data sheet, read 2026-10-31:
+#   https://www.beyma.com/speakers/Fichas_Tecnicas/beyma-speakers-data-sheet-low-mid-frequency-15LX60V2.pdf
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md.
+name: Beyma 15LX60V2
+kind: cone
+source: https://www.beyma.com/speakers/Fichas_Tecnicas/beyma-speakers-data-sheet-low-mid-frequency-15LX60V2.pdf
+notes: >-
+  Datasheet transcription (2026-10-31). Cms (0.092 mm/N) is published. Mms = 147 g is published
+  and Mmd is not printed, so Mmd = Mms - 2*(8/3)*rho*a^3 with a = sqrt(Sd/pi).
+  Xmax conflict in the maker's own PDF: the parameter table prints 8 mm while a feature bullet
+  claims "+/- 9 mm". The table value 8 mm is used (one-way peak); the conflict is recorded here.
+  Consistency check: the published pair (Mms 147 g, Cms 0.092 mm/N) puts the driver's own
+  resonance at 43.9 Hz, 4.5 % above the published Fs = 42 Hz.
+  frame_od_mm = 388 mm is the overall frame diameter; the data sheet separately prints a
+  101.6 mm voice-coil diameter (not a C8 key). motor_od_mm and dish_mm are not published;
+  omitted. Sens is the table's sensitivity column (the maker's published figure; the 2.83 V
+  condition is not restated in the extraction).
+derived: [mmd_g]
+re_ohm: 5.1
+le_mh: 2.1
+bl_tm: 21.1
+sd_cm2: 910
+xmax_mm: 8
+p_aes_w: 700
+fs_hz: 42
+qms: 21.2
+mms_g: 147
+mmd_g: 115.341
+cms_mm_per_n: 0.092
+vas_l: 105
+cutout_mm: 349.5
+depth_mm: 142
+frame_od_mm: 388
+sens_db_2v83: 98
