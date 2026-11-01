@@ -2,6 +2,90 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-01 - MERGED: PR #17 (Metal, budget hint, staged A/B, CMA covariance + pin plan) + the hardware-neutrality rule
+
+- **Merged:** jamescollinharky's PR #17 (`36c6712`, 4 commits, 32 files, +3135/-40) squashed onto `main`: `beat_metal` backend + Mac path, Hansen `max(150, 100*N)` budget hint (`GET /api/budget-hint`), staged MACRO->SHAPE A/B harness (`tools/run_staged_search.py`), end-of-run `cma_covariance` (`run.json` + `cma/covariance.json` + GUI table), CMA-driven `pin-plan` (CLI + run-detail table), `--restarts-mode` / `--restarts-max` (CLI + Launch/Compose).
+- **Docs:** all three conflicts were append-only logs. `CODE_MAP.md` was curated (took the PR's `solve/*` row; kept main's newer `metrics/`, `driver/compression`, `mesh/throat_check` rows that the PR copy would have erased); `CONTINUITY.md` ordered newest-first; `NOTES_FOR_SENIOR.md` unioned chronologically.
+- **Two merge defects found by the merged test suite, fixed before landing:** (1) `auto_backend()` probed `hornlab_beat_bem` (spawning `nvidia-smi`) inside `build_argv`, so merely enqueueing a queued resume did hardware I/O and 11 GUI tests failed that pass on main; it is now platform-only - Apple Silicon -> `beat_metal`, otherwise `None`, never a silent CPU swap. (2) `--backend` was applied *after* config validation, so `cuda_fused: true` stayed in `raw` / `SolveSpec.extra` and a Metal override died at the first solve while `run.json.backend` disagreed with the snapshot; `load_config(..., backend=...)` now applies the override before validation and drops `cuda_fused` for non-CUDA backends, so `config_sha`, the snapshot and `run.json.backend` agree.
+- **Owner rule (2026-11-01): results must be hardware-neutral.** The endpoint is the same data regardless of the host's solver backend (CUDA / Metal / CPU / Julia). Enforced from now on: no silent backend swapping (backend is explicit, hashed into `SolveSpec`, recorded in `run.json.backend` and dataset provenance); pooling across backends only after a measured parity check; `beat_metal` stays a lab backend until Mac<->4060 <=0.2 dB is measured.
+- **Verification:** full offline suite green apart from the same 2 pre-existing environment failures as pristine `main` (`test_mesh_pin` pinned-dist mismatch; `tests/test_gui_sandbox_page.py::test_3d_hot_swap_never_scenes_per_frame`). Optimizer A/B (`osse_baseline`, budget 4, seed 1234): identical `design_hash` sequence (`8443a5763be5`, `c54661892c59`, `16905720dfc2`, `8f7d77bd7bfd`) and identical best params; J differs by <=3.0e-06 while the seed candidate - bit-identical input by construction - alone differs by 2.1e-06, i.e. solver noise, not an optimizer change. `run.json` gains only `cma_covariance` (+ `cma/covariance.json`).
+- **Owed:** GPU-box `python tools/run_staged_search.py --out runs/staged_ab_2026-10-31 --both`, then paste COMPARE.md into `docs/evidence/STAGED_SEARCH_AB_2026-10-31.md`; Mac<->4060 Metal parity before Metal rows enter any campaign/compare.
+
+## 2026-10-31 (evening) - CMA-driven knob pin recommendations
+
+- `search/pin_from_cma.py`: pin when `σ√C_ii` share and std are small, unless Spearman
+  `|ρ|` vetoes; values from `best.json`. CLI `hornlab-search pin-plan --run <id>` writes
+  `pin_plan.json` + `PIN_PLAN.md` (+ optional `--write-config`). Run detail shows the table
+  under CMA covariance. Offline: `tests/test_pin_from_cma.py`.
+
+## 2026-10-31 (evening) - CMA covariance dump + GUI table
+
+- End of each CMA search writes `run.json` `cma_covariance` (+ `cma/covariance.json`):
+  per-knob `C_ii` / `σ√C_ii` shares and top eigenpair loadings (unit-box search distribution).
+  Restart arms carry a compact `covariance` block. GUI run detail shows the table when present.
+  Offline: `tests/test_cma_covariance.py`.
+
+## 2026-10-31 (evening) - Staged A/B knob schedule disclosure
+
+- `tools/run_staged_search.py` writes **active vs fixed/pinned** knobs per stage into
+  `plan.json` (`knob_schedule`) and a **Knob schedule** section at the top of `COMPARE.md`.
+  Stage B `fixed` is where macros show as pinned to A's best. Offline tests updated.
+
+## 2026-10-31 (evening) - Mac .venv + Metal smoke + GUI auto-backend
+
+- Project `.venv` (Python 3.12.4) with `pip install -e ".[dev,crosscheck]"` — mesher, beat,
+  plots, bempp all import; Metal `ready` via Julia. Doctor: 9 PASS / 2 FAIL (expected: no
+  nvidia-smi / beat_cuda).
+- Dry-run OK: freeform_hv, conical, tractrix. Short `--backend beat_metal --budget 5` searches
+  OK: tractrix 137→111, freeform_hv 33.3→30.8, conical 154.7→35.0.
+- GUI `jobs.py`: when CUDA is unavailable, search/run auto-append `--backend beat_metal` (else
+  `beat_cpu` if that is ready). Launch on this Mac no longer dies on YAML `beat_cuda`.
+- GUI restarted on `.venv/bin/python`. Mac↔4060 A/B still owed before mixing Metal into CUDA
+  leaderboards.
+
+## 2026-10-31 (evening) - Hansen budget heuristic for Launch/Compose
+
+- **`search/budget_heuristic.py`:** suggested evals = `max(150, 100·N)` from Hansen's
+  hard-problem floor (~100·N … 300·N² in c-cmaes; we keep the linear end for GPU BEM).
+  IPOP/BIPOP add `(1+max)×screen` leftover room (BIPOP +25 %). Cap 5000 (GUI allow-list).
+- **`GET /api/budget-hint`:** `n_knobs=` or `config=` + optional `restarts_mode`/`restarts_max`.
+- Launch auto-fills when config/restarts change (until the user edits); Compose offers
+  "Use suggested". Glossary updated. Offline: `tests/test_budget_heuristic.py` + GUI API test.
+
+## 2026-10-31 (evening) - Launch/Compose IPOP/BIPOP controls
+
+- CLI: `search --restarts-mode {ipop,bipop,off}` + `--restarts-max N` (overrides config;
+  updates `cfg.raw` so the run snapshot matches). GUI Launch + Compose search forms expose the
+  same via allow-listed `jobs.py` args. Glossary tips added. Offline: argv allow-list + CLI apply
+  helper + search smoke with `--restarts-mode ipop`.
+
+## 2026-10-31 (later) - beat_metal + Mac path for staged A/B
+
+- **P3 slice:** `beat_metal` added to `BACKEND_NAMES` / `BeatBackend` / CLI `--backend` /
+  `source_motion` allow-list. No nvidia-smi VRAM poll on Metal; `cuda_fused` stays CUDA-only
+  (Metal's fused assembly is the library default).
+- **Staged harness:** `--backend auto|beat_cuda|beat_metal|beat_cpu|bempp_cpu` — on Darwin
+  `auto` → `beat_metal` and clears `cuda_fused` on emitted configs. README has Mac install +
+  run steps. Offline tests cover the rewrite.
+- Still owed: project `.venv` + `pip install -e ".[dev,crosscheck]"` on this Mac, then
+  `doctor` + the staged A/B; Mac↔4060 A/B before mixing Metal into CUDA leaderboards.
+
+## 2026-10-31 - STAGED SEARCH A/B PROTOCOL + CHAINING HARNESS
+
+- **Why:** refine CMA on high-dim typologies (macro → shape → joint polish vs one joint run).
+- **Configs:** `examples/typologies/staged_ab_2026-10-31/` — joint budget 60 vs stages 20+20+20 on
+  `crease__core_law` (same seed lineage / brief as the smoke cell).
+- **Harness:** `tools/run_staged_search.py` — seeds Stage B from A's `best.json`, builds Stage C
+  with ±12 % boxes and `sigma0=0.06`, writes `COMPARE.md`. Offline tests:
+  `tests/test_tools_staged_search.py` (10 passed).
+- **Synthetic coupled A/B (no GPU):** staged final J **0.100** vs joint **0.302** (seed 1.262,
+  coupling 0.7, budget 60) → **staged+polish wins**. Evidence:
+  `docs/evidence/STAGED_SEARCH_AB_2026-10-31.md`.
+- **Acoustic GPU A/B:** blocked on this Mac (no CUDA / no project venv / `cma` missing). GPU-box
+  command recorded in the evidence doc. Do **not** promote into `hornlab_search/search/` until
+  that run lands. Parallel priority unchanged: objective term normalisation.
+- Docs: INDEX, CODE_MAP, ISSUES updated this entry.
+
 ## 2026-10-28 (15:05 EDT) - PUSHED: SOLVED-STYLE RENDER SHEETS + THE DAY'S WINNER (J 1.11)
 
 - **Renders (4 PNG, `docs/renders/2026-10-28/`):** `typologies_solved_2026-10-28.png` (best design of each typology solved today, one row each),

@@ -90,7 +90,7 @@ class ObservationSpec:
 class SolveSpec:
     mode: Mode
     freqs_hz: tuple[float, ...]
-    backend: str               # "beat_cuda" | "beat_cpu" | "bempp_cpu"
+    backend: str               # "beat_cuda" | "beat_metal" | "beat_cpu" | "bempp_cpu"
     observation: ObservationSpec
     gmres_tol: float
     extra: dict = field(default_factory=dict)

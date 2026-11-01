@@ -31,7 +31,7 @@ from ..types import BackendUnavailableError, Response
 
 log = logging.getLogger("hornlab_search.solve.base")
 
-BACKEND_NAMES: tuple[str, ...] = ("beat_cuda", "beat_cpu", "bempp_cpu")
+BACKEND_NAMES: tuple[str, ...] = ("beat_cuda", "beat_metal", "beat_cpu", "bempp_cpu")
 
 #: Plausible absolute SPL band for any cut sample. Outside it the array is mis-sliced,
 #: mis-scaled or silent, never a real horn. (05_TASK_SOLVE `_to_response` assertion 4.)
@@ -350,14 +350,15 @@ def meta_roundtrips(meta: dict) -> bool:
 
 
 def get_backend(name: str, **kwargs) -> Backend:
-    """'beat_cuda' | 'beat_cpu' | 'bempp_cpu'. Raises ``BackendUnavailableError`` with the
-    reason from ``available()`` if the backend cannot run, and for an unknown name.
+    """'beat_cuda' | 'beat_metal' | 'beat_cpu' | 'bempp_cpu'. Raises ``BackendUnavailableError``
+    with the reason from ``available()`` if the backend cannot run, and for an unknown name.
 
-    Extra keyword arguments (``timeout_s``, ``track_vram``) are passed to the adapter.
+    Extra keyword arguments (``timeout_s``, ``track_vram``, ``cuda_fused``) are passed to the
+    beat adapter when applicable.
     """
     if name not in BACKEND_NAMES:
         raise BackendUnavailableError(f"unknown backend {name!r}; expected one of {list(BACKEND_NAMES)}")
-    if name in ("beat_cuda", "beat_cpu"):
+    if name in ("beat_cuda", "beat_metal", "beat_cpu"):
         from .beat import BeatBackend
         be = BeatBackend(name.split("_", 1)[1], **kwargs)
     else:

@@ -67,6 +67,34 @@ def test_run_writes_the_per_design_files_and_one_dataset_record(env, capsys):
     assert (run_dir / "best.json").exists() and (run_dir / "config.yaml").exists()
 
 
+def test_apply_restarts_cli_overrides_and_clears():
+    from hornlab_search.config import load_config
+    from hornlab_search import cli as cli_mod
+    cfg = load_config(SMOKE)
+    assert cfg.search.restarts is None
+    cli_mod._apply_restarts_cli(cfg, "ipop", 3)
+    assert cfg.search.restarts == {"mode": "ipop", "max": 3}
+    assert cfg.raw["search"]["restarts"] == {"mode": "ipop", "max": 3}
+    cli_mod._apply_restarts_cli(cfg, "off", None)
+    assert cfg.search.restarts is None
+    assert "restarts" not in cfg.raw["search"]
+    with pytest.raises(Exception, match="restarts-max"):
+        cli_mod._apply_restarts_cli(cfg, "off", 2)
+    with pytest.raises(Exception, match="requires --restarts-mode"):
+        cli_mod._apply_restarts_cli(cfg, None, 2)
+
+
+def test_search_restarts_cli_flag_lands_in_run_json(env, capsys):
+    rc = run_cli("search", "--config", SMOKE, "--budget", "8",
+                 "--restarts-mode", "ipop", "--restarts-max", "2", *env["dirs"])
+    assert rc == 0
+    run = json.loads((latest(env["tmp"]) / "run.json").read_text())
+    # Absent key when single-ES; present schedule list (may be empty if no natural stop fired).
+    assert "restarts" in run
+    snap = (latest(env["tmp"]) / "config.yaml").read_text()
+    assert "restarts:" in snap and "ipop" in snap
+
+
 def test_search_report_dataset_chain(env, capsys):
     rc = run_cli("search", "--config", SMOKE, "--budget", "8", *env["dirs"])
     out = capsys.readouterr().out
@@ -158,3 +186,37 @@ def test_cost_curve_is_monotone_and_hits_the_measured_points():
     xs = [1000, 2369, 4000, 5140, 7001, 8941, 12000]
     ys = [cli.estimate_seconds_per_frequency(x) for x in xs]
     assert ys == sorted(ys)
+
+
+def test_ensure_utf8_stdio_reconfigures_non_utf8_streams(monkeypatch):
+    """A Windows cp1252 console must not make pin-plan/any glyph print raise (2026-11-01)."""
+    class _S:
+        encoding = "cp1252"
+
+        def __init__(self):
+            self.calls = []
+
+        def reconfigure(self, **kw):
+            self.calls.append(kw)
+
+    out, err = _S(), _S()
+    monkeypatch.setattr(cli.sys, "stdout", out)
+    monkeypatch.setattr(cli.sys, "stderr", err)
+    cli._ensure_utf8_stdio()
+    want = {"encoding": "utf-8", "errors": "replace"}
+    assert out.calls == [want] and err.calls == [want]
+
+
+def test_ensure_utf8_stdio_leaves_utf8_and_streams_without_reconfigure(monkeypatch):
+    class _Utf8:
+        encoding = "utf-8"
+
+        def reconfigure(self, **kw):
+            raise AssertionError("a utf-8 stream must not be reconfigured")
+
+    class _NoReconfigure:
+        encoding = "cp1252"
+
+    monkeypatch.setattr(cli.sys, "stdout", _Utf8())
+    monkeypatch.setattr(cli.sys, "stderr", _NoReconfigure())
+    cli._ensure_utf8_stdio()   # must not raise

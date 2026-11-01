@@ -50,7 +50,7 @@ def test_get_backend_reports_the_reason_when_unavailable(monkeypatch):
 
 
 def test_get_backend_names_are_the_contract_names():
-    assert base.BACKEND_NAMES == ("beat_cuda", "beat_cpu", "bempp_cpu")
+    assert base.BACKEND_NAMES == ("beat_cuda", "beat_metal", "beat_cpu", "bempp_cpu")
 
 
 # ------------------------------------------------------------------ balloon helpers

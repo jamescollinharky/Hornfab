@@ -1988,6 +1988,19 @@ async function viewRunDetail(id) {
         <div class="tbl-wrap"><table id="sens-table"></table></div>
       </div>
 
+      <!-- CMA covariance (search distribution; absent on older runs) -->
+      <div class="fig" id="cma-cov-block" style="display:none">
+        <h3>${tip("cma_cov", "CMA covariance")}</h3>
+        <div class="cap" id="cma-cov-cap">Unit-box search scales from the final ES. Large ${tip("cma_std", "σ√Cᵢᵢ")} ⇒ still exploring that knob; eigenvectors are coupled J-directions, not acoustic Sobol indices.</div>
+        <div class="tbl-wrap"><table id="cma-cov-table"></table></div>
+        <div id="cma-eig-wrap" class="stack" style="gap:8px;margin-top:10px"></div>
+        <div id="pin-plan-wrap" style="display:none;margin-top:14px">
+          <h3 style="margin:0 0 6px">${tip("pin_plan", "Pin plan")}</h3>
+          <div class="cap">Recommendations from CMA scales + Spearman guard. Does not change the config — run <code>hornlab-search pin-plan --run ${esc(sum.id || id)}</code> to write <code>PIN_PLAN.md</code> / a patched YAML.</div>
+          <div class="tbl-wrap"><table id="pin-plan-table"></table></div>
+        </div>
+      </div>
+
       <!-- Failures -->
       <div class="stack" style="gap:6px">
         <h3>${tip("failures", "Failures")}</h3>
@@ -2224,6 +2237,67 @@ async function viewRunDetail(id) {
     sensT.innerHTML = s + "</tbody>";
   } else {
     sensT.innerHTML = "<tr><td class='muted'>No sensitivity data.</td></tr>";
+  }
+
+  // CMA covariance (final ES; from run.json cma_covariance)
+  const cov = d.cma_covariance;
+  const covBlock = document.getElementById("cma-cov-block");
+  if (covBlock && cov && Array.isArray(cov.coordinates) && cov.coordinates.length) {
+    covBlock.style.display = "";
+    const cond = cov.condition_number != null ? Number(cov.condition_number).toFixed(1) : "–";
+    const cap = document.getElementById("cma-cov-cap");
+    if (cap) {
+      cap.innerHTML = `σ=${esc(cov.sigma != null ? Number(cov.sigma).toFixed(3) : "–")} · cond(C)=${esc(cond)} · `
+        + `large ${tip("cma_std", "σ√Cᵢᵢ")} ⇒ still exploring that knob; `
+        + `eigenvectors are coupled J-directions, not acoustic Sobol indices.`;
+    }
+    const maxStd = Math.max(...cov.coordinates.map(r => Number(r.std_unit) || 0), 1e-12);
+    let ct = `<thead><tr>
+      <th>Parameter</th><th class="r">${tip("cma_Cii", "Cᵢᵢ")}</th>
+      <th class="r">${tip("cma_std", "σ√Cᵢᵢ")}</th><th class="r">Share</th><th></th></tr></thead><tbody>`;
+    for (const r of cov.coordinates) {
+      const std = Number(r.std_unit) || 0;
+      const share = r.share != null ? Number(r.share) : 0;
+      const w = Math.max(0, Math.min(100, (std / maxStd) * 100));
+      ct += `<tr><td class="mono">${paramTipHtml(sum.name, r.key, r.key)}</td>
+        <td class="r">${fmt(r.C_ii, 4)}</td><td class="r">${fmt(std, 4)}</td>
+        <td class="r">${(100 * share).toFixed(0)}%</td>
+        <td><svg width="90" height="10" viewBox="0 0 90 10" aria-hidden="true">
+          <rect x="0" y="2" width="${w * 0.9}" height="6" rx="1" fill="${css("--best")}"/></svg></td></tr>`;
+    }
+    const covT = document.getElementById("cma-cov-table");
+    if (covT) covT.innerHTML = ct + "</tbody>";
+    const eigWrap = document.getElementById("cma-eig-wrap");
+    if (eigWrap && Array.isArray(cov.eigenpairs) && cov.eigenpairs.length) {
+      eigWrap.innerHTML = cov.eigenpairs.map(ep => {
+        const loads = (ep.top_loadings || []).slice(0, 5)
+          .map(L => `<code>${esc(L.key)}</code>&nbsp;${Number(L.loading).toFixed(2)}`)
+          .join(" · ");
+        const frac = ep.fraction != null ? `${(100 * Number(ep.fraction)).toFixed(0)}%` : "–";
+        return `<div class="cap"><b>Eigen ${esc(ep.rank)}</b> · λ=${esc(fmt(ep.eigenvalue, 4))} · `
+          + `${esc(frac)} of trace · top loadings: ${loads || "–"}</div>`;
+      }).join("");
+    }
+    const pinPlan = d.pin_plan;
+    const pinWrap = document.getElementById("pin-plan-wrap");
+    const pinT = document.getElementById("pin-plan-table");
+    if (pinWrap && pinT && pinPlan && Array.isArray(pinPlan.decisions) && pinPlan.decisions.length) {
+      pinWrap.style.display = "";
+      let pt = `<thead><tr><th>Key</th><th>Action</th><th class="r">Value</th>
+        <th class="r">share</th><th class="r">σ√Cᵢᵢ</th><th class="r">ρ</th><th>Reasons</th></tr></thead><tbody>`;
+      for (const row of pinPlan.decisions) {
+        const act = row.action === "pin"
+          ? `<span class="pill warn">pin</span>`
+          : `<span class="pill">keep</span>`;
+        const rho = row.rho != null ? Number(row.rho).toFixed(2) : "–";
+        pt += `<tr><td class="mono">${paramTipHtml(sum.name, row.key, row.key)}</td>
+          <td>${act}</td><td class="r">${row.value != null ? fmt(row.value, 4) : "–"}</td>
+          <td class="r">${fmt(row.share, 4)}</td><td class="r">${fmt(row.std_unit, 4)}</td>
+          <td class="r">${rho}</td>
+          <td class="muted" style="font-size:0.8rem">${esc((row.reasons || []).join("; "))}</td></tr>`;
+      }
+      pinT.innerHTML = pt + "</tbody>";
+    }
   }
 
   // P9 (catalog hover docs): the seed-derivation call site is pinned as seedDerivationHtml(d.feasibility)
@@ -3515,10 +3589,24 @@ async function viewCompose() {
         ${S.runKind === "search" ? `
           <label for="cmp-budget">Budget</label>
           <div><input id="cmp-budget" type="number" min="1" max="5000" placeholder="60" style="width:120px">
-            <div class="hint">Evaluations — blank means the engine default of 60 (accepted range 1–5000)</div></div>
+            <div class="hint" id="cmp-budget-hint">Suggested from Hansen ~100·N (blank = engine default 60)</div>
+            <button type="button" class="linkish" id="cmp-budget-apply" style="display:none">Use suggested</button></div>
           <label for="cmp-seed">CMA seed</label>
           <div><input id="cmp-seed" type="number" min="0" step="1" placeholder="optional" style="width:120px">
-            <div class="hint">Change for a different random search path; blank = engine default</div></div>` : ""}
+            <div class="hint">Change for a different random search path; blank = engine default</div></div>
+          <label for="cmp-restarts-mode">${tip("restarts", "CMA restarts")}</label>
+          <div>
+            <select id="cmp-restarts-mode">
+              <option value="" selected>— config default —</option>
+              <option value="off">off — single CMA-ES</option>
+              <option value="ipop">IPOP</option>
+              <option value="bipop">BIPOP</option>
+            </select>
+            <div class="hint">Fresh ES on leftover budget after an early stop; useful on longer searches</div>
+          </div>
+          <label for="cmp-restarts-max">${tip("restarts_max", "Max restarts")}</label>
+          <div><input id="cmp-restarts-max" type="number" value="2" min="0" max="64" disabled style="width:120px">
+            <div class="hint">0–64; ignored when mode is off / config default</div></div>` : ""}
       </div>`;
   }
 
@@ -3552,8 +3640,15 @@ async function viewCompose() {
       const seed = seedRaw === "" ? {} : { cma_seed: seedRaw };
       if (S.runKind === "search") {
         const budRaw = String(document.getElementById("cmp-budget")?.value ?? "").trim();
+        const rmode = document.getElementById("cmp-restarts-mode")?.value || "";
+        const rmaxEl = document.getElementById("cmp-restarts-max");
+        const restarts = !rmode ? {}
+          : rmode === "off" ? { restarts_mode: "off" }
+          : { restarts_mode: rmode,
+              restarts_max: rmaxEl && String(rmaxEl.value).trim() !== "" ? rmaxEl.value : "2" };
         return { kind: "search", args: { config, brief: S.briefPath,
-                                         ...(budRaw === "" ? {} : { budget: budRaw }), ...seed } };
+                                         ...(budRaw === "" ? {} : { budget: budRaw }),
+                                         ...seed, ...restarts } };
       }
       if (S.runKind === "run") return { kind: "run", args: { config, brief: S.briefPath, ...seed } };
       return { kind: "dry-run", args: { config, brief: S.briefPath } };
@@ -3598,8 +3693,58 @@ async function viewCompose() {
       S.tier = b.dataset.tier;
       refreshRunMode(); updatePreview();
     });
-    ["cmp-budget", "cmp-seed"].forEach(id =>
+    ["cmp-budget", "cmp-seed", "cmp-restarts-max"].forEach(id =>
       document.getElementById(id)?.addEventListener("input", updatePreview));
+    const syncCmpRestarts = () => {
+      const mode = document.getElementById("cmp-restarts-mode")?.value || "";
+      const maxEl = document.getElementById("cmp-restarts-max");
+      if (maxEl) maxEl.disabled = !(mode === "ipop" || mode === "bipop");
+    };
+    async function refreshCmpBudgetHint({ apply = false } = {}) {
+      const hint = document.getElementById("cmp-budget-hint");
+      const applyBtn = document.getElementById("cmp-budget-apply");
+      const bud = document.getElementById("cmp-budget");
+      if (!hint || S.runKind !== "search" || S.picks.size !== 1) return;
+      const path = [...S.picks][0];
+      const mode = document.getElementById("cmp-restarts-mode")?.value || "";
+      const rmax = document.getElementById("cmp-restarts-max")?.value || "2";
+      const q = new URLSearchParams({
+        config: path,
+        restarts_mode: mode || "config",
+        restarts_max: rmax,
+      });
+      const h = await api("/api/budget-hint?" + q).catch(e => ({ error: String(e.message || e) }));
+      if (h.error) {
+        hint.textContent = "Could not suggest budget: " + h.error;
+        if (applyBtn) applyBtn.style.display = "none";
+        return;
+      }
+      hint.textContent =
+        `Suggested ${h.recommended} · N=${h.n_knobs} · λ≈${h.popsize_default} · ` +
+        `screen ${h.screen} / compare ${h.compare} (blank field still = engine 60)`;
+      hint.title = h.rationale || "";
+      if (applyBtn) {
+        applyBtn.style.display = "";
+        applyBtn.onclick = () => {
+          if (bud) bud.value = h.recommended;
+          updatePreview();
+        };
+      }
+      if (apply && bud && String(bud.value || "").trim() === "") {
+        bud.value = h.recommended;
+        updatePreview();
+      }
+    }
+    document.getElementById("cmp-restarts-mode")?.addEventListener("change", () => {
+      syncCmpRestarts();
+      refreshCmpBudgetHint({ apply: false });
+      updatePreview();
+    });
+    document.getElementById("cmp-restarts-max")?.addEventListener("change", () => {
+      refreshCmpBudgetHint({ apply: false });
+    });
+    syncCmpRestarts();
+    refreshCmpBudgetHint({ apply: true });
     syncGate();
     showBusy();
   }
@@ -3764,11 +3909,25 @@ function renderLaunch(briefs, jobs, configs, statusData, typs = []) {
             <label for="lf-config">Config</label>
             <select id="lf-config">${configSelectOpts}</select>
             <label for="lf-budget">${tip("budget", "Budget")}</label>
-            <div><input id="lf-budget" type="number" value="200" min="1">
-              <div class="hint">Number of evaluations the search may run</div></div>
+            <div><input id="lf-budget" type="number" value="200" min="1" max="5000">
+              <div class="hint" id="lf-budget-hint">Pick a config — suggested budget uses Hansen ~100·N (GUI cap 5000).</div>
+              <button type="button" class="linkish" id="lf-budget-apply" style="display:none">Use suggested</button></div>
             <label for="lf-seed">${tip("cma_seed", "CMA seed")}</label>
             <div><input id="lf-seed" type="number" value="1234">
               <div class="hint">Change to get a different random search path</div></div>
+            <label for="lf-restarts-mode">${tip("restarts", "CMA restarts")}</label>
+            <div>
+              <select id="lf-restarts-mode">
+                <option value="" selected>— config default —</option>
+                <option value="off">off — single CMA-ES</option>
+                <option value="ipop">IPOP — larger population each restart</option>
+                <option value="bipop">BIPOP — small-σ + large-pop mix</option>
+              </select>
+              <div class="hint">When CMA stops early, spend leftover budget on a fresh ES. Best on longer budgets.</div>
+            </div>
+            <label for="lf-restarts-max">${tip("restarts_max", "Max restarts")}</label>
+            <div><input id="lf-restarts-max" type="number" value="2" min="0" max="64" disabled>
+              <div class="hint">Restarts after the first run (0–64). Ignored when mode is off / config default.</div></div>
             <label for="lf-sbrief">Brief</label>
             <select id="lf-sbrief"><option value="">— use config default —</option>${briefOpts}</select>
           </div>
@@ -3823,6 +3982,7 @@ function renderLaunch(briefs, jobs, configs, statusData, typs = []) {
       launchBtn.disabled = gpuBusy && currentType !== "dry-run";
       if (launchBtn.disabled) launchBtn.title = "GPU busy — only dry-run is available";
       else launchBtn.title = "";
+      if (currentType === "search") refreshBudgetHint({ apply: false });
       updatePreview();
     };
   });
@@ -3910,11 +4070,19 @@ function renderLaunch(briefs, jobs, configs, statusData, typs = []) {
     if (currentType === "campaign")
       return { kind: "campaign", args: { brief: document.getElementById("lf-brief").value, families: famArg(),
                                          tier: document.getElementById("lf-tier").value } };
-    if (currentType === "search")
+    if (currentType === "search") {
+      const rmode = document.getElementById("lf-restarts-mode")?.value || "";
+      const rmaxEl = document.getElementById("lf-restarts-max");
+      const restarts = !rmode ? {}
+        : rmode === "off" ? { restarts_mode: "off" }
+        : { restarts_mode: rmode,
+            restarts_max: rmaxEl && rmaxEl.value !== "" ? rmaxEl.value : "2" };
       return { kind: "search", args: { config: document.getElementById("lf-config").value,
                                        budget: +document.getElementById("lf-budget").value,
                                        cma_seed: document.getElementById("lf-seed").value,
-                                       brief: document.getElementById("lf-sbrief").value || undefined } };
+                                       brief: document.getElementById("lf-sbrief").value || undefined,
+                                       ...restarts } };
+    }
     return { kind: "dry-run", args: { config: document.getElementById("lf-drconfig").value } };
   }
   function updatePreview() {
@@ -3928,15 +4096,85 @@ function renderLaunch(briefs, jobs, configs, statusData, typs = []) {
     }, 150);
   }
 
+  function syncRestartsMax() {
+    const mode = document.getElementById("lf-restarts-mode")?.value || "";
+    const maxEl = document.getElementById("lf-restarts-max");
+    if (!maxEl) return;
+    maxEl.disabled = !(mode === "ipop" || mode === "bipop");
+  }
+
+  // Hansen-grounded budget hint (/api/budget-hint). Auto-fills unless the user typed a budget.
+  let _budgetManual = false;
+  async function refreshBudgetHint({ apply = false } = {}) {
+    const path = document.getElementById("lf-config")?.value || "";
+    const hint = document.getElementById("lf-budget-hint");
+    const applyBtn = document.getElementById("lf-budget-apply");
+    const bud = document.getElementById("lf-budget");
+    if (!hint) return;
+    if (!path) {
+      hint.textContent = "Pick a config — suggested budget uses Hansen ~100·N (GUI cap 5000).";
+      if (applyBtn) applyBtn.style.display = "none";
+      return;
+    }
+    const mode = document.getElementById("lf-restarts-mode")?.value || "";
+    const rmax = document.getElementById("lf-restarts-max")?.value || "2";
+    const q = new URLSearchParams({
+      config: path,
+      restarts_mode: mode || "config",
+      restarts_max: rmax,
+    });
+    const h = await api("/api/budget-hint?" + q).catch(e => ({ error: String(e.message || e) }));
+    if (ROOT_LAUNCH !== currentRoot()) return;
+    if (h.error) {
+      hint.textContent = "Could not suggest budget: " + h.error;
+      if (applyBtn) applyBtn.style.display = "none";
+      return;
+    }
+    const capNote = h.capped ? " (capped at 5000)" : "";
+    hint.textContent =
+      `Suggested ${h.recommended}${capNote} · N=${h.n_knobs} knobs · λ≈${h.popsize_default} · ` +
+      `screen ${h.screen} / compare ${h.compare} / Hansen 100·N=${h.hansen_100n}`;
+    hint.title = h.rationale || "";
+    if (applyBtn) {
+      applyBtn.style.display = "";
+      applyBtn.onclick = () => {
+        if (bud) bud.value = h.recommended;
+        _budgetManual = false;
+        updatePreview();
+      };
+    }
+    if (apply && !_budgetManual && bud) {
+      bud.value = h.recommended;
+      updatePreview();
+    }
+  }
+
+  document.getElementById("lf-restarts-mode")?.addEventListener("change", () => {
+    syncRestartsMax();
+    refreshBudgetHint({ apply: true });
+    updatePreview();
+  });
+  syncRestartsMax();
+
   // Wire inputs to preview
-  ["lf-brief", "lf-config", "lf-budget", "lf-seed", "lf-sbrief", "lf-drconfig"].forEach(id => {
+  ["lf-brief", "lf-config", "lf-budget", "lf-seed", "lf-sbrief", "lf-drconfig",
+   "lf-restarts-max"].forEach(id => {
     const el2 = document.getElementById(id);
     if (el2) el2.addEventListener("input", updatePreview);
     if (el2) el2.addEventListener("change", updatePreview);
   });
+  document.getElementById("lf-budget")?.addEventListener("input", () => { _budgetManual = true; });
+  document.getElementById("lf-config")?.addEventListener("change", () => {
+    _budgetManual = false;
+    refreshBudgetHint({ apply: true });
+  });
+  document.getElementById("lf-restarts-max")?.addEventListener("change", () => {
+    refreshBudgetHint({ apply: true });
+  });
   document.getElementById("lf-brief").addEventListener("change", renderFamPicker);
   document.getElementById("lf-tier").addEventListener("change", renderFamPicker);
   renderFamPicker();
+  refreshBudgetHint({ apply: false });
   updatePreview();
 
   // Initial launch button state

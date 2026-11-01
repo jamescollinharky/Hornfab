@@ -1,0 +1,110 @@
+# Stage A (macro): coverage/size knobs only. Shape (az_*, morph polish) pinned at the
+# published CORE seed. Budget 20 of the equal-total 60. See README.md.
+name: stageA_macro__crease_core_law
+family: OSSE
+seed_params:
+  r0_mm: 25.4
+  a_deg: 5.0
+  a0_deg: 1.2
+  L_mm: 260.0
+  n: 6.0
+  s: 0.6
+  q: 0.996
+  k: 1.0
+  exponent: 2.0
+  aspect_ratio: 1.0
+  s1: 1.14
+  s2: 0.025
+  az_a_sf_amp: 35.0
+  az_sf_m: 4.0
+  az_sf_n1: 12.0
+  az_sf_n2: 15.0
+  az_sf_n3: 16.0
+  az_sf_a: 1.0
+  az_sf_b: 0.618
+  az_a_cos_amp: -15.0
+  az_a_cos_pow: 10.0
+  az_n_cos2_amp: 1.5
+  az_s_cos2_amp: 0.23
+  morph_target: 1
+  morph_width_mm: 399.0
+  morph_height_mm: 399.0
+  morph_corner_mm: 16.5
+  morph_exponent: 4.0
+  morph_rate: 3.0
+  morph_fixed: 0.0
+  morph_allow_shrinkage: 0
+bounds:
+  r0_mm: {lo: 25.4, hi: 25.4, search: false}
+  a_deg: {lo: 0.0, hi: 40.0}
+  a0_deg: {lo: 1.2, hi: 1.2, search: false}
+  L_mm: {lo: 104.0, hi: 520.0}
+  n: {lo: 1.0, hi: 10.0}
+  s: {lo: 0.0, hi: 1.5}
+  q: {lo: 0.996, hi: 0.996, search: false}
+  k: {lo: 0.3, hi: 5.0}
+  exponent: {lo: 2.0, hi: 2.0, search: false}
+  aspect_ratio: {lo: 1.0, hi: 1.0, search: false}
+  s1: {lo: 1.14, hi: 1.14, search: false}
+  s2: {lo: 0.025, hi: 0.025, search: false}
+  az_a_sf_amp: {lo: 35.0, hi: 35.0, search: false}
+  az_sf_m: {lo: 4.0, hi: 4.0, search: false}
+  az_sf_n1: {lo: 12.0, hi: 12.0, search: false}
+  az_sf_n2: {lo: 15.0, hi: 15.0, search: false}
+  az_sf_n3: {lo: 16.0, hi: 16.0, search: false}
+  az_sf_a: {lo: 1.0, hi: 1.0, search: false}
+  az_sf_b: {lo: 0.618, hi: 0.618, search: false}
+  az_a_cos_amp: {lo: -15.0, hi: -15.0, search: false}
+  az_a_cos_pow: {lo: 10.0, hi: 10.0, search: false}
+  az_n_cos2_amp: {lo: 1.5, hi: 1.5, search: false}
+  az_s_cos2_amp: {lo: 0.23, hi: 0.23, search: false}
+  morph_target: {lo: 1, hi: 1, search: false}
+  morph_width_mm: {lo: 399.0, hi: 399.0, search: false}
+  morph_height_mm: {lo: 399.0, hi: 399.0, search: false}
+  morph_corner_mm: {lo: 16.5, hi: 16.5, search: false}
+  morph_exponent: {lo: 4.0, hi: 4.0, search: false}
+  morph_rate: {lo: 3.0, hi: 3.0, search: false}
+  morph_fixed: {lo: 0.0, hi: 0.0, search: false}
+  morph_allow_shrinkage: {lo: 0, hi: 0, search: false}
+target:
+  coverage_h_deg: 50.0
+  coverage_v_deg: 50.0
+  band_lo_hz: 300.0
+  band_hi_hz: 8000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+weights:
+  cov: 1.0
+  rip: 1.0
+  di: 0.3
+  dislope: 0.5
+  flat: 0.5
+  load: 0.0
+mesh:
+  epw: 6.0
+  quadrants: '1'
+  dof_cap_screen: 12000
+  dof_cap_verify: 12000
+  dof_cap_final: 12000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_cuda
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 900
+  cuda_fused: true
+search:
+  algorithm: cma
+  sigma0: 0.15
+  seed: 1234
+  budget: 20
+  popsize: null
+  tolfun: 0.001
+  infeasible_penalty: graded
+description: Staged A/B Stage A macro (L,a,n,s,k); shape pinned at CORE seed; budget 20
+brief_file: ../../briefs/campaign_2026-10-26/native_ath_core_2in.yaml

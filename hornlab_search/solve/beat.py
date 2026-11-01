@@ -384,32 +384,37 @@ def _to_response(raw, spec: SolveSpec, mesh: MeshResult) -> Response:
 
 
 class BeatBackend:
-    """``hornlab_beat_bem`` on ``device`` ('cuda' or 'cpu'). Satisfies ``solve.base.Backend``.
+    """``hornlab_beat_bem`` on ``device`` ('cuda', 'metal', or 'cpu'). Satisfies ``solve.base.Backend``.
 
     ``timeout_s``: wall-clock budget checked between frequencies (the library call itself has no
     cancel hook for a single frequency). ``per_frequency_calls``: one ``solve_frequencies`` call
-    per frequency (default True on CUDA where it is mandatory, False on CPU; see module docstring
-    and the measurement in ``__init__``).
+    per frequency (default True on CUDA/Metal where batching cliffs have been seen or are
+    unmeasured, False on CPU; see module docstring and the measurement in ``__init__``).
     """
 
     def __init__(self, device: str, timeout_s: float | None = None, track_vram: bool = True,
                  per_frequency_calls: bool | None = None, notes_path=None,
                  cuda_fused: bool = False):
-        if device not in ("cuda", "cpu"):
-            raise ValueError(f"device must be 'cuda' or 'cpu', got {device!r}")
+        if device not in ("cuda", "metal", "cpu"):
+            raise ValueError(f"device must be 'cuda', 'metal', or 'cpu', got {device!r}")
         if cuda_fused and device != "cuda":
             raise ValueError(f"cuda_fused is only implemented for the cuda backend, got {device!r}")
         self.device = device
         self.name = f"beat_{device}"
         self.timeout_s = timeout_s
+        # nvidia-smi VRAM polling is CUDA-only; Metal uses unified memory (no separate pool probe).
         self.track_vram = bool(track_vram) and device == "cuda"
         # CUDA: mandatory (689 s vs 33 s at 5,140 dofs). CPU: measured no cliff (4,530 dofs, 4 freqs:
         # one call 18.3 s vs per-frequency 19.2 s; 2,316 dofs, 6 freqs: 7.2 s vs 7.7 s), so one call.
-        self.per_frequency_calls = (device == "cuda") if per_frequency_calls is None else bool(per_frequency_calls)
+        # Metal: unmeasured on our kit; default to per-frequency like CUDA until a Mac ladder says
+        # otherwise (fused Metal assembly is on in the library by default — separate from WP15).
+        self.per_frequency_calls = (
+            device in ("cuda", "metal") if per_frequency_calls is None else bool(per_frequency_calls))
         self.notes_path = notes_path
         # WP15: opt-in fused CUDA Burton-Miller assembly. The env MUST be set BEFORE the persistent
         # worker host spawns (the host inherits this process's environment); explicit "0" for the
         # default so a flag left over in the process environment can never leak into a run.
+        # Metal's fused path is a library default, not this CUDA flag.
         self.cuda_fused = bool(cuda_fused)
         os.environ["HORNLAB_BEAT_FUSED_BM_CUDA"] = "1" if self.cuda_fused else "0"
 

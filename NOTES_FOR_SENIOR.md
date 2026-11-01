@@ -645,3 +645,17 @@ Owner: "I don't want to be running these simulations if it isn't going to behave
 
 ### 2026-10-27 (evening) P12 research result (append)
 Outside research is in `docs/research/SIM_VS_REAL_HORN_2026-10-27.md` and `docs/plan/12_RESEARCH_BASIS.md` section 17: ideal-source BEM is a sound relative tool for pattern shape above cutoff, not for level/loading/distortion. Ranked actions are in `docs/NEXT_DEV_PRIORITIES.md` P12. Decision requested from the senior pass: approve P12a (free re-score with loading ON + stricter cov), the lumped-driver-over-BEM-throat-impedance add, and which published measured horn to validate against. The ripple/ridge night was launched 2026-10-27 17:23 on the existing v4 scoring at the owner's direction.
+
+## 2026-10-31 staged search A/B (collaborator Mac)
+
+What happened: implemented the staged-search recommendation as an equal-budget protocol
+(macro 20 → shape 20 → polish 20 vs joint 60) on crease__core_law, with
+`tools/run_staged_search.py` chaining stages from `best.json`. Offline suite green.
+Synthetic coupled landscape: staged+polish wins (J 0.100 vs 0.302). Acoustic GPU A/B could
+not run here (no CUDA / no project venv). Decision recorded in
+`docs/evidence/STAGED_SEARCH_AB_2026-10-31.md`: keep the tools/ harness; do not promote into
+`hornlab_search/search/` until the CUDA-box run; term normalisation remains higher leverage.
+
+What I need decided: nothing blocking — GPU-box owner should run
+`tools/run_staged_search.py --out runs/staged_ab_2026-10-31 --both` when free and paste
+COMPARE.md into the evidence doc.
