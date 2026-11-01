@@ -23,6 +23,25 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (01:20 EDT) - READINESS PROOF MEASURED ON THE STORED T2 WINNER: 4 PASS, 1 FAIL, 1 NOT PROVEN
+
+- **Link 1 geometry PASS** (tags 1/2/10, 8,625 nodes, quarter planes; seed repairs slide 10 -> 32; walls resolve to
+  ~6.1 kHz at the 12 kHz request). **Link 2 solve PASS** (channel fields + force reciprocity <= 3.2e-4).
+- **Link 3 physics sanity NOT PROVEN.** The dense CD-only sweep rises to 1250 Hz then falls monotonically; no notch
+  in the +-20 % window around the 1-D 1010.8 Hz. At L1 the entry port is a rigid patch unless the lumped network is
+  coupled, so the check needs the network-coupled response with zero mid drive - not run.
+- **Link 4 network < 2 s FAILS: 6.58 s.** `optimise_network` did 1,224 CMA evaluations (5.4 ms each) for the shipped
+  T2 brief (2 mid drivers x 2 xo orders x 2 polarities x up to 160). Per-evaluation budget is met; the whole-call gate
+  is missed 3.3x. Fix is a budget/combo decision, not a solver change. A cache-hit evaluate is 9.31 s wall.
+- **Link 5 search moves PASS.** Two 40-evaluation screens; all six knobs moved (T2 spreads: cov_h 13.3 deg, cov_v
+  23.9 deg, z_frac 0.329, across 0.388, port_along 9.9 mm, slide 25.4 mm); 38/40 T2 and 31/40 T1 OK, the rest genuine
+  `invalid_geometry`; no crash.
+- **Link 6 re-score for free PASS.** The stored winner `ed11d2cd3acc` re-scored with `faitalpro_6pr160` and
+  `hp_hz 160` without a new solve: J 9.530280 -> 9.727026, `cached True`, both finite.
+- **Blocked, recorded:** M8 step 3's quarter-vs-full comparison is impossible today - `tools/cad/meh.py` refuses a
+  full model (`quadrants '1234'` -> GeometryInvalidError, quarter open shell only). M8 step 4 needs link 3's coupled
+  response. **M9 is blocked:** Boundary Lab is not in this workspace (`forks/` has only beat-bem and the mesher).
+
 ## 2026-11-01 (00:45 EDT) - MEH SCREEN DONE: T2 J 9.53 -> 11.89 verified, T1 J 13.23 -> 14.51 verified
 
 - **Two 40-evaluation CMA screens + verify top 2 each, all on the new pin on the owner's GPU** [measured]:
