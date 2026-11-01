@@ -952,7 +952,11 @@ def load_config(path, *, brief=None, cma_seed: int | None = None) -> Config:
 
     mesh = _build(MeshSettings, _require(raw, "mesh", where), f"{where}:mesh",
                   optional=("max_triangle_slack", "rear_res_factor", "band_split"))
-    solve = _build(SolveSettings, _require(raw, "solve", where), f"{where}:solve",
+    solve_section = dict(_require(raw, "solve", where))
+    if solve_section.get("freq_grid") is not None:
+        _validate_freq_grid(solve_section["freq_grid"], f"{where}:solve")
+        solve_section.pop("freq_grid")
+    solve = _build(SolveSettings, solve_section, f"{where}:solve",
                    optional=("cuda_fused", "source_motion", "near_correction",
                              "near_correction_cutoff", "near_correction_order",
                              "solve_precision", "source_profile_alpha"))
@@ -1052,6 +1056,27 @@ def load_config(path, *, brief=None, cma_seed: int | None = None) -> Config:
 
 # ------------------------------------------------------------------ specs
 
+def _validate_freq_grid(block, where: str) -> tuple[float, float, float]:
+    """``solve.freq_grid`` -> (lo_hz, hi_hz, points_per_octave). Opt-in, additive."""
+    if not isinstance(block, dict):
+        raise ConfigError(f"{where}: freq_grid must be a mapping {{lo_hz, hi_hz, points_per_octave}}")
+    unknown = set(block) - {"lo_hz", "hi_hz", "points_per_octave"}
+    if unknown:
+        raise ConfigError(f"{where}: freq_grid has unknown key(s) {sorted(unknown)} "
+                          f"(allowed: lo_hz, hi_hz, points_per_octave)")
+    try:
+        lo = float(block["lo_hz"]); hi = float(block["hi_hz"]); ppo = float(block["points_per_octave"])
+    except (KeyError, TypeError, ValueError):
+        raise ConfigError(f"{where}: freq_grid.lo_hz, hi_hz and points_per_octave are required numbers") from None
+    if not (np.isfinite(lo) and np.isfinite(hi) and np.isfinite(ppo)):
+        raise ConfigError(f"{where}: freq_grid values must be finite")
+    if lo <= 0.0 or hi <= lo:
+        raise ConfigError(f"{where}: freq_grid needs 0 < lo_hz < hi_hz (got {lo} -> {hi})")
+    if not (1.0 <= ppo <= 48.0):
+        raise ConfigError(f"{where}: freq_grid.points_per_octave must be in 1..48 (got {ppo})")
+    return lo, hi, ppo
+
+
 def mode_freqs(mode: str, cfg: Config) -> tuple[float, ...]:
     """The mode's frozen log grid, with its top edge clipped to the target band's upper
     edge so the mesh is never asked to resolve frequencies the objective ignores.
@@ -1064,6 +1089,14 @@ def mode_freqs(mode: str, cfg: Config) -> tuple[float, ...]:
     band_hi = cfg.target_raw.get("band_hi_hz")
     if band_hi is not None and float(band_hi) < hi:
         hi = float(band_hi)
+    override = (getattr(cfg, "raw", None) or {}).get("solve", {}).get("freq_grid") \
+        if isinstance((getattr(cfg, "raw", None) or {}).get("solve"), dict) else None
+    if override is not None:
+        o_lo, o_hi, ppo = _validate_freq_grid(override, "solve.freq_grid")
+        hi_eff = min(o_hi, float(band_hi)) if band_hi is not None else o_hi
+        if hi_eff > o_lo:
+            n_pts = max(2, int(round(float(np.log2(hi_eff / o_lo)) * ppo)) + 1)
+            return tuple(round(float(f), 2) for f in np.geomspace(o_lo, hi_eff, n_pts))
     base = [round(float(f), 2) for f in freq_grid(lo, hi, n)]
     if mode == "verify":
         ppo = ((cfg.grid or {}).get("verify_points_per_octave"))

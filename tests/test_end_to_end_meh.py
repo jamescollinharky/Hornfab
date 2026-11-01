@@ -78,8 +78,8 @@ def test_every_meh_config_derives_the_layout_out_seed(path):
     recipe = _seed_recipe(cfg)
     derived = _tool().derived(recipe)
     assert derived["ok"], derived["reasons"]
-    # The generator search config is the same T2-A geometry as its CAD-authored sibling.
-    want = SEEDS[cfg.name if cfg.name in SEEDS else "meh_t2a"]
+    # A generator search config shares the geometry of its CAD-authored sibling (`<name>_search`).
+    want = SEEDS[cfg.name if cfg.name in SEEDS else cfg.name.removesuffix("_search")]
     assert derived["walls"] == want["walls"]
     assert len(derived["ports"]) == want["ports"]
     assert derived["z_m"] == pytest.approx(want["z_m"], abs=0.6)

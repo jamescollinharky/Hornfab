@@ -42,8 +42,9 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
 - **DONE (M8 screen):** T2 40-eval CMA + verify -> J 9.530 -> 11.894 (best `ed11d2cd3acc`); T1 40-eval CMA + verify
   -> J 13.228 -> 14.512 (best `704051ae928c`). Runs `20261101T004552Z-screen-427d57` and
   `20261101T015657Z-screen-fc1d24`; evidence `docs/evidence/MEH_M8_2026-10-31.md` s8.
-- **OPEN (screen band):** the screen solved 12 frequencies 500-10,000 Hz, not the brief's 120-12,000 Hz; the objective
-  scored 10 in-band points and never saw 120-500 Hz or 10-12 kHz. The contracted 1/6-octave 120-12k grid is not run.
+- **IN PROGRESS (screen band, owner chose the contracted band):** opt-in `solve.freq_grid` gives 41 frequencies
+  120-12,000 Hz at 1/6 octave; both MEH search configs set it and the contracted-band screen is relaunched. The first
+  (500-10k) run and its evidence remain valid as a separate grid group; never rank across the two.
 - **OPEN (verify fidelity):** `verify` reports that the verify mesh equals the screen mesh at the current band/caps;
   only the frequency count and balloon size change. A true higher-fidelity mesh needs a raised dof cap or a lower band.
 - **DONE (readiness, measured on the stored T2 winner):** link 1 PASS, link 2 PASS, link 5 PASS, link 6 PASS (J

@@ -52,6 +52,9 @@ mesh:
   dof_per_triangle: 0.51   # TOOLCHAIN M1: measured ~0.51 quarter
 solve:
   backend: beat_cuda
+  # MEH contract C11/M7: score the brief's own 120-12,000 Hz band at 1/6 octave
+  # (41 points). Opt-in: absent in every other config, so no existing solve hash moves.
+  freq_grid: {lo_hz: 120, hi_hz: 12000, points_per_octave: 6}
   distance_m: 2.0
   angle_count: 73
   balloon: true

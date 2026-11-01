@@ -23,6 +23,24 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (03:45 EDT) - CONTRACTED 120 Hz-12 kHz BAND: OPT-IN solve.freq_grid, SCREEN RELAUNCHED
+
+- **Owner decision:** screen over the contracted 120 Hz-12 kHz band (not the frozen 500-10,000 screen grid).
+- **New opt-in `solve.freq_grid: {lo_hz, hi_hz, points_per_octave}`** (config.py). It is read from `cfg.raw`, not a
+  new dataclass field, because the existing invariant test forbids a `None` in any `SolveSettings` field; the block
+  is validated at load (missing key, lo >= hi, density outside 1..48, unknown key all refuse) and stripped before
+  `_build`. Absent = the frozen `FREQ_GRIDS`, so no other config's solve hash moves. `mesh_spec` already takes
+  `max(mode_freqs(...))`, so the mesh f_max follows to 12 kHz.
+- **Both MEH search configs set it** (`120 -> 12000` at 6 points/octave = **41 frequencies**). `tests/test_config_freq_grid.py`
+  (9 tests) pins: absent block = the frozen 12-point grid, present = 41 points at exactly 1/6 octave with f_max 12 kHz,
+  the solve hash changes, and six bad blocks refuse. Full offline suite green after the change.
+- **Two test repairs on the way** (both mine, both correct additions rather than loosened assertions):
+  `tests/test_end_to_end_meh.py` maps a `*_search` config to its CAD-authored sibling's reference row.
+- **Contracted-band screen relaunched** (`scratch/meh/run_meh_screen_120_12k.ps1`, logs
+  `runs/nights/meh_{t2,t1}_screen_120_12k.log`, summary `meh_screen_120_12k_summary.txt`); the 500-10k run and its
+  evidence are untouched. Dry-run at the new grid: 8,625 dofs (cap 9,000), 41 frequencies, tool estimate
+  1,420 s/candidate; the measured per-candidate time is recorded when the first evaluations land.
+
 ## 2026-11-01 (01:45 EDT) - READINESS LINK 3 MEASURED: PASSIVE-MID NOTCH FOUND, PARTIAL AGAINST +-20 %
 
 - The CD-only BEM sweep cannot show the port notch (an undriven L1 port is a rigid patch), so the check was redone
