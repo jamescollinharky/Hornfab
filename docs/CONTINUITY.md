@@ -23,7 +23,25 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
-## 2026-11-01 (05:50 EDT) - CONTRACTED BAND MADE TO FIT: epw 4.05, 8,044 dofs, SCREEN RUNNING
+## 2026-11-01 (06:10 EDT) - CONTRACTED BAND RELAUNCH STOPPED: the CMA neighbours break the VRAM-safe cap
+
+- The epw 4.05 relaunch was stopped after its first rows. Two distinct failures, both recorded:
+  1. One candidate hit `HORNLAB_BEAT_FUSED_BM_CUDA supports exactly one channel` - a **stale fused worker host** from
+     the earlier fused probe was adopted by the run (same package fingerprint). The config carries no `cuda_fused`;
+     killing hosts before a run is the fix, not a config change.
+  2. The real blocker: CMA neighbours need **8,296-8,485 dofs**, over the 8,200 screen cap, so they fail as
+     `mesh_too_large`. Raising the cap to admit them puts the mesh back at ~7.7-7.9 GB - the ceiling that killed the
+     sweep in the first place.
+- **Conclusion [measured]:** on this 8 GB card the contracted 120-12,000 Hz 1/6-octave band has no legal operating
+  point. A mesh that resolves 12 kHz on the source patches needs >= ~8,600 dofs (7.9/8.19 GB peak, sweep dies); the
+  smallest legal mesh (epw 4.05, 8,044 dofs) leaves the CMA population's larger neighbours over any cap that keeps
+  VRAM safe. `cuda_fused`, the documented high-dof path, refuses multi-channel by design.
+- **Delivered state is unchanged and valid:** the full MEH implementation (M1-M7, M10), the owner-approved pin bump,
+  and the 500-10,000 Hz screens with their verified winners (T2 9.530 -> 11.894, T1 13.228 -> 14.512). The
+  contracted-band work (opt-in `solve.freq_grid`, `worker_restart_every`, epw/cap experiments) is committed and the
+  offline suite is green; only the run itself is not possible here.
+
+
 
 - **`cuda_fused` is NOT an option for the MEH**: `HORNLAB_BEAT_FUSED_BM_CUDA supports exactly one channel`, so the
   fused path can never do a multi-tag solve at any dof count (the queue failed 3 candidates in 90 s; stopped).

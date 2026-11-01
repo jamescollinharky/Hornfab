@@ -42,12 +42,13 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
 - **DONE (M8 screen):** T2 40-eval CMA + verify -> J 9.530 -> 11.894 (best `ed11d2cd3acc`); T1 40-eval CMA + verify
   -> J 13.228 -> 14.512 (best `704051ae928c`). Runs `20261101T004552Z-screen-427d57` and
   `20261101T015657Z-screen-fc1d24`; evidence `docs/evidence/MEH_M8_2026-10-31.md` s8.
-- **IN PROGRESS (screen band, owner chose the contracted band):** the 8,625-dof mesh peaks 7.9/8.19 GB and the
-  41-frequency sweep dies (CUDA 719 / worker_exit, measured); `cuda_fused` refuses multi-channel by design. Fixed by
-  epw 4.05: 8,044 (T2) / 7,977 (T1) dofs, source patches still resolve 12 kHz, ~15 % less VRAM. Grid is the contracted
-  41 frequencies 120-12,000 Hz at 1/6 octave; screen relaunched.
-- **CAVEAT (same run):** at epw 4.05 the rigid walls resolve to ~5.9 kHz, so 6-12 kHz is driven-patch-accurate but
-  wall-coarse. Any high-band number from this grid carries that caveat.
+- **BLOCKED on this hardware (screen band):** the contracted 120-12,000 Hz 1/6-octave grid has no legal operating
+  point on the 8 GB card. A 12 kHz-resolving mesh needs >= ~8,600 dofs (7.9/8.19 GB peak; the 41-frequency sweep dies -
+  CUDA 719 / worker_exit, measured); the smallest legal mesh (epw 4.05, 8,044 dofs) leaves CMA neighbours at
+  8,296-8,485 dofs, over any cap that keeps VRAM safe. `cuda_fused` refuses multi-channel by design. Resolving the band
+  needs a >= 12 GB card. Stopped by owner direction.
+- **OPERATIONAL NOTE:** stale BEAT hosts from an earlier fused probe were adopted by a later run and produced a
+  misleading fused/multi-channel error. Kill Julia hosts before launching a screen (`gpu-clean`).
 - **DONE (worker recycling):** opt-in `solve.worker_restart_every` (fake-tested), set to 8 in both MEH search
   configs; it does not rescue the 8 GB ceiling but is committed for larger cards.
 - **OPEN (verify fidelity):** `verify` reports that the verify mesh equals the screen mesh at the current band/caps;
