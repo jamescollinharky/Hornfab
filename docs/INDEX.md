@@ -125,3 +125,4 @@ Keep this file current: a new doc gets a line here in the same commit.
 `../CONTRIBUTING.md` · `../NOTES_FOR_SENIOR.md` (append-only rulings and questions) · `../examples/catalog.yaml`.
 
 - `docs/data/campaign_v4_2026-10-27/` - analysis tables (cells_summary.csv, evals.csv, best_designs.json, README) from the v4 screen nights, for the collaborator.
+| [evidence/MEH_M8_2026-10-31.md](evidence/MEH_M8_2026-10-31.md) | MEH M8 (partial): fork validated CPU+CUDA (20/20 in the M2 testset after fixing three test defects), single-tag parity 1.1e-5 / 5.9e-5 dB vs the 0.039 dB floor, readiness links 1-2 measured (tags 1/2/10, 8,625 nodes, force reciprocity 5.7e-5..3.2e-4), and the honest NOT-RUN list (link 3 completion, links 4-6, quarter-vs-full, L0-vs-L1, screen, M9). Two geometry caveats: T2-A repairs slide 10 -> 32 mm, and at 12 kHz the walls resolve only to ~6.1 kHz at the 8,900-dof cap. |

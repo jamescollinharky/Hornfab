@@ -23,6 +23,22 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - M8 EVIDENCE DOC WRITTEN; READINESS LINKS 1-2 PROVEN, 3-6 NOT RUN
+
+- `docs/evidence/MEH_M8_2026-10-31.md` (INDEX updated) records, with quoted logs from `runs/meh_m8/`: the fork
+  validation (CPU and CUDA), the three test-defect fixes, the pin bump, the single-tag parity table, readiness link 1
+  (geometry) and link 2 (multi-tag solve), plus an explicit NOT-RUN list.
+- **Link 1 caveats [measured]:** tags {1, 2, 10}, 8,625 nodes (cap 8,900), no non-manifold edges, quarter planes x0/y0
+  - but the C9 T2-A seed is repaired from `slide_mm` 10 to 32 mm (`driver_hits_cd`, eleven 2 mm steps), and at the
+  12 kHz request the driven patches resolve to 12.99-13.47 kHz while the rigid walls resolve only to ~6.1 kHz
+  (`global_warn_source_hard`). The screen band's upper half therefore runs on underresolved walls at the dof cap.
+- **Link 2 [measured]:** `channel_pressure (5, 2, 2, 37)`, force matrix symmetric to <= 3.2e-4 at 4 kHz, legacy
+  fields = channel 0. An earlier 22-38 % reciprocity "failure" was MY error (quarter mesh solved with symmetry off);
+  the app adapter derives the flag from the mesh and the check passes. The area-mean pressure matrix is correctly
+  asymmetric by the area ratio (4.77).
+- **Link 3 is PARTIAL only:** the CD-only sweep (500-4000 Hz, 8 points) shows the response still rising through the
+  1-D port quarter-wave (1010.8 Hz) and peaking at 1250 Hz; the +-20 % notch check needs a denser 700-1600 Hz sweep.
+
 ## 2026-10-31 - M8 STEP 2b [owner-approved]: SOLVER PIN BUMPED TO 1efdc6f
 
 - **Pin:** `pyproject.toml` and `TOOLCHAIN.md` now name `hornlab-beat-bem @ 1efdc6f934e16f288880b6d68e8dce8480b7a421`
