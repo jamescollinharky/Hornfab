@@ -32,6 +32,22 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (07:40 EDT) - HARDWARE AUDIT REVIEWED; FOUR OF MY CLAIMS CORRECTED IN THE HAND-OFF
+
+- The fresh-eyes audit (`docs/evidence/HARDWARE_2026-11-01.md`, Codex session) is sound. I reproduced its two
+  load-bearing numbers from the stored data: the screen winners are **5,872 / 6,249 dofs** (not the 6,032 / 6,009
+  seed meshes I paired with their timings), and the winners' `meta.timings` give **assembly 23.72 s, solve 2.38 s,
+  field 0.19 s, total 35.54 s over 12 frequencies** - assembly is ~67 % of engine time, as the audit says.
+- **Withdrawn from my hand-off:** the "~12x for 1.44x elements" scaling claim (it divided a FAILED sweep by 41 and
+  used cold-start guesses - there is no valid seconds/frequency at 8.6k dofs); the "flat ~7.9 GB workspace" reading
+  (`nvidia-smi` total use + CUDA.jl caching is not live working set, and the CSV that backed it was overwritten by a
+  later poller run, now 558 samples starting at 5,643 MiB with no idle baseline); the "25-35k elements" full-wall
+  guess (the first globally valid T2 mesh is **33,959 dofs / 67,245 triangles**, ~85 GiB static on the pinned CUDA
+  path, so 141 GB is the first viable tier); and "lanes are a one-line change" (five concrete surfaces).
+- `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` now carries a s2a corrections block so the repo does not hold two
+  contradictory records. The audit's conclusion stands: rent a short pilot before buying, and the full-wall 12 kHz
+  target is much larger than this pass assumed.
+
 ## 2026-11-01 (07:05 EDT) - HARDWARE HAND-OFF EXTENDED: UNIFIED MEMORY + THE MEASURED BASELINE
 
 - `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` gained two things the next agent needs:

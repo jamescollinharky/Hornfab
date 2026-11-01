@@ -55,6 +55,10 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   8,296-8,485 dofs, over any cap that keeps VRAM safe. `cuda_fused` refuses multi-channel by design. Resolving the band
   needs a >= 12 GB card. Stopped by owner direction.
 - **DONE (docs accuracy):** the M8 evidence doc and its INDEX line now state the full result set (links 1/2/5/6 PASS, link 4 FAIL, link 3 PARTIAL, screens verified, blocks); no number changed.
+- **CORRECTED (hand-off):** four claims withdrawn after the audit - wrong mesh attribution (winners are
+  5,872/6,249 dofs), the 12x scaling claim, the flat-VRAM reading (and its backing CSV was overwritten), the
+  25-35k element sizing (first valid whole-wall mesh is 33,959 dofs, ~85 GiB), and 'lanes are one line'.
+  The audit's rent-first conclusion and 141 GB tier stand.
 - **UPDATED (compute brief):** the hand-off now carries the measured baseline (3.6 vs ~45 s/frequency;
   ~12x for 1.44x elements) and an explicit unified-memory section (GH200/GB200, Apple Metal, MI300A ROCm,
   APU negative control, CPU-only) with a required validation gate for any non-CUDA recommendation.

@@ -73,6 +73,37 @@ Two facts dominate everything else:
   the 10 kHz screen grid (11.8k elements) to the 12 kHz grid (16.9k elements) roughly tripled solve time per
   frequency; element-level assembly is O(E^2) and the operator inversion adds its own super-linear term.
 
+### 2a. CORRECTIONS (2026-11-01, after the audit in `docs/evidence/HARDWARE_2026-11-01.md`)
+
+The audit is right and this section is kept only as the record of what was believed when it was written.
+Five claims above were wrong or unsupported:
+
+- **Mesh attribution.** The screen winners' own stored responses report **5,872 (T2) and 6,249 (T1) dofs**
+  (`response.npz` -> `n_dof`). The 6,032 / 6,009 figures are the SEED meshes, which CMA did not select. The
+  wall times were measured correctly but paired with the wrong mesh.
+- **The "~12x for 1.44x elements" scaling claim is withdrawn.** It divided a FAILED 41-frequency sweep
+  (1,851.7 s, CUDA 719) by 41 and mixed in cold-start guesses. There is no valid seconds/frequency observation
+  at 8.6k dofs. The only solid stage data is at 5.9-6.2k dofs, from the winners' `meta.timings`:
+  **assembly 23.72 s, solve 2.38 s, field 0.19 s, total 35.54 s over 12 frequencies** (1.98 / 0.199 / 0.016 /
+  2.96 per frequency). Assembly is ~67 % of engine time at that size; field evaluation is negligible.
+- **"VRAM is a flat ~7.9 GB workspace" is withdrawn.** `nvidia-smi` reports total device use and CUDA.jl caches
+  freed allocations, so a flat trace does not prove a flat live working set. Worse, the CSV that backed the
+  quote was overwritten by a later poller run: the file now holds 558 samples starting at 5,643 MiB with no
+  idle baseline (peak 7,897). The 880-sample trace no longer exists on disk. CUDA error 719 is a launch
+  failure, not the allocation-OOM code, so memory pressure is a hypothesis, not a diagnosis.
+- **Whole-wall 12 kHz sizing.** The audit's diagnostic meshes put the first globally valid T2 mesh at
+  **33,959 dofs / 67,245 triangles** (nominal epw 8.4), and source-derived static storage for the pinned CUDA
+  path at **~85 GiB before any workspace**. A 24/32/48/80 GB card cannot run that mesh on that path; the
+  141 GB H200 is the first listed tier worth testing. The "25-35k elements" guess in s4.5 is wrong.
+- **Lanes are not a one-line change.** The audit names five concrete surfaces (CMA generation barrier,
+  evaluator side effects, cache publication, GPU-lock ownership, worker-host tracking). The cheap honest route
+  is two isolated rentals, one brief each. Also: 64 GB system RAM is not established as sufficient for the
+  full-wall mesh; size it from measured host RSS.
+
+What survives unchanged: the pipeline description, the stage attribution at screen size, the fused-path
+single-channel refusal, the four measured 12-frequency screen numbers, the 6.58 s inner optimiser, and the
+conclusion that capacity and throughput are separate problems.
+
 ## 3. The two bottlenecks, stated separately
 
 **B1 - capacity (blocks the contracted band).** The 120 Hz-12 kHz 1/6-octave grid (41 frequencies) needs a mesh
