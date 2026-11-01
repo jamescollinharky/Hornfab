@@ -23,6 +23,21 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - MEH SEARCH UNBLOCKED: `generator: meh` DISPATCH + SEARCHABLE T2-A CONFIG
+
+- **`design/generated.py`** gains `meh_params()` and its `materialize` dispatch (the gap M7 flagged). Recipe = the
+  CAD tool's C9 defaults, then `generator.fixed`, then the knobs; `derived()` runs the layout check and the
+  deterministic slide repair, a non-empty `reasons` list is `invalid_geometry`, and the mouth/depth are checked against
+  the brief envelope. `tests/test_design_meh_generator.py` (5 tests) covers the knob set, the repaired seed, the three
+  corner knob vectors, unknown keys and an illegal envelope.
+- **`examples/typologies/meh_2026-10-30/meh_t2a_search.yaml`**: the T2-A seed authored through the generator, with
+  `cov_h_deg cov_v_deg z_frac across_frac port_along_mm slide_mm` searchable (C9/T2 ranges) and everything else fixed.
+  The seed carries `slide_mm 32` (the repaired value from M8 link 1), so it starts legal.
+- **Cost measured by `run --dry-run` [measured]:** 11,776 triangles, 6,032 dofs (cap 9,000), mesh 5.8 s, 12
+  frequencies 500-10,000 Hz with 73-angle cuts and a 512-point balloon; the tool's TOOLCHAIN estimate is 4.7 s per
+  frequency = 62 s per candidate, i.e. a 40-evaluation search in ~41 min plus a 30 s cold start. The MEH screen is a
+  ~41 min/brief GPU run, not a night.
+
 ## 2026-10-31 - MEH WAVE 2: M7 PIPELINE + BRIEFS + CAD SEED CONFIGS
 
 - **`search/evaluate.py` (+283/-8)**: a brief `meh:` block takes the MEH path - mesh the `meh` CAD STEP ->
