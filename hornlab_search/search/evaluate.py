@@ -21,6 +21,7 @@ Cache semantics (documented choices, see NOTES_FOR_SENIOR):
 from __future__ import annotations
 
 import dataclasses
+import functools
 import json
 import logging
 import os
@@ -69,7 +70,51 @@ DETERMINISTIC_KINDS = (KIND_INVALID, KIND_INVALID_ENV, KIND_TOO_LARGE)
 #: WP8: the only band-split mesh policy name (rides SolveSpec.extra and the record provenance).
 BAND_SPLIT_POLICY = "band_split_v1"
 
+#: C10: the listening-window defaults used only when a hand-built ``meh:`` block omits them.
+MEH_DEFAULT_WINDOW = {"h_deg": [0, 10, 20, 30], "v_deg": [10]}
+MEH_DEFAULT_HP_HZ = 120.0
+MEH_DEFAULT_MAX_BOOST_DB = 6.0
+
 _FREQ_WEIGHTS_V1_WARNED = False
+
+
+# ------------------------------------------------------------------ MEH branch (M7)
+#
+# The MEH path is switched on by the BRIEF's C10 ``meh:`` block, never by a config knob: a
+# brief without it keeps every line of the single-source pipeline below byte-identical.  The
+# branch meshes the labelled ``meh`` CAD STEP (M5), solves the source tags named by the brief
+# groups (M3's ``SolveSpec.extra["source_tags"]``, C5), runs the lumped-network inner
+# optimiser on the BEM response (M4), synthesises the system response, scores it with
+# objective v5 (M6, C11) and records the BEM per-channel arrays + the chosen NetworkSolution.
+
+
+def meh_block_of(cfg) -> dict | None:
+    """The validated C10 ``meh:`` block of the brief, or None (a non-MEH evaluation)."""
+    brief = getattr(cfg, "brief", None)
+    if isinstance(brief, dict):
+        block = brief.get("meh")
+        if isinstance(block, dict):
+            return block
+    return None
+
+
+def meh_source_tags(block: dict) -> tuple[int, ...]:
+    """The C3 source tags named by the brief groups, sorted (CD = 2, mid entry = 10)."""
+    groups = block.get("groups") or {}
+    tags = sorted({int(g["tag"]) for g in groups.values()
+                   if isinstance(g, dict) and g.get("tag") is not None})
+    return tuple(tags)
+
+
+def _with_meh_source_tags(sspec, block: dict):
+    """``SolveSpec`` with ``extra["source_tags"]`` set. Only the MEH branch calls this, so the
+    non-MEH solve hash/payload stays byte-identical (C5)."""
+    tags = meh_source_tags(block)
+    if not tags:
+        return sspec
+    extra = dict(sspec.extra or {})
+    extra["source_tags"] = list(tags)
+    return dataclasses.replace(sspec, extra=extra)
 
 
 def warn_freq_weights_v1(cfg, target: Target) -> None:
@@ -564,6 +609,21 @@ def _cad_info(mesh_dir: Path) -> dict | None:
     return {k: cad.get(k) for k in CAD_ECHO_KEYS}
 
 
+def _cad_meta(mesh_dir: Path) -> dict | None:
+    """The FULL ``mesh_meta.json["cad"]`` block (recipe + derived layout), or None.
+
+    ``_cad_info`` keeps the small record echo; the MEH branch needs the tool's ``derived()``
+    (port area, neck, repair log) and the recipe it was built from, which are too large for a
+    per-row echo but are exactly what the inner network optimiser consumes (C9/C12)."""
+    try:
+        meta = json.loads((Path(mesh_dir) / "mesh_meta.json").read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        log.debug("no mesh_meta.json in %s: %s", mesh_dir, exc)
+        return None
+    cad = meta.get("cad")
+    return cad if isinstance(cad, dict) else None
+
+
 def _write_json(path: Path, obj) -> None:
     path.write_text(json.dumps(to_jsonable(obj), indent=1, sort_keys=True), encoding="utf-8")
 
@@ -667,6 +727,11 @@ def evaluate(design: Design, space, cfg, mode: str, run_dir, store, backend, *,
     t_start = time.perf_counter()
     mspec = config_mod.mesh_spec(mode, cfg)
     sspec = config_mod.solve_spec(mode, cfg)
+    meh = meh_block_of(cfg)
+    if meh is not None:
+        # C5: multi-source solve. The tags ride in SolveSpec.extra, so they are part of the
+        # solve hash (cache, resume memo and record provenance) exactly like every other knob.
+        sspec = _with_meh_source_tags(sspec, meh)
     dh, mh, sh = design.hash(), mspec.hash(), sspec.hash()
     # WP12: MeshSpec.hash does not know about the rear enclosure, so the normalized mounting block
     # rides in the key itself (run-known memo + solve-cache identity). Absent -> today's key.
@@ -774,17 +839,17 @@ def _score_v4(metrics, resp, target, weights, params):
     return objective_v4(metrics, resp, True, target, weights, params)
 
 
-def _score_v5(metrics, resp, target, weights, params):
-    # Bridge only: M6 registers version 5 so the version tuple and this dispatch table stay in
-    # lock-step (the module-level gate below).  M7 owns the MEH branch that builds ``meh_ctx`` on
-    # the evaluation context and passes it here; until that lands none is available, so the four
-    # system terms score their unmeasurable fill while the v4 pattern terms are real.
+def _score_v5(metrics, resp, target, weights, params, meh_ctx=None):
+    """Objective v5 (C11). ``meh_ctx`` is built by the MEH branch (M7) from the synthesised
+    response + the chosen NetworkSolution. When it is absent (e.g. a v5 brief evaluated through
+    the legacy single-source path) the four system terms score their unmeasurable fill while
+    the v4 pattern terms stay real - the M6 bridge behaviour, kept for non-MEH callers."""
     if params is None:
         raise ValueError("objective_version 5 needs the brief's objective block; the evaluation "
                          "context carries none")
     if not isinstance(params, MehParams):
         params = MehParams.from_block(params)
-    return objective_meh(metrics, resp, True, target, weights, params, None)
+    return objective_meh(metrics, resp, True, target, weights, params, meh_ctx)
 
 
 _OBJECTIVE_SCORERS = {
@@ -800,7 +865,7 @@ if tuple(sorted(_OBJECTIVE_SCORERS)) != SUPPORTED_OBJECTIVE_VERSIONS:
         f"disagree: {tuple(sorted(_OBJECTIVE_SCORERS))} vs {SUPPORTED_OBJECTIVE_VERSIONS}")
 
 
-def _score(metrics, resp, ctx) -> tuple[float, dict]:
+def _score(metrics, resp, ctx, meh_ctx=None) -> tuple[float, dict]:
     """The objective dispatch (WP1, senior pass 2026-10-24): version 1 keeps the exact v1 path
     (and every old run reproduces bit-for-bit); version 2 (brief/config``objective: {version: 2}``)
     scores with the detrended terms in ``objective/scalar_v2.py``. Version 3 (2026-10-25,
@@ -815,6 +880,11 @@ def _score(metrics, resp, ctx) -> tuple[float, dict]:
     if scorer is None:
         raise ValueError(f"objective_version {ctx.objective_version!r} is not one of "
                          f"{SUPPORTED_OBJECTIVE_VERSIONS}")
+    if int(ctx.objective_version) == 5:
+        # M7: the MEH branch supplies the per-candidate meh_ctx (LW, polars, xo_hz, SPL_max).
+        # A non-MEH v5 caller passes None and keeps the M6 bridge behaviour.
+        return _score_v5(metrics, resp, ctx.target, ctx.weights,
+                         getattr(ctx, "objective_params", None), meh_ctx)
     return scorer(metrics, resp, ctx.target, ctx.weights, getattr(ctx, "objective_params", None))
 
 
@@ -923,6 +993,202 @@ def _compute_band_split(design, cfg, mode, mspec, sspec, design_dir, backend, ct
     st["J"], st["terms"] = _score(st["metrics"], st["resp"], ctx)
 
 
+def _window_curve(spl_h, h_angles, spl_v, v_angles, window) -> np.ndarray:
+    """C11 listening-window power average per frequency (dB), from the two cut planes.
+
+    A window angle that is not on the solved grid is skipped; with no matching angle the
+    on-axis sample is used (never a silent mean over the whole cut). Same definition as the
+    M4 inner optimiser's local context, so the inner and outer scores agree.
+    """
+    cols = []
+    for angles, spl, wanted in ((h_angles, spl_h, (window or {}).get("h_deg", [])),
+                                (v_angles, spl_v, (window or {}).get("v_deg", []))):
+        angles = np.asarray(angles, dtype=float)
+        idx = []
+        for a in wanted or []:
+            hit = np.flatnonzero(np.abs(angles - float(a)) <= 1e-9)
+            if hit.size:
+                idx.append(int(hit[0]))
+        if idx:
+            cols.append(np.asarray(spl, dtype=float)[:, idx])
+    if not cols:
+        ax = int(np.argmin(np.abs(np.asarray(h_angles, dtype=float))))
+        return np.asarray(spl_h, dtype=float)[:, ax].copy()
+    stacked = np.concatenate(cols, axis=1)
+    power = np.mean(np.power(10.0, stacked / 10.0), axis=1)
+    with np.errstate(divide="ignore"):
+        return 10.0 * np.log10(power)
+
+
+def _meh_ctx(system, solution, block: dict, target: Target) -> dict:
+    """The C11 ``meh_ctx`` mapping the v5 objective reads (scalar_meh module docstring)."""
+    from ..meh.limits import spl_max
+
+    f = np.asarray(system.freqs_hz, dtype=float)
+    window = block.get("listening_window") or MEH_DEFAULT_WINDOW
+    lw = _window_curve(system.spl_h_db, system.h_angles_deg,
+                       system.spl_v_db, system.v_angles_deg, window)
+    smax = np.asarray(getattr(solution, "spl_max_db", ()) or (), dtype=float)
+    if smax.shape != f.shape:
+        smax = np.asarray(spl_max(f, solution, block), dtype=float)
+    return {
+        "freqs": f,
+        "LW": np.asarray(lw, dtype=float),
+        "polars": {
+            "h": (np.asarray(system.h_angles_deg, dtype=float),
+                  np.asarray(system.spl_h_db, dtype=float)),
+            "v": (np.asarray(system.v_angles_deg, dtype=float),
+                  np.asarray(system.spl_v_db, dtype=float)),
+        },
+        "xo_hz": [float(solution.xo_hz)],
+        "spl_max_db": smax,
+        "spl_target_db": block.get("spl_target"),
+        "hp_hz": float(block.get("hp_hz", MEH_DEFAULT_HP_HZ)),
+        "max_boost_db": float(block.get("max_boost_db", MEH_DEFAULT_MAX_BOOST_DB)),
+        "band_lo_hz": float(target.band_lo_hz),
+        "band_hi_hz": float(target.band_hi_hz),
+    }
+
+
+def _meh_layout(design: Design, cad: dict | None) -> tuple[dict, dict]:
+    """(``layout_derived`` for M4 inner, full derived dict) from the CAD mesh provenance.
+
+    The inner optimiser needs the printed port area and the L1 recipe. We deliberately do NOT
+    hand it the tool's ``v_front_cm3``: the front-chamber volume must stay the fill-dependent
+    cone-dish model (C7), so the fixed spacer/wall thickness and the driver file's dish are what
+    pass through. ``dish_mm`` comes from the driver object when the file carries it, else M4's
+    documented 0.2 x cutout placeholder.
+    """
+    recipe = dict((cad or {}).get("recipe") or (design.params or {}).get("cad") or {})
+    derived = dict((cad or {}).get("derived") or {})
+    port_area = derived.get("port_area_mm2")
+    if port_area is None:
+        ports = derived.get("ports") or []
+        if ports and isinstance(ports[0], dict):
+            port_area = ports[0].get("area_mm2")
+    if port_area is None:
+        raise ValueError(
+            "MEH mesh provenance carries no port area; the meh CAD tool's derived() block "
+            "is required (task M5 echoes it into mesh_meta.json)[\"cad\"][\"derived\"]")
+    neck_mm = recipe.get("wall_t_mm")
+    layout = {
+        "derived": {
+            "port_area_mm2": float(port_area),
+            "l_neck_mm": float(neck_mm) if neck_mm is not None else None,
+        },
+        "params": recipe,
+    }
+    return layout, derived
+
+
+def _compute_meh(design, cfg, mode, mspec, sspec, key, design_dir, backend, ctx, st) -> None:
+    """C10 MEH branch: CAD mesh -> multi-source solve -> inner network -> synthesis -> v5.
+
+    ``st["resp"]`` is the BEM Response (the per-channel arrays and Z the record stores);
+    ``st["metrics"]`` / ``st["J"]`` are computed on the SYNTHESISED response. The solve cache
+    holds the BEM response, so re-scoring a stored record with a different driver stem / hp_hz
+    re-runs the CPU inner optimiser and needs no new BEM solve.
+    """
+    from ..meh.drivers import load_cd, load_cone
+    from ..meh.inner import optimise_network
+    from ..meh.synthesis import system_response
+    from ..objective.scalar_meh import inner_score
+
+    block = meh_block_of(cfg) or {}
+    brief = getattr(cfg, "brief", None)
+
+    try:
+        mesh = build_mesh(design, mspec, cfg, design_dir, mode=mode, cache_dir=ctx.mesh_cache_root)
+    except GeometryInvalidError as exc:
+        st["kind"], st["err"] = KIND_INVALID, str(exc)
+        return
+    except MeshTooLargeError as exc:
+        st["kind"], st["err"] = KIND_TOO_LARGE, str(exc)
+        return
+    except GeneratorError as exc:
+        st["kind"], st["err"] = KIND_INVALID, f"generator: {exc}"
+        return
+    st["mesh"] = mesh
+    st["area"], st["grid"] = _grid_info(design_dir)
+    cad = _cad_meta(design_dir)
+    st["cad"] = ({k: cad.get(k) for k in CAD_ECHO_KEYS} if cad else _cad_info(design_dir))
+    why = envelope_violation(mesh, brief)
+    if why:
+        st["kind"], st["err"], st["no_marker"] = KIND_INVALID, why, True
+        return
+
+    resp = None
+    root = ctx.solve_cache_root
+    if root is not None:
+        resp = solve_cache.lookup(key, root)
+        if resp is not None:
+            st["from_disk"] = True
+            st["outcome"] = SolveOutcome(True, resp, 0.0, None, "cache hit")
+    if resp is None:
+        outcome = backend.solve(mesh, sspec)
+        st["outcome"] = outcome
+        if not outcome.ok or outcome.response is None:
+            st["kind"], st["err"] = KIND_SOLVE, outcome.message or "solve failed"
+            log.error("MEH solve failed for %s: %s", design.hash(), st["err"][:2000])
+            return
+        resp = outcome.response
+    st["resp"] = resp
+    if resp.n_dof is not None:
+        mesh.n_dof = int(resp.n_dof)
+    if getattr(resp, "channel_pressure", None) is None:
+        st["kind"], st["err"] = KIND_SOLVE, (
+            "MEH solve returned no channel_pressure/impedance_matrix; the solve spec must carry "
+            "extra['source_tags'] and the installed solver must expose the C4 fields")
+        return
+
+    # C10 groups -> loaded drivers. The inner optimiser enumerates the CD (exactly one in the
+    # M6 validator) and every mid candidate named here.
+    groups = block.get("groups") or {}
+    try:
+        cd_stems = list(groups["cd"]["drivers"])
+        mid_stems = list(groups["mid"]["drivers"])
+        drivers = {"cd": [load_cd(s) for s in cd_stems],
+                   "mid": [load_cone(s) for s in mid_stems]}
+    except (KeyError, TypeError) as exc:
+        raise ValueError(f"meh.groups is malformed: {exc!r}") from None
+
+    layout, derived = _meh_layout(design, cad)
+    params = getattr(ctx, "objective_params", None)
+    score = inner_score if params is None else functools.partial(inner_score, params=params)
+    solution = optimise_network(resp, layout, brief, drivers, score=score)
+    system = system_response(resp, solution)
+
+    # The synthesised balloon is on the BEM theta-phi sphere grid. Carry that fact into the
+    # metrics so metrics_from_response applies its sin(theta) quadrature (C4/C11) instead of
+    # silently treating a theta-phi grid as equal-area.
+    grid_meta = (getattr(resp, "meta", None) or {}).get("balloon_grid")
+    if grid_meta is not None and system.spl_balloon_db is not None:
+        system.meta["balloon_grid"] = grid_meta
+
+    try:
+        st["metrics"] = metrics_from_response(system, ctx.target, mesh=mesh, design=design)
+    except Exception as exc:  # noqa: BLE001
+        st["kind"], st["err"] = KIND_METRICS, f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
+        return
+    mismatch = _throat_angle_mismatch_deg(design, brief)
+    if mismatch is not None:
+        st["metrics"].scalars["throat_angle_mismatch_deg"] = mismatch
+
+    meh_ctx = _meh_ctx(system, solution, block, ctx.target)
+    st["J"], st["terms"] = _score(st["metrics"], system, ctx, meh_ctx=meh_ctx)
+    st["network_solution"] = solution.to_dict()
+    st["meh_layout"] = {"derived": derived, "recipe": dict((cad or {}).get("recipe") or {})}
+
+    if root is not None and not st["from_disk"]:
+        # The cache holds the BEM response (not the synthesised one): re-scoring with a new
+        # brief re-runs the CPU inner loop on it without another solve.
+        try:
+            solve_cache.store(key, root, resp, {"ok": True, "objective": st["J"],
+                                                "n_dof": resp.n_dof, "mode": mode})
+        except Exception as exc:  # noqa: BLE001
+            log.warning("MEH solve cache write failed for %s: %s", key, exc)
+
+
 def _compute(design, cfg, mode, mspec, sspec, key, design_dir, backend, ctx, st) -> None:
     """Mesh, solve, metrics, objective. Fills ``st``; sets st['kind'] on an expected failure.
 
@@ -948,6 +1214,11 @@ def _compute(design, cfg, mode, mspec, sspec, key, design_dir, backend, ctx, st)
         gerr = str(design.params[GENERATOR_ERROR_KEY])
         env_kind = KIND_INVALID_ENV if gerr.startswith("invalid_envelope") else KIND_INVALID
         st["kind"], st["err"] = env_kind, f"generator: {gerr}"
+        return
+    if meh_block_of(cfg) is not None:
+        # C10: the MEH pipeline. Same mesh-context expectations as the single-source path;
+        # ``_compute_meh`` owns the solve -> inner network -> synthesis -> v5 objective chain.
+        _compute_meh(design, cfg, mode, mspec, sspec, key, design_dir, backend, ctx, st)
         return
     if band_split_of(cfg) is not None:
         _compute_band_split(design, cfg, mode, mspec, sspec, design_dir, backend, ctx, st)
@@ -1035,6 +1306,9 @@ def _record_provenance(ctx: EvalContext, st: dict) -> dict:
         prov["cad"] = st["cad"]                      # WP14: cad-route recipe/tool/step echo
     if st.get("mounting"):
         prov["mounting"] = st["mounting"]            # WP12: normalized brief mounting block
+    if st.get("meh_layout"):
+        # M7/C12: the CAD recipe + derived layout the inner network optimiser consumed.
+        prov["meh"] = {"layout": st["meh_layout"]}
     return prov
 
 
@@ -1081,7 +1355,8 @@ def _persist(ev: Evaluation, mode: str, sspec, design_dir: Path, ctx: EvalContex
                     ev, ctx.target, ctx.lib_shas, solve_spec=sspec, area_m2=st["area"],
                     grid=st["grid"], traces=trace_info, trace_sample_fraction=ctx.trace_fraction,
                     objective_version=ctx.objective_version,
-                    provenance=_record_provenance(ctx, st))
+                    provenance=_record_provenance(ctx, st),
+                    network_solution=st.get("network_solution"))
                 store.append(meta, arrays)
                 ctx.store_seen.add(seen)
             except Exception as exc:  # noqa: BLE001 - ValueError from validate_record, or I/O

@@ -1,0 +1,67 @@
+# T2-A MEH seed: 2 x B&C 6NDL38 top/bottom + FaitalPRO HF1440, no fill (C1, C9, C11).
+#
+# This is the exact C9 T2 default recipe (tools/cad/meh.py defaults()) and the
+# layout_out.md "Final seeds" T2-A row after repair: mouth 330 x 191 mm, horn length 144 mm,
+# port z 45 mm, path to diaphragm 85 mm, V_front 251 cm^3, f_h 732 Hz.
+#
+# The geometry is CAD-authored: family stays FREEFORM and the Design params are the labelled
+# STEP recipe {"cad": {...}} (same shape as multicell_3x3.yaml). The `meh:` block lives in the
+# brief and switches search/evaluate.py onto the MEH pipeline (multi-source solve -> inner
+# network optimisation -> synthesis -> metrics -> objective v5).
+#
+# NOTE (M7 scope): design/generated.py has no `generator: meh` dispatch yet, so this config
+# carries the seed recipe directly (`bounds: {}`) rather than a generator knob box. The
+# searchable C9 knobs (cov_h_deg cov_v_deg z_frac across_frac port_along_mm slide_mm) are
+# ready to move into a generator block as soon as that dispatch lands; the CAD tool, the
+# registry entry and the mesh route are already in place. See NOTES_FOR_SENIOR.md.
+name: meh_t2a
+family: FREEFORM
+brief_file: ../../briefs/meh_2026-10-30/meh_home_90x60_t2.yaml
+seed_params:
+  cad:
+    tool: meh
+    cov_h_deg: 90.0
+    cov_v_deg: 60.0
+    z_frac: 0.25
+    across_frac: 0.8
+    port_along_mm: 30.0
+    slide_mm: 10.0
+    walls: tb
+    env_w_mm: 406.4
+    env_h_mm: 406.4
+    env_d_mm: 380.0
+    box_t_mm: 18.0
+    roll_mm: 20.0
+    wall_t_mm: 6.0
+    spacer_mm: 3.0
+    exit_mm: 35.8          # FaitalPRO HF1440 (examples/drivers/faitalpro_hf1440.yaml)
+    cd_duct_mm: 40.0       # C9 [inferred]
+    cd_body_d_mm: 124.0
+    cd_body_len_mm: 75.0
+    cone_cutout_mm: 145.0  # B&C 6NDL38
+    cone_depth_mm: 85.0
+    clearance_mm: 3.0
+bounds: {}
+mesh:
+  epw: 4.2
+  quadrants: '1'           # the meh STEP is a QUARTER open shell (C2)
+  dof_cap_screen: 9000
+  dof_cap_verify: 9000
+  dof_cap_final: 9000
+  dof_per_triangle: 0.51   # TOOLCHAIN M1: measured ~0.51 quarter
+solve:
+  backend: beat_cuda
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 900
+search:
+  algorithm: cma
+  sigma0: 0.2
+  seed: 1234
+  budget: 80
+  popsize: null
+  tolfun: 0.001

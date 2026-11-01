@@ -23,6 +23,26 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 - MEH WAVE 2: M7 PIPELINE + BRIEFS + CAD SEED CONFIGS
+
+- **`search/evaluate.py` (+283/-8)**: a brief `meh:` block takes the MEH path - mesh the `meh` CAD STEP ->
+  `SolveSpec.extra.source_tags = [2, 10]` -> `meh.inner.optimise_network(..., score=objective_meh.inner_score)` ->
+  `meh.synthesis.system_response` -> `metrics.compute` on the SYNTHESISED response -> objective v5 with a real
+  `meh_ctx` (LW, polars, xo_hz, spl_max_db, spl_target_db, hp/boost). The record stores the BEM per-channel arrays +
+  impedance matrix + `network_solution` + CAD layout. The non-MEH path is untouched (suite proves it).
+- **Examples:** `examples/briefs/meh_2026-10-30/meh_home_90x60_t{2,1}.yaml`;
+  `examples/typologies/meh_2026-10-30/meh_t{2a,2b,1}.yaml` (CAD recipes from `layout_out.md` final seeds).
+- **CPU shape check [measured]:** t2a 6032 / 9000 dofs, t2b 5998 / 9000, t1 6009 / 9000; mouth 406 x 406 mm, depth
+  380 mm, driver coupling round and matching the exit.
+- **Tests:** fake mesh + fake multi-channel solver end-to-end (finite J, NetworkSolution, per-channel record arrays);
+  re-scoring with another mid stem and `hp_hz` hits the solve cache (no new solve) and changes J; every new config and
+  brief validates; the real CAD+BEM run is `slow`+`gpu`. Focused MEH 192 passed.
+- **Deliberate adjustments:** brief envelopes use the C0 outer box (406.4 x 406.4 x 380) rather than the draft's 370;
+  the T1 brief lists one CD (the M6 validator allows exactly one); T2-B uses the T2 brief's HF1440, so its port
+  centroid is 39.9 mm vs the layout table's 41 mm (an HF108 T2-B needs its own brief).
+- **Open gap (not M7's file):** `design/generated.py` has no `name: meh` materialize branch, so the seeds are
+  CAD-native (`seed_params.cad`, `bounds: {}`) and not CMA-searchable until that ~20-line dispatch lands.
+
 ## 2026-10-31 - M8 EVIDENCE DOC WRITTEN; READINESS LINKS 1-2 PROVEN, 3-6 NOT RUN
 
 - `docs/evidence/MEH_M8_2026-10-31.md` (INDEX updated) records, with quoted logs from `runs/meh_m8/`: the fork
