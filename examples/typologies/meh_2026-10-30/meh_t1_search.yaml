@@ -40,14 +40,18 @@ bounds:
   port_along_mm: {lo: 12, hi: 35}
   slide_mm: {lo: -10, hi: 40}
 mesh:
-  epw: 4.2
+  epw: 4.05              # smallest mesh whose source patches still resolve 12 kHz (4.0 = 11.93 kHz,
+                         # 4.2 = 8,625 dofs and a 7.9/8.19 GB peak that killed the sweep)
   quadrants: '1'
-  dof_cap_screen: 9000
+  dof_cap_screen: 8200   # contracted 41-frequency band at epw 4.05 (~8.0k dofs, ~15 % less VRAM)
   dof_cap_verify: 9000
   dof_cap_final: 9000
   dof_per_triangle: 0.51
 solve:
   backend: beat_cuda
+  # NB: cuda_fused cannot do a MEH solve - HORNLAB_BEAT_FUSED_BM_CUDA refuses >1 channel.
+  # The unfused 8,625-dof mesh needs ~7.9 of the 8 GB card, which a 41-frequency sweep
+  # cannot survive (CUDA 719, measured twice), so the screen cap below buys the headroom.
   # MEH contract C11/M7: score the brief's own 120-12,000 Hz band at 1/6 octave
   # (41 points). Opt-in: absent in every other config, so no existing solve hash moves.
   freq_grid: {lo_hz: 120, hi_hz: 12000, points_per_octave: 6}

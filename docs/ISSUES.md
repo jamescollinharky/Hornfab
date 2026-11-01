@@ -42,10 +42,12 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
 - **DONE (M8 screen):** T2 40-eval CMA + verify -> J 9.530 -> 11.894 (best `ed11d2cd3acc`); T1 40-eval CMA + verify
   -> J 13.228 -> 14.512 (best `704051ae928c`). Runs `20261101T004552Z-screen-427d57` and
   `20261101T015657Z-screen-fc1d24`; evidence `docs/evidence/MEH_M8_2026-10-31.md` s8.
-- **BLOCKED (screen band, owner chose the contracted band):** the 41-frequency 120-12,000 Hz grid does not fit the
-  8 GB card - two clean attempts died (CUDA 719, then worker_exit) at 7,908 / 7,897 MiB peaks; the ceiling is
-  per-frequency, not cumulative. Options: (A) lower the dof cap (~7,000, wall floor ~4.7 kHz), (B) a larger card,
-  (C) keep the 500-10k 12-point screen and record the gap. Not yet tried: `solve.cuda_fused: true`.
+- **IN PROGRESS (screen band, owner chose the contracted band):** the 8,625-dof mesh peaks 7.9/8.19 GB and the
+  41-frequency sweep dies (CUDA 719 / worker_exit, measured); `cuda_fused` refuses multi-channel by design. Fixed by
+  epw 4.05: 8,044 (T2) / 7,977 (T1) dofs, source patches still resolve 12 kHz, ~15 % less VRAM. Grid is the contracted
+  41 frequencies 120-12,000 Hz at 1/6 octave; screen relaunched.
+- **CAVEAT (same run):** at epw 4.05 the rigid walls resolve to ~5.9 kHz, so 6-12 kHz is driven-patch-accurate but
+  wall-coarse. Any high-band number from this grid carries that caveat.
 - **DONE (worker recycling):** opt-in `solve.worker_restart_every` (fake-tested), set to 8 in both MEH search
   configs; it does not rescue the 8 GB ceiling but is committed for larger cards.
 - **OPEN (verify fidelity):** `verify` reports that the verify mesh equals the screen mesh at the current band/caps;

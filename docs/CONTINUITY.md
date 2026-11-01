@@ -23,6 +23,19 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (05:50 EDT) - CONTRACTED BAND MADE TO FIT: epw 4.05, 8,044 dofs, SCREEN RUNNING
+
+- **`cuda_fused` is NOT an option for the MEH**: `HORNLAB_BEAT_FUSED_BM_CUDA supports exactly one channel`, so the
+  fused path can never do a multi-tag solve at any dof count (the queue failed 3 candidates in 90 s; stopped).
+- **The 12 kHz source-patch gate sets the mesh floor.** Measured with `run --dry-run`: epw 4.2 -> 8,625 dofs (7.9/8.19 GB
+  peak, sweep dies); 3.8 -> entry_mid resolves only 11.28 kHz (refused); 4.0 -> driver 11.93 kHz (refused);
+  **4.05 -> 8,044 dofs (T2) / 7,977 (T1), patches valid above 12 kHz, ~15 % less VRAM.** Both configs now dry-run OK
+  with the full contracted grid: **41 frequencies, 120-12,000 Hz at 1/6 octave**.
+- **Screen relaunched** on that configuration (log `runs/nights/meh_{t2,t1}_screen_120_12k.log`); the estimator says
+  853 s / 803 s per candidate, i.e. a multi-hour run per brief - the measured first-candidate time goes in the evidence
+  doc. Wall-resolution caveat stands and is now slightly worse: at epw 4.05 the rigid walls resolve to ~5.9 kHz, so
+  the top of the band is driven-patch-accurate but wall-coarse.
+
 ## 2026-11-01 (05:10 EDT) - CONTRACTED 41-FREQUENCY BAND DOES NOT FIT THE 8 GB CARD (measured twice)
 
 - **Run 1 (plain):** one 41-frequency sweep on the T2-A seed (8,625 dofs) ran 1,851 s and died with
