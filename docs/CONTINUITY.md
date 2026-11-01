@@ -2,6 +2,15 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-01 (later) - CI unblock: the preview-shape suite skips when the optional mesher is absent
+
+- main's GitHub Actions run had been red since 2026-10-29 with a **collection error**, not a test
+  failure: `tests/test_gui_preview_shape.py` imports `gui.preview`, which raises RuntimeError when
+  `hornlab_mesher.preview` is not importable, and CI installs the package with `--no-deps` (the
+  mesher pin is deliberately not installed there). One module-level guard now skips only when the
+  mesher is absent; a **present** mesher whose pinned preview API changed still fails loudly.
+- No product code changed; locally (mesher installed) the file still runs its 12 tests.
+
 ## 2026-11-01 - MERGED: PR #17 (Metal, budget hint, staged A/B, CMA covariance + pin plan) + the hardware-neutrality rule
 
 - **Merged:** jamescollinharky's PR #17 (`36c6712`, 4 commits, 32 files, +3135/-40) squashed onto `main`: `beat_metal` backend + Mac path, Hansen `max(150, 100*N)` budget hint (`GET /api/budget-hint`), staged MACRO->SHAPE A/B harness (`tools/run_staged_search.py`), end-of-run `cma_covariance` (`run.json` + `cma/covariance.json` + GUI table), CMA-driven `pin-plan` (CLI + run-detail table), `--restarts-mode` / `--restarts-max` (CLI + Launch/Compose).
