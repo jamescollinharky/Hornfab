@@ -50,8 +50,9 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   9.530 -> 9.727 with a different mid driver and hp_hz, cached, no new solve).
 - **FAIL (readiness link 4):** the inner optimiser takes 6.58 s for 1,224 CMA evaluations on the shipped T2 brief,
   3.3x the hand-off's < 2 s gate. Per-evaluation cost is 5.4 ms, so this is an evaluation-budget/combo decision.
-- **NOT PROVEN (readiness link 3):** the CD-only sweep shows no notch near the 1-D 1.01 kHz; the network-coupled
-  passive-mid response has not been run.
+- **PARTIAL (readiness link 3):** with the mid drive muted, a 9.19 dB notch appears between 1200 and 1300 Hz
+  (+18.7 % to +28.6 % of the 1-D 1.0108 kHz), so the +-20 % gate is met only at the lower edge of that interval. A
+  25 Hz sweep over 1150-1350 Hz is needed to place the centre.
 - **BLOCKED (M8 step 3):** the meh CAD tool refuses a full model (quarter open shell only), so quarter-vs-full cannot
   be measured without extending the tool.
 - **BLOCKED (M9):** Boundary Lab is not present in this workspace; it needs its own environment (pins BEAT 0.6.0).

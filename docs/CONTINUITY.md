@@ -23,6 +23,18 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (01:45 EDT) - READINESS LINK 3 MEASURED: PASSIVE-MID NOTCH FOUND, PARTIAL AGAINST +-20 %
+
+- The CD-only BEM sweep cannot show the port notch (an undriven L1 port is a rigid patch), so the check was redone
+  properly: dense MULTI-TAG solve on the T2-A seed (10 frequencies 700-1800 Hz, 679.8 s), inner optimiser on that
+  response (4.82 s, xo 673.7 Hz, order 2), mid channel muted to -300 dB, then `system_response`.
+- **Result [measured]:** on axis, SPL 27.08 dB at 1000 Hz, 26.18 at 1100, 24.93 at 1200, then 34.12 at 1300 - a
+  9.19 dB notch whose centre lies between 1200 and 1300 Hz. That is **+18.7 % to +28.6 %** of the 1-D 1010.8 Hz
+  prediction, so the +-20 % gate is met only at the very bottom of that interval; the likely centre (~1250 Hz,
+  +23.7 %) is outside. **PARTIAL, not a clean pass.** Placing it needs a 25 Hz sweep over 1150-1350 Hz.
+- Logs: `runs/meh_m8/readiness3_coupled.log`, `readiness3_verdict.log`; arrays
+  `runs/meh_m8/link3_muted_mid.npz`. Evidence doc section 9 row 3 updated.
+
 ## 2026-11-01 (01:20 EDT) - READINESS PROOF MEASURED ON THE STORED T2 WINNER: 4 PASS, 1 FAIL, 1 NOT PROVEN
 
 - **Link 1 geometry PASS** (tags 1/2/10, 8,625 nodes, quarter planes; seed repairs slide 10 -> 32; walls resolve to
