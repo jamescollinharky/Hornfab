@@ -42,9 +42,12 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
 - **DONE (M8 screen):** T2 40-eval CMA + verify -> J 9.530 -> 11.894 (best `ed11d2cd3acc`); T1 40-eval CMA + verify
   -> J 13.228 -> 14.512 (best `704051ae928c`). Runs `20261101T004552Z-screen-427d57` and
   `20261101T015657Z-screen-fc1d24`; evidence `docs/evidence/MEH_M8_2026-10-31.md` s8.
-- **IN PROGRESS (screen band, owner chose the contracted band):** opt-in `solve.freq_grid` gives 41 frequencies
-  120-12,000 Hz at 1/6 octave; both MEH search configs set it and the contracted-band screen is relaunched. The first
-  (500-10k) run and its evidence remain valid as a separate grid group; never rank across the two.
+- **BLOCKED (screen band, owner chose the contracted band):** the 41-frequency 120-12,000 Hz grid does not fit the
+  8 GB card - two clean attempts died (CUDA 719, then worker_exit) at 7,908 / 7,897 MiB peaks; the ceiling is
+  per-frequency, not cumulative. Options: (A) lower the dof cap (~7,000, wall floor ~4.7 kHz), (B) a larger card,
+  (C) keep the 500-10k 12-point screen and record the gap. Not yet tried: `solve.cuda_fused: true`.
+- **DONE (worker recycling):** opt-in `solve.worker_restart_every` (fake-tested), set to 8 in both MEH search
+  configs; it does not rescue the 8 GB ceiling but is committed for larger cards.
 - **OPEN (verify fidelity):** `verify` reports that the verify mesh equals the screen mesh at the current band/caps;
   only the frequency count and balloon size change. A true higher-fidelity mesh needs a raised dof cap or a lower band.
 - **DONE (readiness, measured on the stored T2 winner):** link 1 PASS, link 2 PASS, link 5 PASS, link 6 PASS (J

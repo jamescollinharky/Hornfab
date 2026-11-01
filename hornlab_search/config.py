@@ -956,6 +956,14 @@ def load_config(path, *, brief=None, cma_seed: int | None = None) -> Config:
     if solve_section.get("freq_grid") is not None:
         _validate_freq_grid(solve_section["freq_grid"], f"{where}:solve")
         solve_section.pop("freq_grid")
+    if "worker_restart_every" in solve_section:
+        try:
+            _restart = int(solve_section["worker_restart_every"])
+        except (TypeError, ValueError):
+            raise ConfigError(f"{where}:solve: worker_restart_every must be an integer") from None
+        if _restart < 1:
+            raise ConfigError(f"{where}:solve: worker_restart_every must be >= 1 (got {_restart})")
+        solve_section.pop("worker_restart_every")
     solve = _build(SolveSettings, solve_section, f"{where}:solve",
                    optional=("cuda_fused", "source_motion", "near_correction",
                              "near_correction_cutoff", "near_correction_order",
@@ -1139,6 +1147,10 @@ def solve_spec(mode: Mode, cfg: Config) -> SolveSpec:
     # WP15: cuda_fused rides in `extra` so the solve-spec hash (cache key, dataset provenance)
     # changes ONLY when the opt-in is actually set; absent leaves every old hash untouched.
     extra: dict = {"cuda_fused": True} if bool(getattr(s, "cuda_fused", False)) else {}
+    _restart_every = (getattr(cfg, "raw", None) or {}).get("solve", {}).get("worker_restart_every") \
+        if isinstance((getattr(cfg, "raw", None) or {}).get("solve"), dict) else None
+    if _restart_every is not None:
+        extra["worker_restart_every"] = int(_restart_every)
     # WP5: 'normal' is today's beat source and must NOT enter `extra` (old hashes unchanged).
     if str(getattr(s, "source_motion", "normal")) != "normal":
         extra["source_motion"] = str(s.source_motion)

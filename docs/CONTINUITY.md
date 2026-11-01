@@ -23,6 +23,28 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (05:10 EDT) - CONTRACTED 41-FREQUENCY BAND DOES NOT FIT THE 8 GB CARD (measured twice)
+
+- **Run 1 (plain):** one 41-frequency sweep on the T2-A seed (8,625 dofs) ran 1,851 s and died with
+  `CUDA error: unspecified launch failure (code 719)`; VRAM peaked **7,908 of 8,188 MiB** (2 s poller,
+  880 samples). The screen queue then failed every candidate the same way, so it was stopped.
+- **Run 2 (with the new opt-in worker recycling):** `solve.worker_restart_every: 8` restarts the host every
+  8 solved frequencies. The sweep still died (`[worker_exit] ConnectionResetError`) at a **7,897 MiB** peak.
+- **Interpretation [measured]:** the ceiling is **per-frequency transient**, not cumulative - the 12-frequency
+  500-10,000 Hz screens also peak 7.87-7.92 GB and survive only because they make fewer draws, while 41 draws
+  sit close enough to the edge that one crossing kills the sweep. Recycling cannot buy margin it does not have.
+- **Committed anyway (green, useful on a larger card):** `worker_restart_every` (validated at load, forwarded
+  into the solve `extra` only when set, fake-tested in `tests/test_solve_worker_restart.py`), set to 8 in both
+  MEH search configs; full offline suite green.
+- **Blocked decision for the owner:** (A) lower the dof cap for the contracted band (about 7,000 dofs gives
+  ~35 % VRAM headroom but pushes the wall-resolution floor to ~4.7 kHz); (B) run the contracted band on a
+  card with more VRAM; (C) keep the 500-10,000 Hz 12-point screen and record the band gap. The 500-10k
+  screens and their verified winners stand; never rank across the two grids.
+- **Not yet tried:** `solve.cuda_fused: true` (WP15 fused single-matrix assembler, documented as reaching
+  ~20k quarter dofs on this 8 GB card). It is the one remaining way to fit 41 frequencies at 8,625 dofs
+  without coarsening the mesh; it changes the solve hash and costs a small numeric difference (M5B parity
+  0.020 / 0.039 dB).
+
 ## 2026-11-01 (03:45 EDT) - CONTRACTED 120 Hz-12 kHz BAND: OPT-IN solve.freq_grid, SCREEN RELAUNCHED
 
 - **Owner decision:** screen over the contracted 120 Hz-12 kHz band (not the frozen 500-10,000 screen grid).

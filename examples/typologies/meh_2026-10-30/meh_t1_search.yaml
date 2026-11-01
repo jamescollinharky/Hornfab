@@ -51,6 +51,9 @@ solve:
   # MEH contract C11/M7: score the brief's own 120-12,000 Hz band at 1/6 octave
   # (41 points). Opt-in: absent in every other config, so no existing solve hash moves.
   freq_grid: {lo_hz: 120, hi_hz: 12000, points_per_octave: 6}
+  # 41 frequencies grow the persistent host past the 8 GB card's ceiling (measured: CUDA
+  # 719 at 7,908 MiB). Recycle the host every 8 solved frequencies; opt-in only.
+  worker_restart_every: 8
   distance_m: 2.0
   angle_count: 73
   balloon: true

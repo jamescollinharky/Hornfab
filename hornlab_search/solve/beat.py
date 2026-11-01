@@ -730,12 +730,25 @@ class BeatBackend:
         log.debug("beat frequencies_hz: %r  mesh: %s", freqs, mesh.path)
         deadline = None if self.timeout_s is None else time.perf_counter() + float(self.timeout_s)
         groups = [[f] for f in freqs] if self.per_frequency_calls else [freqs]
+        # MEH (2026-10-31): a long sweep grows the persistent host's VRAM pool until a CUDA
+        # launch failure on the 8 GB card (measured: 41 frequencies peaked 7,908/8,188 MiB and
+        # died with code 719 after completing the sweep). ``worker_restart_every`` recycles the
+        # host between chunks; absent = today's single host, so no other solve changes.
+        restart_every = int((spec.extra or {}).get("worker_restart_every", 0) or 0)
         raws = []
-        for g in groups:
+        for index, g in enumerate(groups, start=1):
             if deadline is not None and time.perf_counter() > deadline:
                 raise TimeoutError(f"solve exceeded timeout_s={self.timeout_s} after "
                                    f"{len(raws)}/{len(groups)} frequency calls")
             raws.append(beat.solve_frequencies(mesh.path, g, cfg))
+            if restart_every and index % restart_every == 0 and index < len(groups):
+                try:
+                    worker.shutdown(verify=True)
+                except Exception as exc:  # noqa: BLE001 - a surviving host is not fatal here
+                    log.warning("worker recycle after %d/%d calls could not verify release (%r); "
+                                "forcing recovery", index, len(groups), exc)
+                    worker.recover_after_failure(self.name)
+                worker.mark_cold(self.name)
         return _stack(raws, freqs)
 
     def _solve(self, mesh: MeshResult, spec: SolveSpec, *, surface_traces: bool):
