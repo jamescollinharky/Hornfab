@@ -23,6 +23,13 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (06:50 EDT) - EVIDENCE DOC AND INDEX CORRECTED TO MATCH THEIR OWN CONTENT
+
+- `docs/evidence/MEH_M8_2026-10-31.md` was still titled "readiness links 1-2 (partial)" although it had grown to the
+  six-line readiness proof, both screen pairs with verify arms, the two hard blocks and the band finding. Title
+  corrected (with a dated note) and the `docs/INDEX.md` entry rewritten to state the actual verdicts: links 1/2/5/6
+  PASS, link 4 FAIL, link 3 PARTIAL, screens verified, blocks listed. No measured number changed.
+
 ## 2026-11-01 (06:40 EDT) - HARDWARE HAND-OFF WRITTEN (next agent: compute configuration)
 
 - `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` (INDEX updated) is the whole brief for whoever works out what to run
