@@ -39,8 +39,18 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   reduced-vs-full symmetry all pass. The M2 Julia testset needed three fixture fixes (commit `93ef848`/`1efdc6f`);
   properties and tolerances unchanged.
 - **DONE (M8 step 2):** single-tag parity vs the current pin <= 5.91e-5 dB on two finalists (floor 0.039 dB).
-- **DONE (M8 step 2b, owner-approved):** solver pin bumped to `1efdc6f` (fork branch pushed); reinstalled, full
-  offline suite green. `SolveConfig.impedance_matrix` and `source_tags` are live.
+- **DONE (M8 screen):** T2 40-eval CMA + verify -> J 9.530 -> 11.894 (best `ed11d2cd3acc`); T1 40-eval CMA + verify
+  -> J 13.228 -> 14.512 (best `704051ae928c`). Runs `20261101T004552Z-screen-427d57` and
+  `20261101T015657Z-screen-fc1d24`; evidence `docs/evidence/MEH_M8_2026-10-31.md` s8.
+- **OPEN (screen band):** the screen solved 12 frequencies 500-10,000 Hz, not the brief's 120-12,000 Hz; the objective
+  scored 10 in-band points and never saw 120-500 Hz or 10-12 kHz. The contracted 1/6-octave 120-12k grid is not run.
+- **OPEN (verify fidelity):** `verify` reports that the verify mesh equals the screen mesh at the current band/caps;
+  only the frequency count and balloon size change. A true higher-fidelity mesh needs a raised dof cap or a lower band.
+- **OPEN (readiness 4-6):** link 4 measured only as the inner optimiser's unit timing; link 5 shown by the two 40-eval
+  screens but not written as the six-line pass/fail block; link 6 exercised on fake records only. Link 3 (notch vs
+  1-D) still needs the network-coupled check; the dense CD-only sweep shows no on-axis notch (rising through 1.01 kHz,
+  peak 1.25 kHz, monotone fall after 1.35 kHz).
+- **OPEN (M8 step 3-4, M9):** quarter-vs-full comparison, L0 vs L1, and the Boundary Lab export/cross-check are not run.
 - **DONE (M10):** bass box - 7 woofer files, `tools/bassbox.py`, 65 tests, `BASSBOX_2026-10-31.md`. Recommendation:
   1 x FaitalPRO 18XL1800 sealed 55 L net + LT; pair = +6 dB; smallest = 1 x 15XL1400 sealed 38 L.
 - **OPEN (task text):** M10's "B4 (fs = fb, Qts 0.383, alpha 1) is -3 dB at fs" is wrong for the lossless vented

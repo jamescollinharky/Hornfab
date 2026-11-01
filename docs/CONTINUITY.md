@@ -23,6 +23,25 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (00:45 EDT) - MEH SCREEN DONE: T2 J 9.53 -> 11.89 verified, T1 J 13.23 -> 14.51 verified
+
+- **Two 40-evaluation CMA screens + verify top 2 each, all on the new pin on the owner's GPU** [measured]:
+  T2 `runs/20261101T004552Z-screen-427d57` best `ed11d2cd3acc` screen J **9.530** (second `719aeb7a4ff0` 9.550),
+  verify **11.894 / 11.804**; T1 `runs/20261101T015657Z-screen-fc1d24` best `704051ae928c` screen J **13.228**
+  (second `9b6548cc2a6c` 13.556), verify **14.512 / 14.636**. Details in `docs/evidence/MEH_M8_2026-10-31.md` s8.
+- **T2 beats T1 on its own brief's J** (9.53 vs 13.23 screen, 11.89 vs 14.51 verify). `lw_resid` dominates both
+  (7.8 / 13.1 of J); `notch` is 0.0 in both, so the listening-window penalty is broad-band. Both winners push the
+  driver to the top of the slide range (T2 `slide 35.2`, T1 36.1) and the ports low (`z_frac` 0.09 / 0.26).
+- **One T2 verify design failed on a VRAM-ceiling worker reset** (7.9 GB of 8 GB) and the auto re-warm failed; after
+  killing the stale BEAT host and confirming 1.36 GB idle, `verify --top 2` gave `2 designs, 0 failed`. The retry is
+  recorded in the evidence doc; no tolerance changed.
+- **`n_nan 12` in the winning record is not a metric failure:** `on_axis_db` is finite at all 12 frequencies and
+  `n_nan_ripple 0`; the 12 NaNs are the synthesis's deliberately-NaN impedance array.
+- **Two gaps opened by the screen (ISSUES):** (1) the solved grid was 12 frequencies 500-10,000 Hz, not the brief's
+  120-12,000 Hz, so the objective scored `n_in_band 10` and never saw 120-500 Hz or 10-12 kHz; (2) `verify`'s own
+  line says the verify mesh equals the screen mesh - only the frequency count and balloon size change, so it is a
+  re-score, not a finer mesh.
+
 ## 2026-10-31 (20:45 EDT) - MEH SCREEN LAUNCHED (T2 then T1, 40 evals each, then verify top 2)
 
 - `examples/typologies/meh_2026-10-30/meh_t1_search.yaml` added (the T1 seed through the `meh` generator; seed
