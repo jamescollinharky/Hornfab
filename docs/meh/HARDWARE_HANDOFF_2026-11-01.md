@@ -48,7 +48,6 @@ see ISSUES).
 | 5-frequency multi-tag solve, 12 kHz mesh | 5 | 8,625 | 360 s incl. cold start (~36-45 s/freq) | ~7.9 GB |
 | dense multi-tag sweep, 12 kHz mesh | 10 | 8,625 | 680 s (~45-68 s/freq) | ~7.9 GB |
 | contracted-band sweep (120-12k, 1/6 oct) | 41 | 8,625 | 1,851 s then **CUDA 719** | **7,908 / 8,188 MiB** |
-| 5-frequency multi-tag solve, cold host | 5 | 8,625 | 360 s (cold start included) | ~7.9 GB |
 | 10-frequency multi-tag sweep, cold host | 10 | 8,625 | 680 s | ~7.9 GB |
 | inner network optimiser only | - | - | 6.58 s (1,224 evaluations) | 0 |
 
@@ -66,9 +65,11 @@ the single most consequential number for hardware choice.
 
 Two facts dominate everything else:
 
-- **VRAM is flat at ~7.9 GB whether the mesh is 6,032 or 8,625 dofs.** The peak is a per-frequency workspace,
-  not a function of dof count in this range. That is why the 8 GB card dies on long sweeps but survives short
-  ones: it is always within ~300 MiB of the ceiling, and a sweep is many draws.
+- **Observed device use sits at ~7.9 GB near the ceiling on short sweeps and long ones alike.** The original
+  reading of this - "a flat per-frequency workspace, independent of dof count" - is WITHDRAWN (s2a): that is
+  total device use with CUDA.jl caching, not live working set. What is established is narrower: this card is
+  within ~300 MiB of its ceiling whenever it solves a 12 kHz MEH mesh, so a long sweep is many draws against a
+  thin margin, and it failed twice.
 - **Wall time scales with frequencies and elements, and the mesh floor is set by the top frequency.** Going from
   the 10 kHz screen grid (11.8k elements) to the 12 kHz grid (16.9k elements) roughly tripled solve time per
   frequency; element-level assembly is O(E^2) and the operator inversion adds its own super-linear term.
@@ -155,7 +156,7 @@ Do not pick a card by marketing numbers. Do this:
 
 | axis | why it matters here | what to check |
 |---|---|---|
-| VRAM | B1 is pure capacity; the measured peak is ~7.9 GB at 6-8.6k dofs, so 24 GB gives ~3x headroom, 48 GB allows the finer 12 kHz meshes | peak per frequency at 17k and 35k elements |
+| VRAM | B1 is capacity. Observed device use is ~7.9 GB at 6-8.6k dofs (not a live working-set figure, see s2a), so 24 GB is the smallest tier with plausible headroom; whole-wall 12 kHz needs the 141 GB tier | live-vs-reserved memory per frequency at 17k and 35k dofs |
 | memory bandwidth | assembly and field evaluation stream large arrays; likely the dominant scalar for s/freq | measure s/freq vs BW across tiers |
 | FP32 throughput | the engine runs Float32 on CUDA; do not pay for FP64 | s/freq vs TFLOPS at matched BW |
 | CPU cores | gmsh per candidate, the inner optimiser, and N parallel lanes each need a core set | 16-32 cores for 4-8 lanes |
@@ -171,10 +172,13 @@ compare $/candidate-hour at the campaign's fidelity, not $/hour.
 
 ### 5b. Unified and coherent-memory configurations (evaluate explicitly)
 
-The interesting property of unified memory here is that our per-frequency working set is a **flat ~7.9 GB**
-regardless of mesh size in the 6-8.6k dof range. That is exactly the case where "more memory than VRAM"
-sounds attractive - and exactly the case where it usually is not, because BEM assembly and the operator
-solve are bandwidth-bound. Spilling that working set over a PCIe-class link (~32-64 GB/s) instead of
+Unified memory looks attractive here because the observed device use sits near the card's ceiling at the
+sizes we run. Be precise about what that means: it is a device-use trace, not a measured live working set
+(the audit in `docs/evidence/HARDWARE_2026-11-01.md` is right about this, and s2a records the correction).
+What the source does establish is that the pinned CUDA path holds several N x N and N x E complex64
+operators plus identity caches per frequency, so the working set grows with N and E and reaches ~85 GiB at
+the first globally valid whole-wall 12 kHz mesh. Spilling that over a PCIe-class link is the failure mode
+to test for; BEM assembly and the operator solve are bandwidth-bound, not capacity-bound. Spilling that working set over a PCIe-class link (~32-64 GB/s) instead of
 GPU memory (~256-3,300 GB/s) does not make a solve slower by a little, it makes it 5-50x slower.
 
 So the test for any unified machine is not capacity, it is **bandwidth through the spill path**. Evaluate:

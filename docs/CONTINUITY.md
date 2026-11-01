@@ -32,6 +32,14 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (07:55 EDT) - HAND-OFF TIDIED: WITHDRAWN VRAM CLAIM REMOVED FROM THE AXES AND UNIFIED-MEMORY SECTIONS
+
+- The s2a corrections block covered s2, but s5 (axes table) and s5b (unified memory) still asserted the withdrawn
+  "flat per-frequency workspace" reading as fact. Both now state what is actually established (device use sits within
+  ~300 MiB of the ceiling whenever a 12 kHz MEH mesh solves; the pinned CUDA path holds several N x N and N x E
+  complex64 operators plus identity caches, ~85 GiB at the first globally valid whole-wall mesh) and point at s2a.
+- Removed a duplicated 5-frequency row my earlier table patch had introduced. No measured value changed.
+
 ## 2026-11-01 (07:40 EDT) - HARDWARE AUDIT REVIEWED; FOUR OF MY CLAIMS CORRECTED IN THE HAND-OFF
 
 - The fresh-eyes audit (`docs/evidence/HARDWARE_2026-11-01.md`, Codex session) is sound. I reproduced its two
