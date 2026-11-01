@@ -23,6 +23,20 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-10-31 (20:45 EDT) - MEH SCREEN LAUNCHED (T2 then T1, 40 evals each, then verify top 2)
+
+- `examples/typologies/meh_2026-10-30/meh_t1_search.yaml` added (the T1 seed through the `meh` generator; seed
+  `slide_mm 14` = the repaired value for the HF108 body). Dry-run [measured]: 11,730 triangles, 6,009 dofs, 12
+  frequencies 500-10,000 Hz, ~58 s/candidate, ~39 min for 40 evaluations.
+- **Screen running detached** (`scratch/meh/run_meh_screen.ps1`, logs `runs/nights/meh_{t2,t1}_screen.log` +
+  `meh_{t2,t1}_verify.log`, summary `runs/nights/meh_screen_summary.txt`). First T2 run
+  `runs/20261101T004552Z-screen-427d57`; 4 records after ~4 min, VRAM 2.9 GB idle / 7.8 GB during assembly (8 GB
+  card), one GPU job at a time.
+- `tests/test_end_to_end_meh.py` now accepts BOTH seed shapes (a CAD-authored seed and a `generator: meh` seed) via
+  `_seed_recipe`; the generator search config is checked against the same T2-A reference row. The old two tests
+  assumed every MEH config carried `seed_params.cad`, which stopped being true when the searchable config landed.
+- Full offline suite after the generator dispatch and both test fixes: exit 0.
+
 ## 2026-10-31 - MEH SEARCH UNBLOCKED: `generator: meh` DISPATCH + SEARCHABLE T2-A CONFIG
 
 - **`design/generated.py`** gains `meh_params()` and its `materialize` dispatch (the gap M7 flagged). Recipe = the

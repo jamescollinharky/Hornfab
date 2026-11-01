@@ -42,6 +42,15 @@ def _tool():
 # ------------------------------------------------------------------ configs
 
 
+def _seed_recipe(cfg):
+    """The seed's CAD recipe: a CAD-authored seed carries it, a generator seed materialises it."""
+    gen = getattr(cfg, "generator", None) or {}
+    if str(gen.get("name", "")) == "meh":
+        from hornlab_search.design.generated import materialize
+        return materialize(gen, dict(cfg.seed_params), cfg.brief)["cad"]
+    return cfg.seed_params["cad"]
+
+
 @pytest.mark.parametrize("path", CONFIG_PATHS, ids=lambda p: p.stem)
 def test_every_meh_config_loads_as_a_cad_seed(path):
     cfg = load_config(path)
@@ -51,20 +60,26 @@ def test_every_meh_config_loads_as_a_cad_seed(path):
     assert cfg.objective_params["cov_narrow_ratio"] == 2.0
     assert cfg.mesh.quadrants == "1"                 # C2: quarter meh STEP
     assert cfg.brief is not None and cfg.brief.get("meh")
-    recipe = cfg.seed_params["cad"]
+    recipe = _seed_recipe(cfg)
     assert recipe["tool"] == step_build.MEH_TOOL
-    # Every C9 recipe key is explicit (no hidden tool defaults in a YAML seed).
+    # Every C9 recipe key is explicit (no hidden tool defaults in a YAML or generator seed).
     assert set(recipe) - {"tool"} == set(_tool().KEYS)
-    assert cfg.bounds_raw == {}
+    if str((getattr(cfg, "generator", None) or {}).get("name", "")) == "meh":
+        # A generator seed exposes exactly the six C9 search knobs.
+        assert set(cfg.bounds_raw) == {"across_frac", "cov_h_deg", "cov_v_deg", "port_along_mm",
+                                       "slide_mm", "z_frac"}
+    else:
+        assert cfg.bounds_raw == {}
 
 
 @pytest.mark.parametrize("path", CONFIG_PATHS, ids=lambda p: p.stem)
 def test_every_meh_config_derives_the_layout_out_seed(path):
     cfg = load_config(path)
-    recipe = cfg.seed_params["cad"]
+    recipe = _seed_recipe(cfg)
     derived = _tool().derived(recipe)
     assert derived["ok"], derived["reasons"]
-    want = SEEDS[cfg.name]
+    # The generator search config is the same T2-A geometry as its CAD-authored sibling.
+    want = SEEDS[cfg.name if cfg.name in SEEDS else "meh_t2a"]
     assert derived["walls"] == want["walls"]
     assert len(derived["ports"]) == want["ports"]
     assert derived["z_m"] == pytest.approx(want["z_m"], abs=0.6)
