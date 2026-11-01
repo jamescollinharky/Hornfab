@@ -1,4 +1,4 @@
-﻿"""M7: the MEH branch of ``search/evaluate.py`` against a fake mesh + fake solver.
+"""M7: the MEH branch of ``search/evaluate.py`` against a fake mesh + fake solver.
 
 No BEM solve, no Julia, no GPU. The mesh is a synthetic ``MeshResult`` plus the
 ``mesh_meta.json`` the M5 CAD route writes (recipe + ``derived()``); the backend returns a

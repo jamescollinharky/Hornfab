@@ -1,4 +1,4 @@
-﻿"""M7: the MEH briefs and CAD seed configs, plus the real-solver end-to-end gate.
+"""M7: the MEH briefs and CAD seed configs, plus the real-solver end-to-end gate.
 
 The offline tests load every MEH config/brief and compare the CAD tool's ``derived()`` layout
 with ``calc/layout_out.md`` "Final seeds" (CPU, pure numpy; no gmsh, no solver). The real
