@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 import yaml
 
+from conftest import requires_mesher
 from hornlab_search.config import load_config
 from hornlab_search.design.generators import grid as G
 from hornlab_search.gui import data as D
@@ -48,6 +49,7 @@ def test_morph_capability_rule():
     assert by["ath_twinray_380"]["morph_capable"] is False
 
 
+@requires_mesher
 def test_morph_knobs_reach_a_native_config_that_does_not_declare_them():
     base = D.preview_shape(ROOT, "osse_baseline", _q("osse_75x45"))
     assert base["morph_capable"] is True
@@ -59,6 +61,7 @@ def test_morph_knobs_reach_a_native_config_that_does_not_declare_them():
     assert shrunk["dims"]["w"] < base["dims"]["w"] - 50
 
 
+@requires_mesher
 def test_rows_typologies_do_not_take_morph():
     out = D.preview_shape(ROOT, "lecleach_rollback", _q("lecleach_rollback_14in", morph_target=1))
     assert out["morph_capable"] is False
@@ -67,6 +70,7 @@ def test_rows_typologies_do_not_take_morph():
 
 # ------------------------------------------------------------------ draw what a search refuses
 
+@requires_mesher
 def test_a_shape_outside_the_envelope_is_still_drawn_with_the_reason():
     out = D.preview_shape(ROOT, "salmon_elliptical", _q("organic_rollback_14in", g_fc_h_hz=600,
                                                         g_fc_v_hz=600))
@@ -76,6 +80,7 @@ def test_a_shape_outside_the_envelope_is_still_drawn_with_the_reason():
         assert any(r.startswith("invalid_envelope") for r in out["rejected"])
 
 
+@requires_mesher
 def test_every_shape_reports_its_measured_size_and_natives_get_a_measured_envelope():
     ath = D.preview_shape(ROOT, "ath_core", _q("ath_core_2in"))
     assert ath["dims"]["w"] == pytest.approx(397, abs=10)            # the published CORE mouth
@@ -85,6 +90,7 @@ def test_every_shape_reports_its_measured_size_and_natives_get_a_measured_envelo
     assert half["quadrants"] == "14" and half["dims"]["h"] > 0
 
 
+@requires_mesher
 def test_brief_that_conflicts_with_a_pinned_driver_explains_instead_of_crashing():
     out = D.preview_shape(ROOT, "osse_baseline", _q("hifi_90x60_2in"))
     assert out["available"] is False
@@ -225,6 +231,7 @@ def test_sandbox_explore_helpers_offline(tmp_path):
 
 # ------------------------------------------------------------------ guiding curve (Ath OS-SE creases)
 
+@requires_mesher
 def test_guiding_curve_is_offered_on_osse_only():
     assert D.gcurve_capable({"family": "OSSE"})
     assert not D.gcurve_capable({"family": "R-OSSE"})
@@ -233,6 +240,7 @@ def test_guiding_curve_is_offered_on_osse_only():
     assert out["gcurve_capable"] is True
 
 
+@requires_mesher
 def test_superformula_guiding_curve_makes_the_coverage_vary_with_direction():
     plain = D.preview_shape(ROOT, "ath_core", _q("ath_core_2in", morph_target=0))
     lobed = D.preview_shape(ROOT, "ath_core", _q(
@@ -248,6 +256,7 @@ def test_superformula_guiding_curve_makes_the_coverage_vary_with_direction():
     assert spread(lobed) > 1.5                       # pinched lobes: the radius swings with azimuth
 
 
+@requires_mesher
 def test_mesher_config_refusal_is_explained_not_a_server_error():
     out = D.preview_shape(ROOT, "osse_baseline", _q(
         "osse_75x45", gcurve_type=1, gcurve_width_mm=380, gcurve_aspect_ratio=0.8, gcurve_dist=0.6,

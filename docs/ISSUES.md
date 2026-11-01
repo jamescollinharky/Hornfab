@@ -35,6 +35,10 @@ Local-only, added 2026-11-01 (**PR #17 merged to main + the hardware-neutrality 
 - **CI:** unblocked main's red Actions run (a collection error from `tests/test_gui_preview_shape.py`
   when the optional mesher is absent under `--no-deps`). The suite now skips in that environment
   instead of aborting the whole run; a changed mesher pin still fails.
+- **CI (part 2):** the remaining ~24 red tests were un-gated optional-dep users (`hornlab_mesher`,
+  `hornlab_beat_bem`, `ribs`) plus 3 Windows-only assertions. All gated/fixed; a missing dep now
+  skips instead of failing. Re-enable real coverage for those areas by installing the pins in CI
+  (or a second job) when that is worth the runner cost.
 
 Local-only, added 2026-10-31 (**staged search A/B protocol + chaining harness; no GitHub issue state changed**):
 - **Landed:** `examples/typologies/staged_ab_2026-10-31/` (joint 60 vs A/B/C 20+20+20 on crease__core_law),

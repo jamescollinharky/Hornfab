@@ -190,6 +190,7 @@ def test_plain_cma_writes_no_archive_and_no_qd_run_json_key(smoke_cfg, tmp_path,
 
 def test_budget_exactness_and_deterministic_resume_match_an_uninterrupted_run(
         smoke_cfg, tmp_path, monkeypatch):
+    pytest.importorskip("ribs", reason="ribs not installed")
     cfg = two_knob_cfg(smoke_cfg, qd=qd_block(bins_h=6, bins_v=6))
     budget = 40
 
@@ -225,6 +226,7 @@ def test_budget_exactness_and_deterministic_resume_match_an_uninterrupted_run(
 
 
 def test_archive_json_matches_the_pinned_contract(smoke_cfg, tmp_path, monkeypatch):
+    pytest.importorskip("ribs", reason="ribs not installed")
     cfg = two_knob_cfg(smoke_cfg, qd=qd_block(bins_h=5, bins_v=4))
     monkeypatch.setattr(qd_mod, "evaluate", knob_eval(cfg))
     run_qd(cfg, tmp_path / "r", 30)
@@ -281,6 +283,7 @@ def test_acceptance_cma_me_covers_most_of_the_grid_scan_reachable_cells(
     """2-knob cheap family: enumerate an 11x11 knob grid through the SAME evaluator, compute the
     cell set that scan reaches at the chosen bins, then run cma_me with a small budget. CMA-ME must
     reach > 50% of the scan-reachable cells."""
+    pytest.importorskip("ribs", reason="ribs not installed")
     from ribs.archives import GridArchive
 
     qd = qd_block(bins_h=8, bins_v=8)

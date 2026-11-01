@@ -2,6 +2,20 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-01 (later) - CI unblock part 2: optional-dep gates + OS-independent assertions
+
+- Remaining pre-existing red: ~24 tests assumed optional deps that CI does not install
+  (`hornlab_mesher`, `hornlab_beat_bem`, `ribs`) and 3 tests only passed on Windows. Now gated with
+  the existing `requires_mesher` / `requires_beat` markers (per-test `pytest.importorskip("ribs")`
+  for the three QD tests, since no `requires_ribs` marker exists).
+- OS fixes, no assertion loosened: `test_cma_files_lists_every_served_pycma_log` writes fixture
+  bytes and expects `len(bytes)` (Windows text mode was CRLF-inflating `version.txt` to 5 bytes);
+  `test_parse_run_dir_variants_and_best_j` builds `tmp_path` paths instead of `C:/work/...`; the
+  sandbox hot-swap pin now matches the shipped `if (curGeo) { ridgeCache.delete(curGeo);
+  curGeo.dispose(); }`.
+- Local: the 11 affected modules run 248 passed; with the three deps simulated absent, 165 passed /
+  41 skipped / 0 failed. No product code changed.
+
 ## 2026-11-01 (later) - CI unblock: the preview-shape suite skips when the optional mesher is absent
 
 - main's GitHub Actions run had been red since 2026-10-29 with a **collection error**, not a test

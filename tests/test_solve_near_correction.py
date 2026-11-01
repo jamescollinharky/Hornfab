@@ -22,7 +22,7 @@ import sys
 import pytest
 import yaml
 
-from conftest import EXAMPLES
+from conftest import EXAMPLES, requires_beat
 from hornlab_search.config import ConfigError, load_config, solve_spec
 from hornlab_search.solve.beat import BeatBackend
 from hornlab_search.types import MeshResult, SolveSpec
@@ -194,6 +194,7 @@ def test_make_config_passes_nothing_when_keys_absent(monkeypatch):
     assert _FakeBeat.SolveConfig.seen["source_motion"] == "normal"
 
 
+@requires_beat
 def test_make_config_forwards_the_library_field_names():
     """Construct the REAL loudspeaker library config on the CPU backend (no GPU/Julia needed)."""
     cfg = load_config(EXAMPLES / "osse_baseline.yaml")

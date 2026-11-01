@@ -294,9 +294,9 @@ def test_only_filters_to_one_job(tmp_path):
 # ------------------------------------------------------------------ pure parsers
 
 
-def test_parse_run_dir_variants_and_best_j():
-    r1 = Path("C:/work/runs/r1")
-    r2 = Path("C:/work/runs/r2")
+def test_parse_run_dir_variants_and_best_j(tmp_path):
+    r1 = tmp_path / "work" / "runs" / "r1"
+    r2 = tmp_path / "work" / "runs" / "r2"
     assert night.parse_run_dir(f"search: x output {r1}\n") == r1
     assert night.parse_run_dir(f"search FAILED: boom (output: {r2})\n") == r2
     assert night.parse_run_dir(

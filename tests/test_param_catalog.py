@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from conftest import requires_mesher
 from hornlab_search.design import families
 from hornlab_search.design.generators import grid, registry
 from hornlab_search.design.params import (
@@ -178,6 +179,7 @@ def test_summaries_are_short_and_placeholder_free():
 # ------------------------------------------------------------------ anchors resolve
 
 
+@requires_mesher
 def test_code_refs_resolve():
     refs = {doc.code_ref for table in (GENERATOR_KNOBS, ROWS_KNOBS, NATIVE_KNOBS)
             for doc in table.values() if doc.code_ref}

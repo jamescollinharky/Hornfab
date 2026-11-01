@@ -209,6 +209,7 @@ def test_mesh_cache_key_separates_mounting_and_is_stable():
 
 # ------------------------------------------------------------------ (d) GRID route
 
+@requires_mesher
 def test_grid_enclosure_drops_outer_points_and_keeps_symmetry(tmp_path, monkeypatch):
     from hornlab_search.constants import C_AIR
     from hornlab_search.design.generators import grid as G
@@ -260,6 +261,7 @@ def test_grid_enclosure_drops_outer_points_and_keeps_symmetry(tmp_path, monkeypa
     assert summary["tag_names"][3] == "SD2G0"
 
 
+@requires_mesher
 def test_grid_route_and_mesher_agree_that_enclosure_excludes_other_topologies():
     """Parity with the mesher's own geometry guard (geometry.py:307-320)."""
     import numpy as np

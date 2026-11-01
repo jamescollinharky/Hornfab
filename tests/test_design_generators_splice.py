@@ -110,6 +110,7 @@ def test_different_parent_r0_is_refused():
 # P3: bounds and monotone zs_frac mapping
 # ---------------------------------------------------------------------------
 
+@requires_mesher
 @pytest.mark.parametrize("bad", [0.19, 0.81, -0.5, 1.5])
 def test_zs_frac_bounds_are_not_widened(bad):
     with pytest.raises(ValueError, match=r"zs_frac must be in \[0\.2, 0\.8\]"):

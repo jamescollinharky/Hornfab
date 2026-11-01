@@ -103,7 +103,8 @@ def test_3d_hot_swap_never_scenes_per_frame():
     on release/hold-idle; the swap path assigns geometry into the ONE scene and disposes the old."""
     src = SANDBOX.read_text(encoding="utf-8")
     assert "function applyMesh(verts, tris, quadrants)" in src
-    assert "if (curGeo) curGeo.dispose();" in src and "if (curWireGeo) curWireGeo.dispose();" in src
+    assert "if (curGeo) { ridgeCache.delete(curGeo); curGeo.dispose(); }" in src and \
+        "if (curWireGeo) curWireGeo.dispose();" in src
     assert 'requestAnimationFrame(() => { raf2d = 0; fire2d(); })' in src
     assert 'if (idle3d) clearTimeout(idle3d);' in src
 
