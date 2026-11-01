@@ -48,7 +48,21 @@ see ISSUES).
 | 5-frequency multi-tag solve, 12 kHz mesh | 5 | 8,625 | 360 s incl. cold start (~36-45 s/freq) | ~7.9 GB |
 | dense multi-tag sweep, 12 kHz mesh | 10 | 8,625 | 680 s (~45-68 s/freq) | ~7.9 GB |
 | contracted-band sweep (120-12k, 1/6 oct) | 41 | 8,625 | 1,851 s then **CUDA 719** | **7,908 / 8,188 MiB** |
+| 5-frequency multi-tag solve, cold host | 5 | 8,625 | 360 s (cold start included) | ~7.9 GB |
+| 10-frequency multi-tag sweep, cold host | 10 | 8,625 | 680 s | ~7.9 GB |
 | inner network optimiser only | - | - | 6.58 s (1,224 evaluations) | 0 |
+
+Derived per-frequency rates (cold-start amortisation is why the short runs look slower):
+
+| mesh | elements | dofs | s/frequency (warm-ish) |
+|---|---|---|---|
+| 10 kHz screen | 11,776 | 6,032 | ~3.6 |
+| 12 kHz | 16,909 | 8,625 | ~40-53 |
+
+That is a **~12x cost increase for a 1.44x element increase**. Do not assume a clean exponent: it is
+consistent with assembly scaling with elements squared PLUS a change of solver path (dense factorisation
+memory/time) between those sizes. Separating those two terms is the first measurement in s4.1, and it is
+the single most consequential number for hardware choice.
 
 Two facts dominate everything else:
 
@@ -123,6 +137,33 @@ Candidate classes to price (not to buy yet): RTX 4090 24 GB / 5090 32 GB (cheap 
 L40S 48 GB (capacity + ECC, blower), A100 80 GB / H100 80 GB (bandwidth, rented), H200 141 GB (only if the
 scaling fit says memory is the wall). Rent first: Lambda, RunPod, Vast, Paperspace, or a cloud A100/H100;
 compare $/candidate-hour at the campaign's fidelity, not $/hour.
+
+### 5b. Unified and coherent-memory configurations (evaluate explicitly)
+
+The interesting property of unified memory here is that our per-frequency working set is a **flat ~7.9 GB**
+regardless of mesh size in the 6-8.6k dof range. That is exactly the case where "more memory than VRAM"
+sounds attractive - and exactly the case where it usually is not, because BEM assembly and the operator
+solve are bandwidth-bound. Spilling that working set over a PCIe-class link (~32-64 GB/s) instead of
+GPU memory (~256-3,300 GB/s) does not make a solve slower by a little, it makes it 5-50x slower.
+
+So the test for any unified machine is not capacity, it is **bandwidth through the spill path**. Evaluate:
+
+| configuration | unified memory | practical bandwidth | what it would prove |
+|---|---|---|---|
+| NVIDIA GH200 / GB200 (Grace + Hopper/Blackwell, NVLink-C2C) | up to 480-960 GB | ~900 GB/s C2C, HBM3e 3-8 TB/s | the only unified option on the already-validated CUDA path; could hold 20-35k element meshes and very large sweeps |
+| Apple Silicon M3/M4 Max/Ultra (Metal backend exists in the engine) | 36-192 GB shared | ~270-800 GB/s | capacity is a non-issue and the working set fits; the question is whether the Metal path is complete and correct for MULTI-CHANNEL BEM, and whether Apple's GPU keeps up on assembly. Our stack has never run on macOS: venv, gmsh wheels and the Julia host all need a port check before any benchmark |
+| AMD MI300A (APU, 128 GB HBM3 unified) | 128 GB | ~5 TB/s HBM | attractive on paper; the engine has a ROCm path that this project has never exercised (TOOLCHAIN reports rocm 'no-hardware'). Only worth testing if a ROCm box can be rented cheaply, and it must be validated against the CUDA answers first |
+| Strix Halo class APU (128 GB LPDDR5X) | 128 GB | ~256 GB/s | capacity without bandwidth: expect it to be slower than a discrete card that simply fits. Useful as the negative control for the "unified memory helps" hypothesis |
+| CPU-only / out-of-core | system RAM | ~50-100 GB/s | the engine has a CPU backend; it is a correctness reference, not a campaign machine. Measure once so the comparison is honest |
+
+For each, the benchmark is the same as s4: the 41-frequency, 2-channel, >=8.6k dof job, reported as
+seconds/frequency, peak memory (and whether it spilled), candidates/hour and $/candidate. Add one extra
+column: **does it complete the contracted band at all**, because on the 8 GB card the answer today is no.
+
+Portability caveat to state in the deliverable: the pinned solver fork `1efdc6f` is validated on CUDA only.
+Metal and ROCm paths exist in the engine but are unvalidated for multi-channel work here, so any non-CUDA
+recommendation carries a validation task (single-tag parity <= 0.039 dB against the CUDA answers, plus the
+four multi-tag properties from the M2 testset) before it can be trusted for a campaign.
 
 ## 6. Deliverable for this hand-off
 

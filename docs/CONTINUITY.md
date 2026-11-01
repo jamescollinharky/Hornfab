@@ -32,6 +32,22 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (07:05 EDT) - HARDWARE HAND-OFF EXTENDED: UNIFIED MEMORY + THE MEASURED BASELINE
+
+- `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` gained two things the next agent needs:
+  1. **The measured baseline table** with every data point this campaign produced, plus the derived
+     per-frequency rates: ~3.6 s/frequency at 6,032 dofs and ~40-53 s/frequency at 8,625 dofs. That is a
+     **~12x cost for a 1.44x element increase**, which is not a clean exponent - it is consistent with
+     elements-squared assembly PLUS a change of solver path between those sizes. Separating those terms is
+     named as the first measurement of the assignment.
+  2. **A unified/coherent-memory section** with the configurations worth testing and the reason the test is
+     bandwidth, not capacity: the per-frequency working set is a flat ~7.9 GB, so spilling it over a
+     PCIe-class link would cost 5-50x, while NVLink-C2C (GH200/GB200) and Apple's shared memory have real
+     bandwidth. Table covers GH200/GB200, Apple M3/M4 Max/Ultra (Metal path), MI300A (ROCm), Strix-Halo-class
+     APUs as the negative control, and CPU-only. Every non-CUDA option carries a validation task: the pinned
+     fork `1efdc6f` is CUDA-validated only, so Metal/ROCm must clear single-tag parity (<= 0.039 dB) and the
+     four multi-tag properties before a campaign may use them.
+
 ## 2026-11-01 (06:50 EDT) - EVIDENCE DOC AND INDEX CORRECTED TO MATCH THEIR OWN CONTENT
 
 - `docs/evidence/MEH_M8_2026-10-31.md` was still titled "readiness links 1-2 (partial)" although it had grown to the

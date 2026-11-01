@@ -55,6 +55,9 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   8,296-8,485 dofs, over any cap that keeps VRAM safe. `cuda_fused` refuses multi-channel by design. Resolving the band
   needs a >= 12 GB card. Stopped by owner direction.
 - **DONE (docs accuracy):** the M8 evidence doc and its INDEX line now state the full result set (links 1/2/5/6 PASS, link 4 FAIL, link 3 PARTIAL, screens verified, blocks); no number changed.
+- **UPDATED (compute brief):** the hand-off now carries the measured baseline (3.6 vs ~45 s/frequency;
+  ~12x for 1.44x elements) and an explicit unified-memory section (GH200/GB200, Apple Metal, MI300A ROCm,
+  APU negative control, CPU-only) with a required validation gate for any non-CUDA recommendation.
 - **OPEN (next agent, compute/hardware):** `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` - fit the s/frequency and
   VRAM scaling laws, benchmark bandwidth vs compute tiers, measure candidate-level lanes on rented GPUs, and
   return a machine table in candidates/hour and $/candidate. Nothing in the MEH code blocks that work.
