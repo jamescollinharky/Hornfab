@@ -47,6 +47,9 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   CUDA 719 / worker_exit, measured); the smallest legal mesh (epw 4.05, 8,044 dofs) leaves CMA neighbours at
   8,296-8,485 dofs, over any cap that keeps VRAM safe. `cuda_fused` refuses multi-channel by design. Resolving the band
   needs a >= 12 GB card. Stopped by owner direction.
+- **OPEN (next agent, compute/hardware):** `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` - fit the s/frequency and
+  VRAM scaling laws, benchmark bandwidth vs compute tiers, measure candidate-level lanes on rented GPUs, and
+  return a machine table in candidates/hour and $/candidate. Nothing in the MEH code blocks that work.
 - **OPERATIONAL NOTE:** stale BEAT hosts from an earlier fused probe were adopted by a later run and produced a
   misleading fused/multi-channel error. Kill Julia hosts before launching a screen (`gpu-clean`).
 - **DONE (worker recycling):** opt-in `solve.worker_restart_every` (fake-tested), set to 8 in both MEH search

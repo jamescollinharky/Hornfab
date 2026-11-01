@@ -23,6 +23,19 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (06:40 EDT) - HARDWARE HAND-OFF WRITTEN (next agent: compute configuration)
+
+- `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` (INDEX updated) is the whole brief for whoever works out what to run
+  this on: the solver pipeline end to end, the measured performance table from this campaign, the two bottlenecks
+  stated separately (**B1 capacity** - the contracted 41-frequency band needs >= ~8.6k dofs at a 7.9/8.19 GB peak and
+  dies; **B2 throughput** - ~45 s per frequency, so ~20-30 h per 40-evaluation brief even with unlimited VRAM), the
+  five measurements that turn "which GPU" into candidates-per-hour-per-dollar, the hardware axes worth pricing, and
+  the deliverable (`docs/evidence/HARDWARE_2026-11-<date>.md`).
+- Key measured fact for sizing: **VRAM is flat at ~7.9 GB from 6,032 to 8,625 dofs**, so the peak is a per-frequency
+  workspace, and 24 GB gives ~3x headroom while 48 GB allows a defensible 12 kHz mesh (the current mesh resolves the
+  walls only to ~6 kHz). Throughput needs candidate-level parallelism (one GPU per lane), not a bigger card - the
+  pipeline is serial per candidate today and `search/evaluate.py` was left a pure function for exactly that change.
+
 ## 2026-11-01 (06:10 EDT) - CONTRACTED BAND RELAUNCH STOPPED: the CMA neighbours break the VRAM-safe cap
 
 - The epw 4.05 relaunch was stopped after its first rows. Two distinct failures, both recorded:
