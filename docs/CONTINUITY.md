@@ -32,6 +32,19 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
 - **Process lesson:** a code fix is not live until the long-running GUI process restarts, and a branch
   switch silently reverts the working tree. Check `D.M3D_VERSION`/cache key, not just the branch log.
 
+## 2026-11-01 (08:20 EDT) - WRAP-UP: FULL OFFLINE SUITE GREEN AT THE TIP; PR TO `main` OPENED
+
+- **Final gate [measured]:** `.venv\Scripts\python.exe -m pytest -m "not slow and not gpu and not crosscheck" -q`
+  at `task/hardware-decision-2026-11-01` -> **exit 0**, no failures. This is the first full run since the last config
+  edits (epw 4.05 / screen cap 8,200 / `solve.freq_grid` / `worker_restart_every`), so the tip is gated, not just the
+  code merges.
+- **Contents of the PR:** the complete MEH implementation (M1-M7, M10), the solver fork pin bump to `1efdc6f` with its
+  validation evidence, both 40-evaluation screens with their verified top-2 arms (T2 9.530 -> 11.894, T1 13.228 ->
+  14.512), the six-line readiness proof with its one FAIL and one PARTIAL stated plainly, the hardware audit and
+  hand-off, and the honest record of the three blocks (8 GB band ceiling, CAD quarter-only, Boundary Lab absent).
+- PR base `main`, head `meh/integration`, which now carries the hardware branch (fast-forward; the hardware branch is
+  a descendant of the integration tip). Background job board: all sessions reconciled, none active.
+
 ## 2026-11-01 (07:55 EDT) - HAND-OFF TIDIED: WITHDRAWN VRAM CLAIM REMOVED FROM THE AXES AND UNIFIED-MEMORY SECTIONS
 
 - The s2a corrections block covered s2, but s5 (axes table) and s5b (unified memory) still asserted the withdrawn

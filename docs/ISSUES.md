@@ -55,6 +55,10 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   8,296-8,485 dofs, over any cap that keeps VRAM safe. `cuda_fused` refuses multi-channel by design. Resolving the band
   needs a >= 12 GB card. Stopped by owner direction.
 - **DONE (docs accuracy):** the M8 evidence doc and its INDEX line now state the full result set (links 1/2/5/6 PASS, link 4 FAIL, link 3 PARTIAL, screens verified, blocks); no number changed.
+- **PR OPENED (wrap-up):** `meh/integration` -> `main`, carrying the full MEH implementation, the owner-approved
+  pin bump, both verified screens, the six-line readiness proof, and the hardware audit/hand-off. Final offline
+  suite green at the tip (exit 0). Open items inside the PR body: 8 GB band ceiling, M9 blocked, step 3 blocked,
+  link 4 budget decision.
 - **TIDIED (hand-off):** the withdrawn VRAM reading no longer appears as fact in s5/s5b; both now carry the
   source-derived operator-storage statement and point at the s2a corrections. Duplicate table row removed.
 - **CORRECTED (hand-off):** four claims withdrawn after the audit - wrong mesh attribution (winners are
