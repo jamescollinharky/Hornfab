@@ -20,6 +20,13 @@ Updated in the same commit as `docs/CONTINUITY.md` on every push. Last synced 20
 
 Local-only items (no GitHub issue): band edges capped by the measured dof cap (confirmed, user "keep lowered edges"); task 07 test-17 disk-latency flake risk (do not loosen); residual CP-7 risks (epw=6 above 2.5 kHz unmeasured; f11 unexercised; DI-vs-beamwidth not a regression test) — see `NOTES_FOR_SENIOR.md` task-09 block and CONTINUITY 06:20.
 
+Local-only, 2026-11-01 (**hardware decision study; no GitHub issue state changed**):
+- **DONE (decision study, not rental benchmarks):** owner clarified theoretical rent-versus-buy scope; $0 rental spend. `docs/evidence/HARDWARE_2026-11-01.md` audits stored timings and backend/lane code and gives current rates with labeled cost scenarios.
+- **MEASURED (CPU mesh sizing):** fixed T2 seed first globally validates at 12 kHz among tested sizes at 33,959 dofs / 67,245 triangles (EPW 8.4). EPW 6 gives 33,938 triangles but only 8.58 kHz global validity. This does not establish acoustic convergence or a universal minimum.
+- **SOURCE-DERIVED capacity constraint:** unchanged standard CUDA multi-channel path requires at least 85.410 GiB for operators+identities+LHS at that full-wall seed, before additional workspace. The 80 GB tier cannot fit that path. H200 141 GB is a test candidate, not a measured solution; cheaper 24/32 GB coarse-screen tests answer a different fidelity question.
+- **OPEN:** successful exact 41-frequency request on candidate hardware, root cause of CUDA 719, actual billed cold/warm costs, unified-backend C4 parity and 1/2/4/8-lane results. Flat `nvidia-smi` peaks do not establish invariant live workspace. Historical seed/winner mesh attribution and current overwritten/unknown-baseline VRAM trace limitations are corrected in the study.
+- **OPEN (implementation if shared-host lanes are selected):** per-device locks/monitoring, owned-host-only cleanup, private registries/cache staging, parent-only dataset writes and deterministic CMA coordination. Existing evaluator has side effects; the current one-writer/global-cleanup code is unsafe for naive concurrent workers. Separate machines, one brief each, are the simpler future deployment test.
+
 Local-only, 2026-10-31 (**3D evolution transparency, re-landed on `meh/integration`**):
 - **Recurring owner report (run `20261031T202159Z-screen-ba7648`): mesh renders as see-through triangles.**
   Not a renderer regression: the hole-free decimation fix (`64ccb20`) lived only on

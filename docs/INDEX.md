@@ -33,7 +33,8 @@ Keep this file current: a new doc gets a line here in the same commit.
 | [BL_LEARNINGS_IMPLEMENTATION.md](BL_LEARNINGS_IMPLEMENTATION.md) | Boundary Lab learnings implemented (mesh checks, phasor, provenance, SPDI). |
 | [research/LEARNINGS_2026-10-26.md](research/LEARNINGS_2026-10-26.md) | Durable learnings from the 2026-10-26 pass: Ath crease mechanism, over-constrained boxes, per-type scoring, driver realism, fused ceiling. Read before campaign or typology work. |
 | [HIGH_FREQUENCY_OPTIONS.md](HIGH_FREQUENCY_OPTIONS.md) | Reaching 12 kHz on 8 GB: options and evidence. |
-| [CLOUD_GPU_REPORT.md](CLOUD_GPU_REPORT.md) | Cloud GPU rental research. |
+| [CLOUD_GPU_REPORT.md](CLOUD_GPU_REPORT.md) | Historical cloud GPU rental research (2026-10-13); current MEH sizing and source-audited caveats are in [HARDWARE_2026-11-01](evidence/HARDWARE_2026-11-01.md). |
+| [evidence/HARDWARE_2026-11-01.md](evidence/HARDWARE_2026-11-01.md) | **Rent versus buy decision study; $0 rental spend.** Decoded historical stage timings, four new CPU-only meshes (whole-surface 12 kHz passes at 33,959 dofs / 67,245 triangles), source-derived CUDA storage lower bound 85.410 GiB, backend/lane audit, current prices and conditional cost scenarios. Cross-GPU/overnight results remain unmeasured. |
 | [HANDOFF_LOCAL.md](HANDOFF_LOCAL.md), [HANDOFF.md](HANDOFF.md) | Older handoffs (CP-8, 6b test plan). Historical. |
 | [SENIOR_REVIEW_2026-10-14.md](SENIOR_REVIEW_2026-10-14.md) | Surrogate-fix review. Historical. |
 

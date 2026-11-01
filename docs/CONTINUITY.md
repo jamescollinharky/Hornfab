@@ -2,6 +2,15 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-01 - HARDWARE DECISION STUDY: RENTAL FIRST; FULL-WALL MESH IS MUCH LARGER
+
+- Owner clarified this is a theoretical rent-versus-buy decision; no rental machines configured. Rental spend $0, no new BEM solves/screens. `docs/evidence/HARDWARE_2026-11-01.md` records the study, current published rates and explicitly conditional costs.
+- Four CPU-only diagnostic builds on the fixed T2 seed: EPW 4.2 => 8,625 dofs / 16,909 triangles, global valid-to 6,015 Hz; EPW 6 => 17,211 / 33,938, global 8,583 Hz; EPW 8.4 => **33,959 / 67,245, global 12,009 Hz, valid**; EPW 9 => 38,819 / 76,919, global 12,864 Hz, valid. This is validator sizing, not acoustic convergence or a proven minimum over all geometries. Shipped configs untouched.
+- Source audit of unchanged pin `1efdc6f`: standard CUDA uses fixed dense direct solves, repeating LHS/refactorization per channel; CPU/Metal GMRES cost model is not the CUDA route. At N=33,959/E=67,245 the concurrently live operators+identities+LHS alone require **85.410 GiB** before extra workspace. A 24/32 GB card is a coarse-mesh test candidate; the first requested full-wall discrete tier worth testing is H200 141 GB. No fit/runtime claim was measured on it.
+- Historical NPZ/NDJSON extraction corrects the handoff's seed/winner attribution: T2 winner is N=5,872/E=11,456 with baseline/peak 513/7,575 MiB; T1 winner N=6,249/E=12,205 with baseline/peak 330/7,840 MiB. Across 69 successful historical screen candidates, assembly is the largest reported engine stage (~2 s/frequency, versus ~0.2 s solve). No 12 kHz throughput inference follows.
+- Flat device-use peaks do not prove constant workspace; CUDA 719 does not uniquely establish OOM. Current `vram_41f.csv` differs from the earlier trace described in M8 and has no verified idle baseline. These refine the older capacity diagnosis; the recorded failures and prior screen winners remain unchanged.
+- Shared-host multi-GPU work is not a one-line change: evaluator/persistence side effects, global lock, all-host cleanup and worker registry identity need isolation. Two separate single-GPU machines, one brief each, are a simpler future deployment test. All cross-card, unified-memory, lane-scaling and overnight measurements remain open. `doctor`: 11/11 checks passed; evidence excerpts checked against decoded bytes. No production code/pins/tolerances changed.
+
 ## 2026-10-31 (20:28Z) - 3D EVOLUTION TRANSPARENCY: FIX RE-LANDED ON meh/integration + LIVE SERVER RESTARTED
 
 - **Owner report (run `20261031T202159Z-screen-ba7648`, 2 improvement frames):** the 3D time-lapse still
