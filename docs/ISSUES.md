@@ -128,6 +128,7 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   coexists with the MEH config changes. PR conflicts resolved.
 - **PACKAGED (handoff, PR #18):** `docs/meh/MEH_QUICKSTART.md`, `tools/meh/run_screen.ps1`, and
   `docs/evidence/meh_2026-11-01/` (both verified winners + README). No production code changed.
+
 - **PR OPENED (wrap-up):** `meh/integration` -> `main`, carrying the full MEH implementation, the owner-approved
   pin bump, both verified screens, the six-line readiness proof, and the hardware audit/hand-off. Final offline
   suite green at the tip (exit 0). Open items inside the PR body: 8 GB band ceiling, M9 blocked, step 3 blocked,
@@ -668,4 +669,6 @@ Local-only, added 2026-10-27 (no GitHub issue state changed): objective v4 imple
 
 Local-only, added 2026-10-27 (evening; no GitHub issue state changed): resume night done; ripple/ridge night running (10 jobs); P12 sim-vs-real investigation opened (loading weight 0 on most briefs, ideal source, generous cov) with the SIM_VS_REAL research report; pushed to main.
 
+Local-only, added 2026-11-02 (no GitHub issue state changed): GUI frequency-axis band + scoring-floor f0 marker landed with offline pins (37 tests pass across the three GUI test files); MEH CPU-vs-CUDA benchmark scripts committed under tools/bench/.
 Local-only, added 2026-11-02 (no GitHub issue state changed): **P11 HF data sync DONE** - public dataset repo <https://huggingface.co/datasets/chingadalleva/hornlab-search-data> (7 tar shards, 10.77 GB packed: text/solve/dataset; meshes not uploaded), `tools/hf_sync.py` corrected to `hf upload`. Owner-machine finding: Xet uploads stall here; upload with `HF_HUB_DISABLE_XET=1`. Still open in P11: merge to `main` (which branches) and the two v4 re-runs.
+
