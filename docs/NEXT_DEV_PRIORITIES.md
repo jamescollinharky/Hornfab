@@ -319,13 +319,28 @@ objective versions (v3 records were silently not written); (2) reseed `gcurve__o
 all scored v4. Section 9 records the fluted/lobed-wall idea from JW Sound's Solana (harmonic FREEFORM station,
 fork change), gated on v4 results.
 
-## P11 (added 2026-10-27, owner-directed, TABLED). Share campaign data with the collaborator, then merge to main
+## P11 (added 2026-10-27, owner-directed). Share campaign data with the collaborator, then merge to main
 
-- **Hugging Face sync.** Data (~22 GB: `runs/` 11.4, `cache/` 7.9, `dataset/` 2.4) is git-ignored and too big for GitHub.
-  `tools/hf_sync.py` (`pack` / `upload` / `pull`) is written but never run for real. Needs the owner to run
-  `hf auth login` (write token) and to pick the repo (suggested `chingadalleva/hornlab-search-data`, private by default).
-  Start with groups `text,solve,dataset` (~7.2 GB); `meshes` (~10 GB) is optional. Pack only after the GPU night has
-  finished writing. The solve cache is what lets a no-CUDA collaborator re-score offline.
+- **Hugging Face sync: DONE 2026-11-02 (owner-directed turn-on).** Public dataset repo
+  <https://huggingface.co/datasets/chingadalleva/hornlab-search-data> — 7 tar shards / 11.56 GB (10.76 GiB)
+  packed, 197,581 files, from the tree at `task/hardware-decision-2026-11-01` (owner chose **public**: the
+  GitHub collaborator needs no HF account, token or login; free-tier public storage is unmetered, whereas a
+  free account gets 100 GB private). Packed groups `text` (0.51 GB: `runs/**` json/ndjson/yaml/html/md),
+  `solve` (6.45 GB: `cache/solve/**`), `dataset` (4.24 GB). The solve cache is what lets a no-CUDA
+  collaborator re-score offline (keyed on geometry + solver settings, not the objective).
+  Collaborator-facing runbook: `docs/COLLABORATOR_PULL_RUNBOOK_2026-11-02.md` (commands, sha256 table,
+  verification counts, troubleshooting, agent rules); short version in
+  `docs/HANDOFF_COLLABORATOR_2026-10-27.md` section 4.
+  - `tools/hf_sync.py` corrected against current docs (2026-11-02): `hf upload` replaced the deprecated
+    `hf upload-large-folder` (gone in hub v2), `pull` now filters `--include "*.tar"`, and `upload` sets
+    the Xet workaround below.
+  - **Network finding (owner machine, 2026-11-02): the Xet upload path stalls here.** Two `hf upload` runs
+    held 0.1-1.2 MB/s with zero commits after 25+ min, while the same link measured 8.3 MB/s upstream and
+    `HF_HUB_DISABLE_XET=1` pushed 2.04 GB in 3.4 min. Uploads from this machine must set
+    `HF_HUB_DISABLE_XET=1`; downloads are unaffected.
+  - Not uploaded: `cache/mesh/**` + `runs/**/*.msh` (16.81 GB). Pack with `--groups meshes` if the
+    collaborator needs stored meshes instead of rebuilding them with the CPU mesher.
+  - The snapshot is frozen at 2026-11-02 ~20:53 local; re-pack after any later GPU night.
 - **Merge to main.** Open question: which branches ("everything" = `unified-typologies` only, or also `beta-fixes`, which
   says "merge after overnight queue"; exclude `dev/fused-cuda-pin`). Work tree has uncommitted v4 changes; the repo rule
   says CONTINUITY.md and ISSUES.md must be updated in the same commit as any push.
