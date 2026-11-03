@@ -34,7 +34,7 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
   24,083 → load one `response.npz`), plus the offline re-score entry points, a troubleshooting table and the
   rules for an agent working in the checkout (never commit the data, never touch `.venv`, no GPU solves, push
   rule). Linked from `docs/INDEX.md`, `docs/HANDOFF_COLLABORATOR_2026-10-27.md` section 4 and P11.
-- **Shipped as its own PR into `main`** (`task/p11-hf-sync`, cherry-picked off `origin/main` so the PR carries
+- **Shipped as PR #20 into `main`** (`task/p11-hf-sync`, cherry-picked off `origin/main` so the PR carries
   only this work, not the 47 unrelated commits on `task/hardware-decision-2026-11-01`). Files: `tools/hf_sync.py`,
   the new runbook, `docs/HANDOFF_COLLABORATOR_2026-10-27.md`, `docs/NEXT_DEV_PRIORITIES.md`, `docs/INDEX.md`,
   this entry and the `docs/ISSUES.md` note. No solves, configs, pins, tolerances or tests touched.
