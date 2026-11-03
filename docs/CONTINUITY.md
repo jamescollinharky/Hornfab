@@ -1,6 +1,47 @@
 # CONTINUITY
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
+## 2026-11-02 - P11 TURNED ON: PUBLIC HF DATASET REPO PUBLISHED FOR THE COLLABORATOR
+
+- **Owner directive:** set up Hugging Face storage so the GitHub collaborator can pull "the solves we've done".
+  Owner chose **public** (collaborator needs no HF account/token) and the **core groups** `text,solve,dataset`.
+- **Live:** <https://huggingface.co/datasets/chingadalleva/hornlab-search-data> — public dataset repo, created
+  with `hf repos create ... --repo-type dataset --public`, 7 tar shards + `.gitattributes`, **11.56 GB /
+  10.76 GiB** (11,556,730,880 B), **197,581 source files**, packed 2026-11-02 ~20:53 local from this worktree
+  at `task/hardware-decision-2026-11-01`. Remote sizes verified byte-identical to the local tars
+  (`text-000` 731,473,920 B; `solve-000..002` 2.03 GB each, `solve-003` 8,550,400 B; `dataset-000` 2.04 GB,
+  `dataset-001` 1.95 GB). Seven per-shard commits (`bfbe708`, `75cf749`, `50aa0b1`, `fbcc6e4`, `42611f3`,
+  `d51b17d`, `701f568`).
+- **Safety gate before packing [measured]:** julia host PID 17056 idle (CPU 954.859 -> unchanged over 8 min),
+  VRAM 706 MiB of 8188, newest `runs/` write 20:44 vs pack start 20:53, so no GPU night was writing.
+- **Collaborator path verified end to end:** anonymous `curl -r 0-2047` on `solve-003.tar` returns **206** with
+  2048 bytes (no auth), and `hf download ... --repo-type dataset --include "solve-003.tar" --local-dir .hf_stage`
+  + in-place untar reproduced `cache/solve/<key>/{response.npz,status.json}` (32 cache dirs). Instructions live in
+  `docs/HANDOFF_COLLABORATOR_2026-10-27.md` section 4; P11 marked done.
+- **`tools/hf_sync.py` corrected** against huggingface_hub docs checked 2026-11-02: `upload` now runs
+  `hf upload <repo> <dir> . --repo-type dataset` (`hf upload-large-folder` is deprecated and absent from the
+  2.4.0 CLI reference; `hf_transfer`/`HF_HUB_ENABLE_HF_TRANSFER` are gone in hub v1), `pull` filters
+  `--include "*.tar"`. Local CLI/hub is 1.17.0 with `hf_xet` 1.5.0.
+- **Measured network finding [owner machine]:** the **Xet upload path stalls here** — two `hf upload` runs held
+  0.1-1.2 MB/s with zero commits after 25+ min while the same link measured 8.3 MB/s upstream
+  (`speed.cloudflare.com/__up`, 20 MB) and 9.7 MB/s down from `huggingface.co`; `HF_HUB_DISABLE_XET=1` then
+  pushed 2.04 GB in 3.4 min. Uploads from this box must set `HF_HUB_DISABLE_XET=1`. Downloads were unaffected.
+- **Not uploaded:** `cache/mesh/**` + `runs/**/*.msh` (16.81 GB) — pack with `--groups meshes` if the collaborator
+  needs stored meshes rather than rebuilding them with the CPU mesher. Anything written after 20:53 local needs
+  a re-pack.
+- **Collaborator runbook added:** `docs/COLLABORATOR_PULL_RUNBOOK_2026-11-02.md` — agent-executable
+  (clone → `hf download` → verify sha256 per shard → extract in place → verify counts 124,681 / 48,817 /
+  24,083 → load one `response.npz`), plus the offline re-score entry points, a troubleshooting table and the
+  rules for an agent working in the checkout (never commit the data, never touch `.venv`, no GPU solves, push
+  rule). Linked from `docs/INDEX.md`, `docs/HANDOFF_COLLABORATOR_2026-10-27.md` section 4 and P11.
+- **Shipped as PR #20 into `main`** (`task/p11-hf-sync`, cherry-picked off `origin/main` so the PR carries
+  only this work, not the 47 unrelated commits on `task/hardware-decision-2026-11-01`). Files: `tools/hf_sync.py`,
+  the new runbook, `docs/HANDOFF_COLLABORATOR_2026-10-27.md`, `docs/NEXT_DEV_PRIORITIES.md`, `docs/INDEX.md`,
+  this entry and the `docs/ISSUES.md` note. No solves, configs, pins, tolerances or tests touched.
+- **Process note:** two docs were briefly damaged by a PowerShell `Get-Content -Raw | Set-Content` round-trip
+  (PS 5.1 re-encoded UTF-8 as ANSI, mangling em dashes and quotes) and were restored from git and re-edited with
+  a UTF-8-safe editor before the commit; the committed diff contains no replacement characters.
+
 
 ## 2026-11-01 (10:20 EDT) - PACKAGED FOR HANDOFF: QUICKSTART, SCREEN LAUNCHER, BOTH VERIFIED WINNERS
 

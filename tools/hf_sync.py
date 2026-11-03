@@ -16,10 +16,16 @@ Usage (python 3.13 with huggingface_hub, or the venv after ``pip install hugging
 
 ``upload`` needs ``hf auth login`` (a WRITE token the owner enters themselves). The repo is created
 PRIVATE unless ``--public`` is given. Do not pack while a GPU night is writing to runs/ or cache/.
+
+CLI notes (checked against huggingface_hub docs 2026-11-02): ``hf upload`` replaced the deprecated
+``hf upload-large-folder`` (removed in v2.x) and is itself resumable — re-run the same command after
+an interruption and already-uploaded shards are skipped. ``hf_transfer`` no longer exists; the speed
+knob is ``HF_XET_HIGH_PERFORMANCE=1`` (set here automatically).
 """
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import tarfile
@@ -65,17 +71,29 @@ def pack(out: Path, groups: list[str], dry_run: bool) -> None:
         print(f"  wrote {shard} shard(s) to {out}")
 
 
+def _env(disable_xet: bool = False) -> dict[str, str]:
+    env = {**os.environ, "HF_XET_HIGH_PERFORMANCE": "1"}
+    if disable_xet:
+        # Measured on the owner machine 2026-11-02: the Xet upload path stalls (0.1-1.2 MB/s, zero commits
+        # after 25 min) while the classic LFS path pushes 2 GB in ~3.4 min. Downloads are unaffected.
+        env["HF_HUB_DISABLE_XET"] = "1"
+    return env
+
+
 def upload(out: Path, repo: str, public: bool) -> None:
     cmd = ["hf", "repos", "create", repo, "--repo-type", "dataset", "--exist-ok"]
-    if not public:
-        cmd.append("--private")
-    subprocess.run(cmd, check=True)
-    subprocess.run(["hf", "upload-large-folder", repo, str(out), "--repo-type", "dataset"], check=True)
+    cmd.append("--public" if public else "--private")
+    subprocess.run(cmd, check=True, env=_env(disable_xet=True))
+    # ``hf upload`` (not the deprecated ``hf upload-large-folder``): resumable, auto-splits commits.
+    # The trailing "." keeps the shards at the repo root.
+    subprocess.run(["hf", "upload", repo, str(out), ".", "--repo-type", "dataset"],
+                   check=True, env=_env(disable_xet=True))
 
 
 def pull(repo: str, dest: Path) -> None:
     stage = dest / ".hf_stage"
-    subprocess.run(["hf", "download", repo, "--repo-type", "dataset", "--local-dir", str(stage)], check=True)
+    subprocess.run(["hf", "download", repo, "--repo-type", "dataset", "--include", "*.tar",
+                    "--local-dir", str(stage)], check=True, env=_env())
     for t in sorted(stage.glob("*.tar")):
         print("extracting", t.name)
         with tarfile.open(t) as tf:
@@ -98,7 +116,7 @@ def main(argv=None) -> int:
     c.add_argument("--dest", type=Path, default=Path("."))
     args = ap.parse_args(argv)
     if args.cmd == "pack":
-        pack(args.out, args.groups.split(","), args.dry_run)
+        pack(args.out, (args.groups or "text,solve,dataset").split(","), args.dry_run)
     elif args.cmd == "upload":
         upload(args.out, args.repo, args.public)
     else:

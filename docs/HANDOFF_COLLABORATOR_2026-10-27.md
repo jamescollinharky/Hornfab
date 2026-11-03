@@ -39,9 +39,44 @@ bw = ok.bw_h_deg.apply(json.loads)                      # horizontal -6 dB beamw
 - **Refusals:** many cells refuse 20-50% of candidates (invalid geometry); `b1w__biradial_keele` and `b3bw__biradial_keele` refuse about 90%, so their best J rests on very few valid designs.
 - **Scoring code:** `hornlab_search/objective/scalar_v4.py` (terms), `hornlab_search/metrics/diagonal.py` (diagonal term). Why these terms and tolerances: `docs/research/V4_SCORING_REVIEW_2026-10-27.md` and `docs/research/V4_TOLERANCE_RESEARCH_2026-10-27.md`.
 
-## 4. What is NOT in git
+## 4. The raw data: public Hugging Face dataset repo (no account needed)
 
-The raw material is about 22 GB (`runs/` 11 GB, solve cache 8 GB, dataset 2.4 GB): meshes, full acoustic responses, 3D renders. The solve cache is what would let you re-score the same designs under a different objective without CUDA. Sharing it needs a Hugging Face dataset repo (`tools/hf_sync.py`, tabled as P11 in `docs/NEXT_DEV_PRIORITIES.md`). Ask the owner.
+Git only carries text. The raw material is at
+
+**<https://huggingface.co/datasets/chingadalleva/hornlab-search-data>**
+
+It is **public** — no Hugging Face account, no token, no `hf auth login`. It holds seven tar shards
+(11.56 GB / 10.76 GiB packed; 2026-11-02 pack of the tree at `task/hardware-decision-2026-11-01`).
+
+Agent-executable runbook (sha256 table, verification counts, troubleshooting):
+`docs/COLLABORATOR_PULL_RUNBOOK_2026-11-02.md`.
+
+| Shard | Contents | Raw size |
+|---|---|---|
+| `text-*.tar` | every `.json`/`.ndjson`/`.yaml`/`.html`/`.md` under `runs/` (124,681 files) | 0.51 GB |
+| `solve-*.tar` | `cache/solve/**` — `response.npz` + `status.json` per cache key (48,817 files) | 6.45 GB |
+| `dataset-*.tar` | `dataset/` (24,083 files) | 4.24 GB |
+
+**Pull it** (from the repo root, after cloning; needs `pip install huggingface_hub` for the `hf` CLI):
+
+```bash
+hf download chingadalleva/hornlab-search-data --repo-type dataset --include "*.tar" --local-dir .hf_stage
+python -c "import glob,tarfile;[tarfile.open(t).extractall('.',filter='data') for t in sorted(glob.glob('.hf_stage/*.tar'))]"
+```
+
+or the repo's own wrapper: `python tools/hf_sync.py pull --repo chingadalleva/hornlab-search-data --dest .`
+
+Shards untar **in place** (arcnames are repo-relative), so `runs/`, `cache/solve/` and `dataset/` land
+next to your checkout and every path in the CSVs/NDJSON still resolves. Delete `.hf_stage/` afterwards.
+Slow link: set `HF_XET_HIGH_PERFORMANCE=1`; the download resumes if interrupted (re-run the same command).
+
+**Why the solve cache matters:** it is keyed on geometry + solver settings, **not** on the objective, so
+you can re-score the same designs under a different objective/weights with no CUDA and no new solves.
+`tools/rescore/rescore_v2.py` is the worked example of an offline re-score.
+
+**Not uploaded (16.81 GB):** `cache/mesh/**` and `runs/**/*.msh`. Rebuild those locally with the mesher
+(`hornlab_mesher`, CPU-only) if you need geometry; ask the owner if you need the exact stored meshes and
+they can be packed as a separate `meshes` group (`python tools/hf_sync.py pack --groups meshes`).
 
 ## 5. Things still changing
 

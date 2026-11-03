@@ -667,3 +667,5 @@ Added 2026-10-26 (campaign Phase 0, implementation lane code-2):
 Local-only, added 2026-10-27 (no GitHub issue state changed): objective v4 implemented + two v4 GPU nights (first + resume); open: re-run crease__osse_b1w (resume startup failure), biradial_keele cells refuse ~90 % of candidates, HF data sync tabled (P11), merge of unified-typologies to main.
 
 Local-only, added 2026-10-27 (evening; no GitHub issue state changed): resume night done; ripple/ridge night running (10 jobs); P12 sim-vs-real investigation opened (loading weight 0 on most briefs, ideal source, generous cov) with the SIM_VS_REAL research report; pushed to main.
+
+Local-only, added 2026-11-02 (no GitHub issue state changed): **P11 HF data sync DONE** - public dataset repo <https://huggingface.co/datasets/chingadalleva/hornlab-search-data> (7 tar shards, 10.77 GB packed: text/solve/dataset; meshes not uploaded), `tools/hf_sync.py` corrected to `hf upload`. Owner-machine finding: Xet uploads stall here; upload with `HF_HUB_DISABLE_XET=1`. Still open in P11: merge to `main` (which branches) and the two v4 re-runs.
