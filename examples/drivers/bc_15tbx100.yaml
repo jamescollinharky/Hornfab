@@ -1,0 +1,36 @@
+# B&C 15TBX100 — 15 in long-throw woofer (M10 bass-box shortlist).
+# Transcribed from the maker's product page, read 2026-10-31:
+#   https://www.bcspeakers.com/en/products/lf-driver/15-0/8/15TBX100
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md.
+name: B&C 15TBX100
+kind: cone
+source: https://www.bcspeakers.com/en/products/lf-driver/15-0/8/15TBX100
+notes: >-
+  Datasheet transcription (2026-10-31). Cms is not printed on the page and is derived:
+  Cms = Vas/(rho*c^2*Sd^2) with Vas = 113 L, Sd = 855 cm2, rho = 1.2041, c = 343.
+  Mmd is not printed as a separate value; Mms = 163 g is published, so
+  Mmd = Mms - 2*(8/3)*rho*a^3 with a = sqrt(Sd/pi).
+  Xmax is the page's "maximum linear excursion" (one-way peak).
+  Consistency check: the derived pair (Mms 163 g, Cms 0.10912 mm/N) puts the driver's own
+  resonance at 37.7 Hz, 7.8 % above the published Fs = 35 Hz; the published Vas/Mms pair is
+  internally inconsistent, and the derived values above follow the C8 formulas as instructed.
+  motor_od_mm and dish_mm are not published on the page; omitted. Sens is the table's
+  sensitivity column (the maker's published 1 W / 1 m figure; the 2.83 V condition is not
+  restated in the extraction).
+derived: [mmd_g, cms_mm_per_n]
+re_ohm: 5.1
+le_mh: 1.6
+bl_tm: 25.5
+sd_cm2: 855
+xmax_mm: 9
+p_aes_w: 1000
+fs_hz: 35
+qms: 5.2
+mms_g: 163
+mmd_g: 134.167
+cms_mm_per_n: 0.109118
+vas_l: 113
+cutout_mm: 354
+depth_mm: 181
+frame_od_mm: 393
+sens_db_2v83: 96

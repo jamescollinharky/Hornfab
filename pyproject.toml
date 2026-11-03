@@ -17,7 +17,7 @@ dependencies = [
   "hornlab-waveguide-mesher @ git+https://github.com/m3gnus/hornlab-waveguide-mesher.git@b922e807a5cf10cf732c4557ec0b9b495762afd7",
   # WP16+17 fork stack, hosted fork (docs/FORKS.md): WP15 fused CUDA Burton-Miller + WP16 J0 source
   # profile + WP17 fused-CUDA near correction (stage 1), all opt-in at their defaults.
-  "hornlab-beat-bem @ git+https://github.com/llevaachingada/hornlab-beat-bem.git@760a1ecf6075f5ccdbf97a69874c7f88441e36c1",
+  "hornlab-beat-bem @ git+https://github.com/llevaachingada/hornlab-beat-bem.git@1efdc6f934e16f288880b6d68e8dce8480b7a421",
   "hornlab-plots @ git+https://github.com/m3gnus/hornlab-plots.git@9e4a6d0dd2ccb6e735dd00233dccccb50d12ed44",
 ]
 

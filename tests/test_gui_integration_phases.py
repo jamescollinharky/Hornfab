@@ -25,6 +25,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
+import numpy as np
 import yaml
 
 from hornlab_search.gui import data as D
@@ -164,8 +165,22 @@ def _row(n: int, h: str, j: float | None, *, ok: bool = True) -> dict:
             "mode": "screen", "family": "FREEFORM", "error": None if ok else "solve_failed: x"}
 
 
-def _mesh_text(extra_node: bool = False) -> str:
-    """Tiny gmsh 2.2 ASCII with 3 triangles (4 nodes, or 5 with an unused extra node)."""
+def _mesh_text(extra_node: bool = False, grid: int = 0) -> str:
+    """Tiny gmsh 2.2 ASCII: 3 triangles (4 nodes, or 5 with an unused extra node), or — when
+    ``grid`` is set — a flat ``grid``x``grid`` square of 2*(grid-1)**2 triangles."""
+    if grid:
+        nodes = [f"{i * grid + j + 1} {i / (grid - 1) * 0.1:.6f} {j / (grid - 1) * 0.1:.6f} 0.0"
+                 for i in range(grid) for j in range(grid)]
+        elems = []
+        for i in range(grid - 1):
+            for j in range(grid - 1):
+                a = i * grid + j + 1
+                b, c, d = a + 1, a + grid, a + grid + 1
+                elems.append(f"{len(elems) + 1} 2 2 1 1 {a} {b} {d}")
+                elems.append(f"{len(elems) + 1} 2 2 1 1 {a} {d} {c}")
+        return ("$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n" + str(len(nodes)) + "\n"
+                + "\n".join(nodes) + "\n$EndNodes\n$Elements\n" + str(len(elems)) + "\n"
+                + "\n".join(elems) + "\n$EndElements\n")
     nodes = ["1 0 0 0", "2 0.1 0 0", "3 0 0.1 0", "4 0.1 0.1 0"]
     if extra_node:
         nodes.append("5 0 0 0.1")
@@ -198,11 +213,11 @@ def _evo_run(runs: Path, rid: str, rows: list[dict], *,
 
 
 def _evo_design(run: Path, h: str, *, mesh: bool = True, quadrants_meta: str | None = None,
-                extra_node: bool = False) -> Path:
+                extra_node: bool = False, grid: int = 0) -> Path:
     dd = run / "designs" / h
     dd.mkdir(parents=True, exist_ok=True)
     if mesh:
-        (dd / "mesh.msh").write_text(_mesh_text(extra_node))
+        (dd / "mesh.msh").write_text(_mesh_text(extra_node, grid))
     if quadrants_meta is not None:
         (dd / "mesh_meta.json").write_text(json.dumps({"result": {"quadrants": quadrants_meta}}))
     return dd
@@ -440,7 +455,7 @@ def test_evolution_frames3d_uses_the_evolution_improvement_rule_and_skips_missin
     _evo_design(run, H2, mesh=False)         # improved, design dir lacks mesh.msh: skipped
 
     d = D.evolution_frames3d(runs, EVO_SKIP_RID)
-    assert d["available"] is True and d["cap"] == 6000
+    assert d["available"] is True and d["cap"] == D.M3D_DEFAULT_CAP
     [f] = d["frames"]                        # exactly the one improvement with a saved mesh
     assert f["mesh_hash"] == H0 and f["n"] == 0 and f["objective"] == 10.0
     assert f["quadrants"] == "1" and f["n_tris_full"] == 3 and f["decimated"] is False
@@ -450,29 +465,38 @@ def test_evolution_frames3d_uses_the_evolution_improvement_rule_and_skips_missin
     json.dumps(d, allow_nan=False)
 
 
-def test_evolution_frames3d_decimates_by_stride_and_honors_the_cap(repo):
+def test_evolution_frames3d_decimates_hole_free_and_honors_the_cap(repo):
     runs = repo / "runs"
     run = _evo_run(runs, EVO_RID, [_evo_row(0, H0, 10.0)])
     _evo_design(run, H0)
 
     full = D.evolution_frames3d(runs, EVO_RID)
     f = full["frames"][0]
-    assert full["cap"] == 6000 and f["decimated"] is False
+    assert full["cap"] == D.M3D_DEFAULT_CAP and f["decimated"] is False
     assert f["n_tris_full"] == 3 and len(f["tris"]) == 9 and f["n_verts"] == 4
     assert len(f["verts"]) == 12 and all(isinstance(v, float) for v in f["verts"])
 
-    dec = D.evolution_frames3d(runs, EVO_RID, max_tris_per_frame=2)
+    # A 12x12 grid (242 triangles) forced under a 100-triangle budget must be welded, not
+    # stride-sampled: no degenerate faces survive and the sheet stays contiguous (the old
+    # tris[::k] sampler punched single-triangle holes across the whole surface).
+    rid = "20261026T000010Z-screen-ab1201"
+    run2 = _evo_run(runs, rid, [_evo_row(0, H0, 10.0)])
+    _evo_design(run2, H0, grid=12)
+    dec = D.evolution_frames3d(runs, rid, max_tris_per_frame=100)
     g = dec["frames"][0]
-    assert dec["cap"] == 2 and g["decimated"] is True and g["n_tris_full"] == 3
-    assert len(g["tris"]) // 3 == 2          # ceil(3 / 2) = 2 stride-sampled triangles
-    assert g["verts"] == f["verts"] and g["n_verts"] == 4
+    assert dec["cap"] == 100 and g["decimated"] is True and g["n_tris_full"] == 242
+    assert 0 < len(g["tris"]) // 3 <= 100
+    tri = np.asarray(g["tris"]).reshape(-1, 3)
+    assert not np.any((tri[:, 0] == tri[:, 1]) | (tri[:, 1] == tri[:, 2]) | (tri[:, 0] == tri[:, 2]))
+    # symmetry-plane vertices stay exactly on the plane so the mirrored seam has no slit
+    assert np.any(np.abs(np.asarray(g["verts"]).reshape(-1, 3)[:, 0]) == 0.0)
 
 
 def test_evolution_frames3d_available_false_is_honest(repo):
     runs = repo / "runs"
     _evo_run(runs, EVO_NOMESH_RID, [_evo_row(0, H0, 10.0)])       # improved, no design dir
     d = D.evolution_frames3d(runs, EVO_NOMESH_RID)
-    assert d["available"] is False and d["frames"] == [] and d["cap"] == 6000
+    assert d["available"] is False and d["frames"] == [] and d["cap"] == D.M3D_DEFAULT_CAP
     assert "skipped: no saved mesh" in d["note"]
 
     _evo_run(runs, EVO_NOROWS_RID, [])                            # search.ndjson exists, empty
@@ -526,7 +550,7 @@ def test_evolution_frames3d_route(server, repo):
 
     code, body = _req(server + f"/api/evolution/{EVO_RID}/frames3d")
     assert code == 200 and body["run_id"] == EVO_RID
-    assert body["available"] is True and body["cap"] == 6000 and "note" not in body
+    assert body["available"] is True and body["cap"] == D.M3D_DEFAULT_CAP and "note" not in body
     [f] = body["frames"]
     assert f["mesh_hash"] == H0 and len(f["tris"]) == 9 and f["decimated"] is False
     assert _req(server + "/api/evolution/bad-id/frames3d")[0] == 400

@@ -1,0 +1,43 @@
+# T2 MEH top: 1.4 in CD + 2 x 6.5 in on the top/bottom walls (C1, C10).
+#
+# The `meh:` block switches search/evaluate.py onto the MEH path: one CAD mesh with source
+# tags 2 (CD) and 10 (mid entry group), then the lumped-network inner optimiser, synthesis,
+# metrics on the synthesised system response and objective v5 (C11). hp_hz is the LR4
+# high-pass that hands over to the separate bass box (M10); it is NOT a bass alignment.
+#
+# C0: the front face is a 16 in square (406.4 mm) and the box is 380 mm deep. The envelope
+# below is the OUTER box the meh CAD tool authors (406.4 x 406.4 x 380), not the 330 x 191 mm
+# horn mouth, because search/evaluate.py checks the meshed bounding box (C2/C9).
+name: meh_home_90x60_t2
+description: Mini MEH top, home hi-fi / DJ booth, 90x60, 16 in square face, 1.4 in CD + 2 x 6.5 in, HP 120 Hz to the bass box
+driver: {exit_radius_mm: 17.9, exit_angle_deg: 0.0}
+envelope: {max_mouth_w_mm: 406.4, max_mouth_h_mm: 406.4, max_depth_mm: 380.0}
+symmetry: hv
+source: {cap: auto}
+target:
+  coverage_h_deg: 90.0
+  coverage_v_deg: 60.0
+  band_lo_hz: 120.0
+  band_hi_hz: 12000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 850.0
+weights: {cov: 1.0, rip: 0.5, di: 0.0, dislope: 0.3, flat: 0.0, load: 0.0, distd: 0.5, diag: 0.0,
+          lw_resid: 0.5, notch: 1.0, xo_lob: 1.0, headroom: 1.0}
+objective: {version: 5, cov_narrow_ratio: 2.0, cov_below_f0: one_sided}
+meh:
+  groups:
+    cd:  {tag: 2,  drivers: [faitalpro_hf1440]}
+    mid: {tag: 10, count: 2, drivers: [bc_6ndl38, faitalpro_6pr160]}
+  hp_hz: 120
+  xo_hz: {lo: 650, hi: 1100}
+  xo_orders: [2, 4]
+  delay_ms: {lo: -1.0, hi: 2.0}
+  v_front_fill: {lo: 0.0, hi: 0.7}
+  v_rear_l: {lo: 0.8, hi: 6.0}
+  amp_v_rms: 40.0
+  port_air_mps_max: 17.0
+  max_boost_db: 6.0
+  spl_target: [[120, 114], [250, 120], [12000, 120]]
+  listening_window: {h_deg: [0, 10, 20, 30], v_deg: [10]}

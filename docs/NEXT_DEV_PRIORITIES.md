@@ -367,3 +367,12 @@ print-and-measure protocol, and six owner decisions.
 ## Fallback
 Cloud RTX 4090 (24 GB, about $0.34–0.69/h) or L40S (48 GB, about $0.79/h): `docs/CLOUD_GPU_REPORT.md` CP-9a pod proof
 first (Linux CUDA never run with this solver).
+
+## P13 (added 2026-10-30, owner-directed). Mini multiple-entry horn: implement through the `docs/meh/` hand-off
+
+Owner un-deferred MEH (deferred 2026-10-24, G17) and set the targets: MEH top in a 16 in square face for home hi-fi /
+DJ practice / booth, separate bass box 30-120 Hz, DSP + FIR on every channel. The orchestrator fixed the architecture,
+typologies (T2 `meh2_6x2` primary, T1 `meh2_4x4`), solve strategy (per-channel BEM + impedance matrix + lumped network)
+and scoring (objective v5). Ten work packages for cheaper agents: `docs/meh/README.md` (waves, models, dispatch prompt),
+`docs/meh/00_MEH_CONTRACTS.md`. Research basis: `docs/research/typologies/MINI_MEH_RESEARCH_2026-10-29.md`.
+GPU work is M8 only, on the owner's box, after the fork change (M2) and the pipeline (M7).

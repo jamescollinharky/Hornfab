@@ -86,6 +86,134 @@ Local-only, added 2026-10-31 later (**beat_metal + Mac staged path; no GitHub is
 
 Local-only items (no GitHub issue): band edges capped by the measured dof cap (confirmed, user "keep lowered edges"); task 07 test-17 disk-latency flake risk (do not loosen); residual CP-7 risks (epw=6 above 2.5 kHz unmeasured; f11 unexercised; DI-vs-beamwidth not a regression test) — see `NOTES_FOR_SENIOR.md` task-09 block and CONTINUITY 06:20.
 
+Local-only, 2026-11-01 (**hardware decision study; no GitHub issue state changed**):
+- **DONE (decision study, not rental benchmarks):** owner clarified theoretical rent-versus-buy scope; $0 rental spend. `docs/evidence/HARDWARE_2026-11-01.md` audits stored timings and backend/lane code and gives current rates with labeled cost scenarios.
+- **MEASURED (CPU mesh sizing):** fixed T2 seed first globally validates at 12 kHz among tested sizes at 33,959 dofs / 67,245 triangles (EPW 8.4). EPW 6 gives 33,938 triangles but only 8.58 kHz global validity. This does not establish acoustic convergence or a universal minimum.
+- **SOURCE-DERIVED capacity constraint:** unchanged standard CUDA multi-channel path requires at least 85.410 GiB for operators+identities+LHS at that full-wall seed, before additional workspace. The 80 GB tier cannot fit that path. H200 141 GB is a test candidate, not a measured solution; cheaper 24/32 GB coarse-screen tests answer a different fidelity question.
+- **OPEN:** successful exact 41-frequency request on candidate hardware, root cause of CUDA 719, actual billed cold/warm costs, unified-backend C4 parity and 1/2/4/8-lane results. Flat `nvidia-smi` peaks do not establish invariant live workspace. Historical seed/winner mesh attribution and current overwritten/unknown-baseline VRAM trace limitations are corrected in the study.
+- **OPEN (implementation if shared-host lanes are selected):** per-device locks/monitoring, owned-host-only cleanup, private registries/cache staging, parent-only dataset writes and deterministic CMA coordination. Existing evaluator has side effects; the current one-writer/global-cleanup code is unsafe for naive concurrent workers. Separate machines, one brief each, are the simpler future deployment test.
+
+Local-only, 2026-10-31 (**3D evolution transparency, re-landed on `meh/integration`**):
+- **Recurring owner report (run `20261031T202159Z-screen-ba7648`): mesh renders as see-through triangles.**
+  Not a renderer regression: the hole-free decimation fix (`64ccb20`) lived only on
+  `feat/hardened-plan-2026-10-29`; this worktree is `meh/integration`, whose `gui/data.py` still stride-sampled
+  (`M3D_VERSION=1`, cap 6000 -> 11.5k-tri frames cut to 5.8k). Code files cherry-picked here, cache key bumped
+  to `[2,30000]`, stale per-run cache regenerated (`decimated:false`). The long-running GUI on :8765 must be
+  restarted after any such change; a branch switch also silently reverts the working tree. 131 GUI tests pass.
+  Detail: CONTINUITY 20:28Z.
+
+Local-only, pushed 2026-10-30 late (**chief-implementer hand-off; no GitHub issue state changed**):
+- **OPEN:** owner/lead agent to pull branch `ccr-4978c80b-tvvcgv` locally and run `docs/meh/CHIEF_IMPLEMENTER_HANDOFF.md`.
+
+Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; no GitHub issue state changed**):
+- **DONE:** M4 network layer (merged, `meh/M4-network` parts 1+2: drivers, network, dsp, limits, synthesis).
+- **DONE:** M4 inner optimiser (`hornlab_search/meh/inner.py`; merged `meh/M4c-inner`, commit `0cdfd7a`).
+- **DONE (M8 step 1):** solver fork validated on CPU and CUDA - superposition, reciprocity, single-tag parity,
+  reduced-vs-full symmetry all pass. The M2 Julia testset needed three fixture fixes (commit `93ef848`/`1efdc6f`);
+  properties and tolerances unchanged.
+- **DONE (M8 step 2):** single-tag parity vs the current pin <= 5.91e-5 dB on two finalists (floor 0.039 dB).
+- **DONE (M8 screen):** T2 40-eval CMA + verify -> J 9.530 -> 11.894 (best `ed11d2cd3acc`); T1 40-eval CMA + verify
+  -> J 13.228 -> 14.512 (best `704051ae928c`). Runs `20261101T004552Z-screen-427d57` and
+  `20261101T015657Z-screen-fc1d24`; evidence `docs/evidence/MEH_M8_2026-10-31.md` s8.
+- **BLOCKED on this hardware (screen band):** the contracted 120-12,000 Hz 1/6-octave grid has no legal operating
+  point on the 8 GB card. A 12 kHz-resolving mesh needs >= ~8,600 dofs (7.9/8.19 GB peak; the 41-frequency sweep dies -
+  CUDA 719 / worker_exit, measured); the smallest legal mesh (epw 4.05, 8,044 dofs) leaves CMA neighbours at
+  8,296-8,485 dofs, over any cap that keeps VRAM safe. `cuda_fused` refuses multi-channel by design. Resolving the band
+  needs a >= 12 GB card. Stopped by owner direction.
+- **DONE (docs accuracy):** the M8 evidence doc and its INDEX line now state the full result set (links 1/2/5/6 PASS, link 4 FAIL, link 3 PARTIAL, screens verified, blocks); no number changed.
+- **CI FIXED (PR #18):** `tests/test_solve_worker_restart.py` now gates `hornlab_beat_bem` with
+  `pytest.importorskip`, so CI (which does not install the solver) skips it instead of failing at collection.
+- **MERGED main (2026-11-01):** `origin/main` merged into `meh/integration`; 16 MEH-touched files normalized to
+  LF (main is LF), logs unioned so no entry from either side was dropped, and main's Metal/backend-override work
+  coexists with the MEH config changes. PR conflicts resolved.
+- **PACKAGED (handoff, PR #18):** `docs/meh/MEH_QUICKSTART.md`, `tools/meh/run_screen.ps1`, and
+  `docs/evidence/meh_2026-11-01/` (both verified winners + README). No production code changed.
+- **PR OPENED (wrap-up):** `meh/integration` -> `main`, carrying the full MEH implementation, the owner-approved
+  pin bump, both verified screens, the six-line readiness proof, and the hardware audit/hand-off. Final offline
+  suite green at the tip (exit 0). Open items inside the PR body: 8 GB band ceiling, M9 blocked, step 3 blocked,
+  link 4 budget decision.
+- **TIDIED (hand-off):** the withdrawn VRAM reading no longer appears as fact in s5/s5b; both now carry the
+  source-derived operator-storage statement and point at the s2a corrections. Duplicate table row removed.
+- **CORRECTED (hand-off):** four claims withdrawn after the audit - wrong mesh attribution (winners are
+  5,872/6,249 dofs), the 12x scaling claim, the flat-VRAM reading (and its backing CSV was overwritten), the
+  25-35k element sizing (first valid whole-wall mesh is 33,959 dofs, ~85 GiB), and 'lanes are one line'.
+  The audit's rent-first conclusion and 141 GB tier stand.
+- **UPDATED (compute brief):** the hand-off now carries the measured baseline (3.6 vs ~45 s/frequency;
+  ~12x for 1.44x elements) and an explicit unified-memory section (GH200/GB200, Apple Metal, MI300A ROCm,
+  APU negative control, CPU-only) with a required validation gate for any non-CUDA recommendation.
+- **OPEN (next agent, compute/hardware):** `docs/meh/HARDWARE_HANDOFF_2026-11-01.md` - fit the s/frequency and
+  VRAM scaling laws, benchmark bandwidth vs compute tiers, measure candidate-level lanes on rented GPUs, and
+  return a machine table in candidates/hour and $/candidate. Nothing in the MEH code blocks that work.
+- **OPERATIONAL NOTE:** stale BEAT hosts from an earlier fused probe were adopted by a later run and produced a
+  misleading fused/multi-channel error. Kill Julia hosts before launching a screen (`gpu-clean`).
+- **DONE (worker recycling):** opt-in `solve.worker_restart_every` (fake-tested), set to 8 in both MEH search
+  configs; it does not rescue the 8 GB ceiling but is committed for larger cards.
+- **OPEN (verify fidelity):** `verify` reports that the verify mesh equals the screen mesh at the current band/caps;
+  only the frequency count and balloon size change. A true higher-fidelity mesh needs a raised dof cap or a lower band.
+- **DONE (readiness, measured on the stored T2 winner):** link 1 PASS, link 2 PASS, link 5 PASS, link 6 PASS (J
+  9.530 -> 9.727 with a different mid driver and hp_hz, cached, no new solve).
+- **FAIL (readiness link 4):** the inner optimiser takes 6.58 s for 1,224 CMA evaluations on the shipped T2 brief,
+  3.3x the hand-off's < 2 s gate. Per-evaluation cost is 5.4 ms, so this is an evaluation-budget/combo decision.
+- **PARTIAL (readiness link 3):** with the mid drive muted, a 9.19 dB notch appears between 1200 and 1300 Hz
+  (+18.7 % to +28.6 % of the 1-D 1.0108 kHz), so the +-20 % gate is met only at the lower edge of that interval. A
+  25 Hz sweep over 1150-1350 Hz is needed to place the centre.
+- **BLOCKED (M8 step 3):** the meh CAD tool refuses a full model (quarter open shell only), so quarter-vs-full cannot
+  be measured without extending the tool.
+- **BLOCKED (M9):** Boundary Lab is not present in this workspace; it needs its own environment (pins BEAT 0.6.0).
+- **OPEN (M8 step 4):** L0 vs L1 notch comparison is not run.
+- **DONE (M10):** bass box - 7 woofer files, `tools/bassbox.py`, 65 tests, `BASSBOX_2026-10-31.md`. Recommendation:
+  1 x FaitalPRO 18XL1800 sealed 55 L net + LT; pair = +6 dB; smallest = 1 x 15XL1400 sealed 38 L.
+- **OPEN (task text):** M10's "B4 (fs = fb, Qts 0.383, alpha 1) is -3 dB at fs" is wrong for the lossless vented
+  box (alpha = 1 gives 0.0 dB at fs; the B4 constant is alpha = sqrt(2)). The test asserts both; amend the task file.
+- **OPEN (datasheets):** 15TBX100 (7.8 %) and 18NLW9601 (4.5 %) Vas/Mms vs Fs are internally inconsistent; Beyma
+  15LX60V2 Xmax 8 mm vs +/-9 mm. Files follow C8 and say so in `notes`.
+- **DONE:** M6 objective v5 + brief `meh:` block (merged, `meh/M6-objective-v5`).
+- **OPEN (M7):** `search/evaluate.py` currently only bridges version 5 (params class + scorer registration); the MEH
+  evaluation branch that builds `meh_ctx`, runs the inner optimiser and synthesises the response is M7's.
+- **OPEN (M1/M5):** cone `frame_od_mm` / `motor_od_mm` / `dish_mm` and CD `duct_mm` are not in the s8 table; M5 keeps
+  the C9 [inferred] placeholders (CD duct 40 / 25 / 25 mm) until a drawing is read or M8 measures it.
+- **DONE:** M3 multi-tag solve adapter (merged, `meh/M3-solve-adapter`).
+- **OPEN (M8 gate):** the installed `hornlab-beat-bem` has no `SolveConfig.impedance_matrix`; every multi-tag solve
+  raises ConfigError until M2's fork branch is validated on the GPU and the pin is bumped (owner approves the bump).
+- **OPEN (M5 follow-up):** seed renders not produced - `hornlab-render` needs `pyvista`, absent from the venv and no
+  installs are permitted. `cd_duct_mm = 0` is not modelled (no disc face without a bore). Unknown cone
+  (cutout, depth) pairs are refused until M1's driver files land.
+- **OPEN (local, not mine to commit):** the integrator's checkout carried unrelated regenerated catalog work
+  (cone_plughorn_2026-10-28 entries typed 2026-10-31 in `examples/catalog.yaml`, `docs/reference/PARAMETERS.md`,
+  `TYPOLOGIES.md`, `param-catalog.v1.json`); preserved as a patch outside the MEH branch.
+
+Local-only, pushed 2026-10-30 18:10 EDT (**MEH integration started on the owner's box; no GitHub issue state changed**):
+- **IN PROGRESS:** `meh/integration` created from `origin/ccr-4978c80b-tvvcgv` (hand-off section 0); baseline suite
+  green after fixing two pre-existing reds (stale sandbox.js dispose pin, CRLF-committed `param-catalog.v1.json`).
+- **OPEN (blocker, GPU):** night queue `n2_gapfill_2026-10-30` occupies the only GPU; M8 GPU validation/pin bump waits
+  for it to finish (CLAUDE.md: never start GPU work while a night queue runs).
+- **OPEN (owner):** confirm the 380 mm box depth assumption (M8 readiness step 1 + layout feasibility depend on it).
+
+Local-only, pushed 2026-10-30 (**MEH implementation hand-off; no GitHub issue state changed**):
+- **OPEN (wave 1, dispatch-ready):** M1 driver files, M2 solver fork multi-tag + impedance matrix, M3 solve adapter,
+  M4 network + inner optimiser, M5 CAD tool + multi-label STEP, M6 objective v5 + brief block, M10 bass box
+  (`docs/meh/README.md`).
+- **OPEN (wave 2/3):** M7 pipeline + configs; M8 GPU validation, pin bump, first screen (owner's box); M9 Boundary Lab.
+- **OPEN (owner):** confirm the 380 mm box depth assumption.
+- **CLOSED:** dossier s13 questions answered by the owner 2026-10-30 (dossier s14).
+
+Local-only, pushed 2026-10-29 20:15 EDT (**mini MEH research pass complete for this round; no GitHub issue state changed**):
+- **OPEN (owner decisions):** mini MEH targets - bass route (top + sub / one-box PR-vent ~106 dB / 3-way), size number, use and
+  coverage, 4 x 4-inch vs 2 x 6.5-inch, DSP per channel, new J terms, commercial intent (Synergy patent)
+  (`docs/research/typologies/MINI_MEH_RESEARCH_2026-10-29.md` s13).
+- **OPEN (senior, `NOTES_FOR_SENIOR.md` 2026-10-29):** attribution fix in `docs/DRIVER_MODEL.md:42` (issue #78 is
+  timini/horn-simulation); frozen-plan MEH tag note; BL symmetry note.
+- **CLOSED (research):** web-lane findings folded into the dossier s7-s8 with orchestrator spot-checks.
+- **FINDING:** compression-driver internal depth sets the mid ceiling in a mini MEH (1-D); any MEH model must include it.
+
+Local-only, pushed 2026-10-29 18:45 EDT (**mini MEH research pass, draft; no GitHub issue state changed**):
+- **OPEN (owner decisions):** mini multiple-entry horn targets - separate sub vs bass in the box, size number, use case /
+  coverage, 4 x 4-inch vs 2 x 6.5-inch mids, DSP per channel, new J terms
+  (`docs/research/typologies/MINI_MEH_RESEARCH_2026-10-29.md` s13).
+- **CLOSED 2026-10-29 20:15:** web-lane findings folded into the dossier s7-s8.
+- **FINDING / correction:** the mesher has MEH tag names 8-12 only, no builder; MEH geometry needs the CAD -> STEP route
+  (multi-label) or a new builder. Python `SolveConfig` refuses more than one source tag although the engine supports it.
+
 Local-only, pushed 2026-10-28 20:50 EDT (**cone mid horn typology + research; no GitHub issue state changed**; 8 commits to origin/main):
 - **OPEN:** `cone_plughorn` never solved on the GPU; first screen should use `source_motion: axial` and a CPU cross-check of the
   2.4 mm axe-head/throat gap (thin-gap risk).

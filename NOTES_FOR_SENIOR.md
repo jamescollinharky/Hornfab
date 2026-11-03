@@ -646,6 +646,23 @@ Owner: "I don't want to be running these simulations if it isn't going to behave
 ### 2026-10-27 (evening) P12 research result (append)
 Outside research is in `docs/research/SIM_VS_REAL_HORN_2026-10-27.md` and `docs/plan/12_RESEARCH_BASIS.md` section 17: ideal-source BEM is a sound relative tool for pattern shape above cutoff, not for level/loading/distortion. Ranked actions are in `docs/NEXT_DEV_PRIORITIES.md` P12. Decision requested from the senior pass: approve P12a (free re-score with loading ON + stricter cov), the lumped-driver-over-BEM-throat-impedance add, and which published measured horn to validate against. The ripple/ridge night was launched 2026-10-27 17:23 on the existing v4 scoring at the owner's direction.
 
+## 2026-10-29 mini multiple-entry horn research pass (orchestrator, append-only)
+Dossier: `docs/research/typologies/MINI_MEH_RESEARCH_2026-10-29.md` (s8 corrections table). Three corrections touch files
+this pass does not own; nothing in them was edited:
+1. `docs/plan/12_RESEARCH_BASIS.md` s3/s9 and `docs/plan/04_TASK_DESIGN_MESH.md:289` (frozen) say the mesher already has
+   the MEH geometry path (tags 8-11). Verified 2026-10-29 at mesher a833a7e: tag NAMES only (8-12; 10/11 in
+   `SOURCE_TAGS`); no builder, and the mesher README says it ships no builders for slots, ports, drivers or cabinets.
+   MEH geometry needs our CAD -> STEP route with several driven labels, or a new builder.
+2. `docs/DRIVER_MODEL.md:42` cites "Boundary Lab issue #78: 10-20 % low-frequency error". The source is
+   timini/horn-simulation issue #78 ("Evaluation: JWSound/boundary-lab compared to horn-simulation ..."; BL's own #78
+   is a 404); it says Mms - Mmd is "of order 10 to 20 percent of the mass term". Suggested edit: "(timini/horn-simulation
+   issue #78, evaluating Boundary Lab: Mms - Mmd is of order 10-20 % of the mass term)". The Mmd rule itself stands.
+3. `docs/BOUNDARY_LAB_0.5_RESEARCH.md` s4 / `docs/research/boundary_lab_0.5/bl_inventory.md`: "named assemblies require
+   symmetry Off" is a generator-plugin limit; a coupled multi-region BL project runs with symmetry `xy`
+   (`examples/Multi_region_SAWMOD`, verified). Suggested: add that sentence where the limit is quoted.
+Also for the senior pass: the hornlab-beat-bem Python package refuses more than one source tag (`config.py:462`) while
+its engine already solves several channels on one factorization; an opt-in fork change (multi-tag + per-tag
+impedance matrix) is MEH seed MEH-3. MEH implementation stays owner-deferred.
 ## 2026-10-31 staged search A/B (collaborator Mac)
 
 What happened: implemented the staged-search recommendation as an equal-budget protocol

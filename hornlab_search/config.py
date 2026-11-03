@@ -169,7 +169,7 @@ def load_brief(path) -> dict:
     if not isinstance(raw, dict):
         raise ConfigError(f"{where}: top level must be a mapping")
     allowed = {"name", "description", "driver", "envelope", "symmetry", "source", "target", "weights",
-               "verify_only", "objective", "grid", "mounting"}
+               "verify_only", "objective", "grid", "mounting", "meh"}
     unknown = set(raw) - allowed
     if unknown:
         raise ConfigError(f"{where}: unknown key(s) {sorted(unknown)}")
@@ -190,6 +190,9 @@ def load_brief(path) -> dict:
         _validate_grid_block(raw["grid"], where)
     if "mounting" in raw and raw["mounting"] is not None:
         _validate_mounting_block(raw["mounting"], where)
+    meh_cfg = None
+    if "meh" in raw and raw["meh"] is not None:
+        meh_cfg = _validate_meh_block(raw["meh"], f"{where}:meh")
     for k in ("max_mouth_w_mm", "max_mouth_h_mm", "max_depth_mm"):
         if not isinstance(env.get(k), (int, float)) or not float(env[k]) > 0:
             raise ConfigError(f"{where}: envelope.{k} must be a positive number")
@@ -210,6 +213,8 @@ def load_brief(path) -> dict:
     out = dict(raw)
     out["source"] = {"cap": cap}
     out["path"] = str(path)
+    if meh_cfg is not None:
+        out["meh"] = meh_cfg
     return out
 
 
@@ -228,20 +233,28 @@ def _require(section: dict, key: str, where: str):
 # ------------------------------------------------------------------ WP1/WP4 blocks (senior pass)
 
 def _validate_objective_block(block, where: str) -> dict:
-    """Brief/config ``objective: {version: 2|3|4}`` (WP1; v3 = the 2026-10-25 owner-approved
+    """Brief/config ``objective: {version: 2|3|4|5}`` (WP1; v3 = the 2026-10-25 owner-approved
     K-law-masked coverage scoring - see objective/scalar_v2.py objective_v3; v4 = the 2026-10-27
     tolerance-normalised objective, whose block also carries ``tolerances`` and the optional
-    ``cov_narrow_ratio`` / ``cov_below_f0`` / ``diag_reference`` - see objective/scalar_v4.py).
-    Default 1. Unknown keys are refused so a YAML typo is never silent."""
+    ``cov_narrow_ratio`` / ``cov_below_f0`` / ``diag_reference`` - see objective/scalar_v4.py;
+    v5 = the MEH system objective, whose block is v4's shape with the C11 defaults when
+    ``tolerances`` is omitted - see objective/scalar_meh.py). Default 1. Unknown keys are refused
+    so a YAML typo is never silent."""
     if not isinstance(block, dict):
         raise ConfigError(f"{where}: objective must be a mapping")
     v = block.get("version", 1)
-    if isinstance(v, bool) or not isinstance(v, int) or v not in (1, 2, 3, 4):
-        raise ConfigError(f"{where}: objective.version must be 1, 2, 3 or 4, got {v!r}")
+    if isinstance(v, bool) or not isinstance(v, int) or v not in (1, 2, 3, 4, 5):
+        raise ConfigError(f"{where}: objective.version must be 1, 2, 3, 4 or 5, got {v!r}")
     if v == 4:
         from .objective.scalar_v4 import V4Params
         try:
             return V4Params.from_block(block).to_block()
+        except ValueError as e:
+            raise ConfigError(f"{where}: {e}") from None
+    if v == 5:
+        from .objective.scalar_meh import MehParams
+        try:
+            return MehParams.from_block(block).to_block()
         except ValueError as e:
             raise ConfigError(f"{where}: {e}") from None
     unknown = set(block) - {"version"}
@@ -347,6 +360,222 @@ def _validate_mounting_block(block, where: str) -> dict:
         "margins_mm": margins,
         "edge_mm": edge_mm,
         "plan": plan,
+    }
+
+
+# ------------------------------------------------------------------ MEH brief block (C10)
+
+#: The C10 ``meh:`` brief block: every key is required (M7's inner optimiser and limits read all
+#: of them, and a missing one has no honest default at the brief level).
+MEH_KEYS = ("groups", "hp_hz", "xo_hz", "xo_orders", "delay_ms", "v_front_fill", "v_rear_l",
+            "amp_v_rms", "port_air_mps_max", "max_boost_db", "spl_target", "listening_window")
+MEH_GROUP_KEYS = ("cd", "mid")
+#: C3: the only MEH tags this build knows. ``cd`` is the driver tag, ``mid`` the entry_mid tag.
+MEH_GROUP_TAGS = {"cd": 2, "mid": 10}
+#: C8: the driver-file kind each group must reference (M1 creates those files).
+MEH_GROUP_KINDS = {"cd": "compression_meh", "mid": "cone"}
+MEH_XO_ORDERS = (2, 4, 8)
+
+
+def _meh_number(value, where: str, lo: float | None = None, hi: float | None = None) -> float:
+    """One finite number, optionally inside the inclusive [lo, hi] range."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) \
+            or not np.isfinite(float(value)):
+        raise ConfigError(f"{where} must be a finite number, got {value!r}")
+    v = float(value)
+    if lo is not None and v < float(lo):
+        raise ConfigError(f"{where} must be >= {lo:g}, got {v!r}")
+    if hi is not None and v > float(hi):
+        raise ConfigError(f"{where} must be <= {hi:g}, got {v!r}")
+    return v
+
+
+def _meh_range(block, key: str, where: str, lo: float, hi: float, *,
+               strict: bool = False) -> dict:
+    """A ``{lo, hi}`` sub-block, both endpoints in [lo, hi], with ``lo`` < (or <=) ``hi``."""
+    sub = block.get(key)
+    if not isinstance(sub, dict):
+        raise ConfigError(f"{where}.{key} must be a mapping with keys lo and hi")
+    unknown = set(sub) - {"lo", "hi"}
+    if unknown:
+        raise ConfigError(f"{where}.{key} unknown key(s) {sorted(unknown)} (allowed: lo, hi)")
+    for edge in ("lo", "hi"):
+        if edge not in sub:
+            raise ConfigError(f"{where}.{key} missing required key '{edge}'")
+    a = _meh_number(sub["lo"], f"{where}.{key}.lo", lo, hi)
+    b = _meh_number(sub["hi"], f"{where}.{key}.hi", lo, hi)
+    if (a >= b) if strict else (a > b):
+        cmp = "lo < hi" if strict else "lo <= hi"
+        raise ConfigError(f"{where}.{key} needs {cmp}, got lo={a:g}, hi={b:g}")
+    return {"lo": a, "hi": b}
+
+
+def _meh_driver_files(block: dict, where: str, drivers_dir) -> None:
+    """Check every driver stem's file and kind. A MISSING file is a warning until M1 lands."""
+    root = Path(drivers_dir) if drivers_dir is not None \
+        else Path(__file__).resolve().parents[1] / "examples" / "drivers"
+    for group_name, group in block.items():
+        expected = MEH_GROUP_KINDS[group_name]
+        for stem in group["drivers"]:
+            stem_path = Path(str(stem))
+            candidates = ([stem_path] if stem_path.is_absolute()
+                          else [root / f"{stem_path}.yaml", root / f"{stem_path}.yml"])
+            found = next((p for p in candidates if p.exists()), None)
+            if found is None:
+                # M1 runs in parallel with M6: a missing stem must not make every MEH brief
+                # unloadable while the driver files have not landed yet.  The warning names the
+                # exact path so a typo is still visible in the log.
+                log.warning("%s.groups.%s: driver file %s is missing; MEH validation continues "
+                            "(M1 has not landed)", where, group_name, candidates[0])
+                continue
+            try:
+                raw = yaml.safe_load(found.read_text(encoding="utf-8"))
+            except (OSError, yaml.YAMLError) as exc:
+                raise ConfigError(f"{where}.groups.{group_name}: cannot read driver file "
+                                  f"{found}: {exc}") from None
+            kind = raw.get("kind") if isinstance(raw, dict) else None
+            if kind != expected:
+                raise ConfigError(
+                    f"{where}.groups.{group_name}: driver file {found.name!r} has kind {kind!r}, "
+                    f"expected {expected!r} for the {group_name} group")
+
+
+def _validate_meh_block(block, where: str, drivers_dir=None) -> dict:
+    """Validate the C10 ``meh:`` brief block. Exact keys, types and ranges; unknown keys refuse.
+
+    Ranges are the task's (M6 brief): hp_hz 60-250; xo lo < hi inside 300-3000; xo_orders a
+    subset of {2, 4, 8}; delay -3..3 ms; fill 0..0.9; rear chamber 0.2..20 L; amp 5..200 V RMS;
+    port air 5..40 m/s; boost 0..12 dB; spl_target sorted by frequency with dB 80..140.  Driver
+    stems are checked against ``examples/drivers/`` (kind from C8); a missing file is a warning,
+    never a failure, while M1 has not landed.
+    """
+    if not isinstance(block, dict):
+        raise ConfigError(f"{where} must be a mapping")
+    unknown = set(block) - set(MEH_KEYS)
+    if unknown:
+        raise ConfigError(f"{where} unknown key(s) {sorted(unknown)} (allowed: {list(MEH_KEYS)})")
+    missing = [k for k in MEH_KEYS if k not in block or block[k] is None]
+    if missing:
+        raise ConfigError(f"{where} missing required key(s) {missing}")
+
+    # groups: cd (tag 2, exactly one driver) and mid (tag 10, count >= 1, one or more candidates).
+    groups = block["groups"]
+    if not isinstance(groups, dict):
+        raise ConfigError(f"{where}.groups must be a mapping with keys cd and mid")
+    unknown = set(groups) - set(MEH_GROUP_KEYS)
+    if unknown:
+        raise ConfigError(f"{where}.groups unknown key(s) {sorted(unknown)} "
+                          f"(allowed: {list(MEH_GROUP_KEYS)})")
+    missing = [k for k in MEH_GROUP_KEYS if k not in groups]
+    if missing:
+        raise ConfigError(f"{where}.groups missing required key(s) {missing}")
+    clean_groups = {}
+    for name in MEH_GROUP_KEYS:
+        g = groups[name]
+        if not isinstance(g, dict):
+            raise ConfigError(f"{where}.groups.{name} must be a mapping")
+        allowed = {"tag", "drivers"} if name == "cd" else {"tag", "count", "drivers"}
+        unknown = set(g) - allowed
+        if unknown:
+            raise ConfigError(f"{where}.groups.{name} unknown key(s) {sorted(unknown)} "
+                              f"(allowed: {sorted(allowed)})")
+        for key in allowed:
+            if key not in g:
+                raise ConfigError(f"{where}.groups.{name} missing required key '{key}'")
+        tag = g["tag"]
+        expected_tag = MEH_GROUP_TAGS[name]
+        if isinstance(tag, bool) or not isinstance(tag, int) or tag != expected_tag:
+            raise ConfigError(f"{where}.groups.{name}.tag must be {expected_tag} "
+                              f"(C3's only MEH mapping), got {tag!r}")
+        drivers = g["drivers"]
+        if not isinstance(drivers, (list, tuple)) or not drivers:
+            raise ConfigError(f"{where}.groups.{name}.drivers must be a non-empty list of stems")
+        stems = []
+        for stem in drivers:
+            if not isinstance(stem, str) or not stem.strip():
+                raise ConfigError(f"{where}.groups.{name}.drivers must contain non-empty strings, "
+                                  f"got {stem!r}")
+            stems.append(stem)
+        if name == "cd" and len(stems) != 1:
+            raise ConfigError(f"{where}.groups.cd.drivers must name exactly one CD file, "
+                              f"got {len(stems)}")
+        clean = {"tag": int(tag), "drivers": stems}
+        if name == "mid":
+            count = g["count"]
+            if isinstance(count, bool) or not isinstance(count, int) or count < 1:
+                raise ConfigError(f"{where}.groups.mid.count must be an integer >= 1, got {count!r}")
+            clean["count"] = int(count)
+        clean_groups[name] = clean
+
+    hp_hz = _meh_number(block["hp_hz"], f"{where}.hp_hz", 60.0, 250.0)
+    xo_hz = _meh_range(block, "xo_hz", where, 300.0, 3000.0, strict=True)
+
+    orders = block["xo_orders"]
+    if not isinstance(orders, (list, tuple)) or not orders:
+        raise ConfigError(f"{where}.xo_orders must be a non-empty list of Linkwitz-Riley orders")
+    clean_orders = []
+    for order in orders:
+        if isinstance(order, bool) or not isinstance(order, int) or order not in MEH_XO_ORDERS:
+            raise ConfigError(f"{where}.xo_orders must be a subset of {list(MEH_XO_ORDERS)}, "
+                              f"got {order!r}")
+        if order in clean_orders:
+            raise ConfigError(f"{where}.xo_orders contains duplicate order {order}")
+        clean_orders.append(int(order))
+
+    delay = _meh_range(block, "delay_ms", where, -3.0, 3.0)
+    fill = _meh_range(block, "v_front_fill", where, 0.0, 0.9)
+    rear = _meh_range(block, "v_rear_l", where, 0.2, 20.0)
+    amp = _meh_number(block["amp_v_rms"], f"{where}.amp_v_rms", 5.0, 200.0)
+    port_air = _meh_number(block["port_air_mps_max"], f"{where}.port_air_mps_max", 5.0, 40.0)
+    boost = _meh_number(block["max_boost_db"], f"{where}.max_boost_db", 0.0, 12.0)
+
+    spl = block["spl_target"]
+    if not isinstance(spl, (list, tuple)) or len(spl) < 2:
+        raise ConfigError(f"{where}.spl_target must be a list of at least two [Hz, dB] points")
+    clean_spl = []
+    for i, point in enumerate(spl):
+        if not isinstance(point, (list, tuple)) or len(point) != 2:
+            raise ConfigError(f"{where}.spl_target[{i}] must be a [Hz, dB] pair, got {point!r}")
+        f_hz = _meh_number(point[0], f"{where}.spl_target[{i}][0]", 1e-9, None)
+        db = _meh_number(point[1], f"{where}.spl_target[{i}][1]", 80.0, 140.0)
+        if clean_spl and f_hz <= clean_spl[-1][0]:
+            raise ConfigError(f"{where}.spl_target must be strictly increasing in frequency, "
+                              f"got {clean_spl[-1][0]:g} then {f_hz:g} Hz")
+        clean_spl.append([f_hz, db])
+
+    window = block["listening_window"]
+    if not isinstance(window, dict):
+        raise ConfigError(f"{where}.listening_window must be a mapping with h_deg and v_deg")
+    unknown = set(window) - {"h_deg", "v_deg"}
+    if unknown:
+        raise ConfigError(f"{where}.listening_window unknown key(s) {sorted(unknown)} "
+                          f"(allowed: h_deg, v_deg)")
+    clean_window = {}
+    for axis in ("h_deg", "v_deg"):
+        if axis not in window:
+            raise ConfigError(f"{where}.listening_window missing required key '{axis}'")
+        angles = window[axis]
+        if not isinstance(angles, (list, tuple)) or not angles:
+            raise ConfigError(f"{where}.listening_window.{axis} must be a non-empty list of degrees")
+        clean_window[axis] = [
+            _meh_number(a, f"{where}.listening_window.{axis}") for a in angles
+        ]
+
+    _meh_driver_files(clean_groups, where, drivers_dir)
+
+    return {
+        "groups": clean_groups,
+        "hp_hz": hp_hz,
+        "xo_hz": xo_hz,
+        "xo_orders": clean_orders,
+        "delay_ms": delay,
+        "v_front_fill": fill,
+        "v_rear_l": rear,
+        "amp_v_rms": amp,
+        "port_air_mps_max": port_air,
+        "max_boost_db": boost,
+        "spl_target": clean_spl,
+        "listening_window": clean_window,
     }
 
 
@@ -705,6 +934,14 @@ def load_config(path, *, brief=None, cma_seed: int | None = None,
     if brief_d is not None and brief_d.get("mounting") is not None:
         mounting_cfg = _validate_mounting_block(brief_d["mounting"], f"{where}:mounting")
         raw["mounting"] = dict(mounting_cfg)
+    # C10: the MEH block lives in the brief.  A fresh brief was already validated by load_brief;
+    # an embedded run-directory brief goes through the same validator here (so a resume cannot
+    # smuggle an unvalidated block), and the normalized form is stored in raw for config_sha.
+    if brief_d is not None and brief_d.get("meh") is not None:
+        meh_cfg = (_validate_meh_block(brief_d["meh"], f"{where}:meh")
+                   if embedded_brief else dict(brief_d["meh"]))
+        raw["brief"] = dict(raw.get("brief") or brief_d)
+        raw["brief"]["meh"] = meh_cfg
     if cma_seed is not None:
         raw.setdefault("search", {})
         raw["search"] = dict(raw["search"], seed=int(cma_seed))
@@ -729,7 +966,19 @@ def load_config(path, *, brief=None, cma_seed: int | None = None,
 
     mesh = _build(MeshSettings, _require(raw, "mesh", where), f"{where}:mesh",
                   optional=("max_triangle_slack", "rear_res_factor", "band_split"))
-    solve = _build(SolveSettings, _require(raw, "solve", where), f"{where}:solve",
+    solve_section = dict(_require(raw, "solve", where))
+    if solve_section.get("freq_grid") is not None:
+        _validate_freq_grid(solve_section["freq_grid"], f"{where}:solve")
+        solve_section.pop("freq_grid")
+    if "worker_restart_every" in solve_section:
+        try:
+            _restart = int(solve_section["worker_restart_every"])
+        except (TypeError, ValueError):
+            raise ConfigError(f"{where}:solve: worker_restart_every must be an integer") from None
+        if _restart < 1:
+            raise ConfigError(f"{where}:solve: worker_restart_every must be >= 1 (got {_restart})")
+        solve_section.pop("worker_restart_every")
+    solve = _build(SolveSettings, solve_section, f"{where}:solve",
                    optional=("cuda_fused", "source_motion", "near_correction",
                              "near_correction_cutoff", "near_correction_order",
                              "solve_precision", "source_profile_alpha"))
@@ -784,6 +1033,17 @@ def load_config(path, *, brief=None, cma_seed: int | None = None,
                 f"{where}: objective v4 tolerances/weights let an all-unmeasurable valid design score "
                 f"J = {worst:.0f}, above half the refusal penalty ({PENALTY_INVALID:g}); raise the "
                 f"tolerances or lower the weights so refused designs always rank below valid ones")
+    elif objective_version == 5:
+        # Same penalty-ordering invariant as v4, with the v5 term set and C11 defaults.
+        from .objective.scalar_meh import MehParams, worst_valid_meh_j
+        from .objective.terms import PENALTY_INVALID
+        objective_params = _validate_objective_block(raw["objective"], where)
+        worst = worst_valid_meh_j(MehParams.from_block(objective_params), raw.get("weights"))
+        if worst > 0.5 * PENALTY_INVALID:
+            raise ConfigError(
+                f"{where}: objective v5 tolerances/weights let an all-unmeasurable valid design score "
+                f"J = {worst:.0f}, above half the refusal penalty ({PENALTY_INVALID:g}); raise the "
+                f"tolerances or lower the weights so refused designs always rank below valid ones")
 
     if mesh.quadrants not in QUADRANT_FACTOR:
         raise ConfigError(f"{where}: mesh.quadrants must be one of {list(QUADRANT_FACTOR)}")
@@ -818,6 +1078,27 @@ def load_config(path, *, brief=None, cma_seed: int | None = None,
 
 # ------------------------------------------------------------------ specs
 
+def _validate_freq_grid(block, where: str) -> tuple[float, float, float]:
+    """``solve.freq_grid`` -> (lo_hz, hi_hz, points_per_octave). Opt-in, additive."""
+    if not isinstance(block, dict):
+        raise ConfigError(f"{where}: freq_grid must be a mapping {{lo_hz, hi_hz, points_per_octave}}")
+    unknown = set(block) - {"lo_hz", "hi_hz", "points_per_octave"}
+    if unknown:
+        raise ConfigError(f"{where}: freq_grid has unknown key(s) {sorted(unknown)} "
+                          f"(allowed: lo_hz, hi_hz, points_per_octave)")
+    try:
+        lo = float(block["lo_hz"]); hi = float(block["hi_hz"]); ppo = float(block["points_per_octave"])
+    except (KeyError, TypeError, ValueError):
+        raise ConfigError(f"{where}: freq_grid.lo_hz, hi_hz and points_per_octave are required numbers") from None
+    if not (np.isfinite(lo) and np.isfinite(hi) and np.isfinite(ppo)):
+        raise ConfigError(f"{where}: freq_grid values must be finite")
+    if lo <= 0.0 or hi <= lo:
+        raise ConfigError(f"{where}: freq_grid needs 0 < lo_hz < hi_hz (got {lo} -> {hi})")
+    if not (1.0 <= ppo <= 48.0):
+        raise ConfigError(f"{where}: freq_grid.points_per_octave must be in 1..48 (got {ppo})")
+    return lo, hi, ppo
+
+
 def mode_freqs(mode: str, cfg: Config) -> tuple[float, ...]:
     """The mode's frozen log grid, with its top edge clipped to the target band's upper
     edge so the mesh is never asked to resolve frequencies the objective ignores.
@@ -830,6 +1111,14 @@ def mode_freqs(mode: str, cfg: Config) -> tuple[float, ...]:
     band_hi = cfg.target_raw.get("band_hi_hz")
     if band_hi is not None and float(band_hi) < hi:
         hi = float(band_hi)
+    override = (getattr(cfg, "raw", None) or {}).get("solve", {}).get("freq_grid") \
+        if isinstance((getattr(cfg, "raw", None) or {}).get("solve"), dict) else None
+    if override is not None:
+        o_lo, o_hi, ppo = _validate_freq_grid(override, "solve.freq_grid")
+        hi_eff = min(o_hi, float(band_hi)) if band_hi is not None else o_hi
+        if hi_eff > o_lo:
+            n_pts = max(2, int(round(float(np.log2(hi_eff / o_lo)) * ppo)) + 1)
+            return tuple(round(float(f), 2) for f in np.geomspace(o_lo, hi_eff, n_pts))
     base = [round(float(f), 2) for f in freq_grid(lo, hi, n)]
     if mode == "verify":
         ppo = ((cfg.grid or {}).get("verify_points_per_octave"))
@@ -872,6 +1161,10 @@ def solve_spec(mode: Mode, cfg: Config) -> SolveSpec:
     # WP15: cuda_fused rides in `extra` so the solve-spec hash (cache key, dataset provenance)
     # changes ONLY when the opt-in is actually set; absent leaves every old hash untouched.
     extra: dict = {"cuda_fused": True} if bool(getattr(s, "cuda_fused", False)) else {}
+    _restart_every = (getattr(cfg, "raw", None) or {}).get("solve", {}).get("worker_restart_every") \
+        if isinstance((getattr(cfg, "raw", None) or {}).get("solve"), dict) else None
+    if _restart_every is not None:
+        extra["worker_restart_every"] = int(_restart_every)
     # WP5: 'normal' is today's beat source and must NOT enter `extra` (old hashes unchanged).
     if str(getattr(s, "source_motion", "normal")) != "normal":
         extra["source_motion"] = str(s.source_motion)

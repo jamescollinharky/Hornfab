@@ -53,6 +53,8 @@ def materialize(gen: dict, knobs: dict, brief: dict) -> dict:
         return grid_gen.design_params(gen, knobs, brief)
     if str(gen.get("name", "")) == "plughorn":
         return plughorn_params(gen, knobs, brief)
+    if str(gen.get("name", "")) == "meh":
+        return meh_params(gen, knobs, brief)
     return registry.materialize(gen, knobs, brief)
 
 
@@ -86,6 +88,43 @@ def plughorn_params(gen: dict, knobs: dict, brief: dict) -> dict:
         if key in env and val > float(env[key]) + 0.5:
             raise ValueError(f"plughorn: outer {key[4:-3]} {val:.0f} mm exceeds the brief's {env[key]} mm")
     return {"cad": {"tool": step_build.PLUGHORN_TOOL, **recipe}}
+
+
+def meh_params(gen: dict, knobs: dict, brief: dict) -> dict:
+    """``name: meh`` -> ``{"cad": recipe}`` for ``tools/cad/meh.py`` (MEH, 2026-10-30).
+
+    Recipe = the tool's documented defaults (C9), overridden by ``generator.fixed`` and then by
+    the knobs (knob names ARE the tool's keys). Every key is written, so the design hash is the
+    geometry. The tool's own ``derived()`` runs the layout check and the deterministic slide
+    repair here; a non-empty ``reasons`` list is an illegal horn (``invalid_geometry`` before any
+    mesh). The mouth and depth are checked against the brief envelope.
+    """
+    from ..mesh import step_build                   # lazy: mesh imports the design package
+    tool = step_build.load_cad_tool(tool=step_build.MEH_TOOL)
+    recipe = dict(tool.defaults())
+    fixed = dict(gen.get("fixed") or {})
+    for src in (fixed, knobs):
+        unknown = sorted(set(src) - set(recipe))
+        if unknown:
+            raise ValueError(f"meh: unknown key(s) {unknown}")
+        recipe.update(src)
+    for key in ("cov_h_deg", "cov_v_deg", "z_frac", "across_frac", "port_along_mm", "slide_mm"):
+        recipe[key] = float(recipe[key])
+    for key in ("env_w_mm", "env_h_mm", "env_d_mm", "box_t_mm", "roll_mm", "wall_t_mm",
+                "spacer_mm", "exit_mm", "cd_duct_mm", "cd_body_d_mm", "cd_body_len_mm",
+                "cone_cutout_mm", "cone_depth_mm", "clearance_mm"):
+        recipe[key] = float(recipe[key])
+    recipe["walls"] = str(recipe["walls"])
+    d = tool.derived(recipe)                        # the tool's own validation + repair
+    reasons = list(d.get("reasons") or [])
+    if reasons:
+        raise ValueError(f"meh: layout infeasible: {reasons}")
+    env = (brief or {}).get("envelope") or {}
+    for key, val in (("max_mouth_w_mm", float(d["mouth_w"])), ("max_mouth_h_mm", float(d["mouth_h"])),
+                     ("max_depth_mm", float(recipe["env_d_mm"]))):
+        if key in env and val > float(env[key]) + 0.5:
+            raise ValueError(f"meh: {key[4:-3]} {val:.1f} mm exceeds the brief's {env[key]} mm")
+    return {"cad": {"tool": step_build.MEH_TOOL, **recipe}}
 
 
 class GeneratedSpace:

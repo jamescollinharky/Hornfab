@@ -74,6 +74,9 @@ Create and edit **only** your own paths. Read anything.
 | `docs/plan/**` | frozen; nobody edits |
 | `CLAUDE.md`, `CONTRIBUTING.md`, `.github/**` | orchestrator |
 
+**MEH effort (owner, 2026-10-30):** tasks M1-M10 own the paths in `docs/meh/00_MEH_CONTRACTS.md` C13 (additive to the
+table above); `docs/meh/**` is orchestrator-owned and frozen for the effort.
+
 Need a file you do not own? Do not edit it. Append the exact change to `NOTES_FOR_SENIOR.md`.
 
 ## The three silent killers

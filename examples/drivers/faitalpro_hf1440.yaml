@@ -1,0 +1,21 @@
+# FaitalPRO HF1440 — T2 compression driver (1.4 in exit; min XO 0.7 kHz).
+# Transcribed from docs/research/typologies/mini_meh_2026-10-29/appendix_A_web_survey_raw.md
+# section 8(b), row labelled V (manufacturer datasheet PDF read 2026-10-29).
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md. Existing files are untouched.
+name: FaitalPRO HF1440
+kind: compression_meh
+source: https://faitalpro.com/products/files/HF1440/8/HF1440_datasheet_8.pdf
+notes: >-
+  Datasheet row V. Published body size 124 mm diameter x 75 mm length (the same values
+  C9 carries as cd_body_d_mm / cd_body_len_mm). Sensitivity 109 dB is the appendix A s8
+  "Sens" column; the reference horn is not stated in the extracted table, so it is not
+  named here. Power is the datasheet nominal/AES 120 W (continuous/program 240 W).
+  Only Zmin = 8.3 ohm is published, so re_ohm is omitted. duct_mm (diaphragm to exit) is
+  not shown in the appendix A s8 table: duct depth not published. fs_cd_hz, q_cd and
+  di_ref_db are omitted so the C8 defaults apply (min_xo_hz/1.4, 1.0, 10 dB).
+exit_mm: 35.8
+p_aes_w: 120
+min_xo_hz: 700
+sens_db_1w: 109
+body_d_mm: 124
+body_len_mm: 75

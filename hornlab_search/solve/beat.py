@@ -32,10 +32,12 @@ Facts about the installed ``hornlab-beat-bem`` 0.2.0 (read from its source, not 
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import time
 import traceback
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -142,6 +144,127 @@ def check_symmetry_pairing(mesh: MeshResult) -> None:
             f"smooth, wrong polar.")
 
 
+# ------------------------------------------------------------------ MEH multi-source preflight
+
+#: docs/meh/00_MEH_CONTRACTS.md C4: the fork accepts 1..8 velocity-source tags.
+MAX_SOURCE_TAGS = 8
+#: SolveConfig field the MEH path needs (C4). It does not exist on the installed pin.
+IMPEDANCE_MATRIX_FIELD = "impedance_matrix"
+
+
+def _source_tags(extra: dict | None) -> tuple[int, ...] | None:
+    """``SolveSpec.extra['source_tags']`` -> the sorted tag tuple, or None for a legacy solve.
+
+    Absent = today's single-source solve (``velocity_sources={2: 1.0}``, no new config keys).
+    Present = the MEH multi-source path (C4): 1..8 distinct positive integer tags. Raises
+    ``ConfigError`` for anything the solver contract would refuse, instead of silently solving a
+    different problem.
+    """
+    from ..config import ConfigError
+
+    raw = (extra or {}).get("source_tags")
+    if raw is None:
+        return None
+    if isinstance(raw, (str, bytes)) or not isinstance(raw, (list, tuple)):
+        raise ConfigError(
+            f"solve.extra['source_tags'] must be a list of integer physical tags, got {raw!r}")
+    values = []
+    for t in raw:
+        if isinstance(t, bool) or not isinstance(t, (int, np.integer)):
+            raise ConfigError(
+                f"solve.extra['source_tags'] must contain integer physical tags, got {t!r}")
+        values.append(int(t))
+    tags = tuple(sorted(values))
+    if not tags:
+        raise ConfigError("solve.extra['source_tags'] is empty; either omit it (single source) "
+                          "or name at least one physical tag")
+    if len(set(tags)) != len(tags):
+        raise ConfigError(f"solve.extra['source_tags'] contains duplicates: {list(raw)!r}")
+    if len(tags) > MAX_SOURCE_TAGS:
+        raise ConfigError(
+            f"solve.extra['source_tags'] has {len(tags)} tags but the MEH solver contract "
+            f"accepts at most {MAX_SOURCE_TAGS}")
+    if any(t < 1 for t in tags):
+        raise ConfigError(
+            f"solve.extra['source_tags'] must be positive physical tags, got {list(tags)!r}")
+    return tags
+
+
+def _solveconfig_has_field(cls, name: str) -> bool:
+    """True when ``SolveConfig`` exposes ``name`` (the MEH fork adds it; the old pin does not)."""
+    import dataclasses
+    import inspect
+    try:
+        if dataclasses.is_dataclass(cls):
+            return any(f.name == name for f in dataclasses.fields(cls))
+    except (TypeError, ValueError):
+        pass
+    try:
+        return name in inspect.signature(cls).parameters
+    except (TypeError, ValueError):
+        return False
+
+
+def _mesh_tag_ids_from_meta(mesh: MeshResult) -> set[int]:
+    """Physical tags present in a CAD mesh, from ``mesh_meta.json`` (M5 writes per-tag areas and
+    centroids next to the .msh; step_build's ``summary.tags`` already records element counts).
+
+    Read BEFORE a worker starts, so a request naming a tag the STEP labels never produced fails
+    as a configuration error instead of a solver failure or, worse, a silently different model.
+    """
+    from ..config import ConfigError
+
+    meta_path = Path(mesh.path).with_name("mesh_meta.json")
+    if not meta_path.is_file():
+        raise ConfigError(
+            f"source_tags requested but {meta_path} is missing: a MEH multi-source solve needs "
+            f"the CAD mesh metadata (per-tag areas/centroids from task M5) to prove every source "
+            f"tag exists before any worker starts")
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ConfigError(f"source_tags requested but {meta_path} is unreadable: {exc!r}") from exc
+    summary = meta.get("summary") if isinstance(meta, dict) else None
+    summary = summary if isinstance(summary, dict) else {}
+    ids: set[int] = set()
+    counts = summary.get("tags")
+    if isinstance(counts, dict):
+        for k, v in counts.items():
+            try:
+                if int(v) > 0:
+                    ids.add(int(k))
+            except (TypeError, ValueError):
+                continue
+    # M5 additionally echoes per-tag areas (C9); honour them when present.
+    for table in (summary.get("tag_areas_m2"),
+                  meta.get("tag_areas_m2") if isinstance(meta, dict) else None):
+        if isinstance(table, dict):
+            for k, v in table.items():
+                try:
+                    if float(v) > 0.0:
+                        ids.add(int(k))
+                except (TypeError, ValueError):
+                    continue
+    if not ids:
+        raise ConfigError(
+            f"source_tags requested but {meta_path} records no per-tag areas or tag counts; "
+            f"cannot prove the source tags exist (task M5 mesh metadata)")
+    return ids
+
+
+def _check_source_tags_in_mesh(mesh: MeshResult, tags: tuple[int, ...]) -> None:
+    """Every requested source tag must exist in the mesh before any worker starts."""
+    from ..config import ConfigError
+
+    present = _mesh_tag_ids_from_meta(mesh)
+    missing = [t for t in tags if t not in present]
+    if missing:
+        raise ConfigError(
+            f"source_tags {list(tags)} but the mesh at {mesh.path} has no elements on tag(s) "
+            f"{missing} (tags present: {sorted(present)}); the STEP label -> BEM tag mapping "
+            f"(docs/meh/00_MEH_CONTRACTS.md C3) did not produce them")
+
+
 # ------------------------------------------------------------------ result handling
 
 
@@ -169,6 +292,14 @@ def _stack(raws: list, freqs: list[float]) -> SimpleNamespace:
     n_req = sum(int(getattr(r, "requested_frequency_count", None) or np.asarray(r.frequencies_hz).size)
                 for r in raws)
     got = int(sum(np.asarray(r.frequencies_hz).size for r in raws))
+    # MEH (C4): per-channel fields are per-frequency stacks; the tag tuple is per solve.
+    channel_tags = getattr(r0, "channel_tags", None)
+    tag_areas_m2 = getattr(r0, "tag_areas_m2", None)
+    for i, r in enumerate(raws):
+        if getattr(r, "channel_tags", None) != channel_tags:
+            raise ResponseSanityError(f"channel_tags changed between frequencies at index {i}")
+        if getattr(r, "tag_areas_m2", None) != tag_areas_m2:
+            raise ResponseSanityError(f"tag_areas_m2 changed between frequencies at index {i}")
     return SimpleNamespace(
         frequencies_hz=cat("frequencies_hz"),
         pressure_complex=cat("pressure_complex"),
@@ -183,6 +314,11 @@ def _stack(raws: list, freqs: list[float]) -> SimpleNamespace:
         sphere_pressure_complex=cat("sphere_pressure_complex"),
         sphere_theta_deg=getattr(r0, "sphere_theta_deg", None),
         sphere_phi_deg=getattr(r0, "sphere_phi_deg", None),
+        channel_tags=channel_tags,
+        channel_pressure=cat("channel_pressure"),
+        channel_sphere_pressure=cat("channel_sphere_pressure"),
+        impedance_matrix=cat("impedance_matrix"),
+        tag_areas_m2=tag_areas_m2,
         surface_pressure_complex=cat("surface_pressure_complex"),
         surface_neumann_complex=cat("surface_neumann_complex"),
         cancelled=any(bool(getattr(r, "cancelled", False)) for r in raws),
@@ -318,6 +454,63 @@ def _to_response(raw, spec: SolveSpec, mesh: MeshResult) -> Response:
     elif want_balloon:
         raise ResponseSanityError("balloon was requested but the solver returned no sphere grid")
 
+    # ---- MEH per-channel fields (C4/C5). Requested only through `source_tags`; a solver that
+    # cannot produce them has already been refused in make_config (pin check).
+    source_tags = _source_tags(spec.extra)
+    channel_tags = channel_pressure = channel_sphere = z_matrix = tag_areas = None
+    if source_tags is not None:
+        raw_tags = getattr(raw, "channel_tags", None)
+        if raw_tags is None or getattr(raw, "channel_pressure", None) is None:
+            raise ResponseSanityError(
+                f"source_tags {list(source_tags)} requested but the solver returned no "
+                f"channel_tags/channel_pressure fields")
+        channel_tags = tuple(int(t) for t in raw_tags)
+        if channel_tags != source_tags:
+            raise ResponseSanityError(
+                f"solver channel_tags {list(channel_tags)} != requested source_tags "
+                f"{list(source_tags)}")
+        channel_pressure = np.asarray(raw.channel_pressure, dtype=np.complex128)
+        want_cp = (want_f.size, len(source_tags)) + p.shape[1:]
+        if channel_pressure.shape != want_cp:
+            raise ResponseSanityError(
+                f"channel_pressure shape {channel_pressure.shape} but expected {want_cp} "
+                f"(F, C, P, A)")
+        # C4: legacy pressure is the channel of the smallest tag (channel 0).
+        if not np.allclose(channel_pressure[:, 0, :, :], p, rtol=1e-12, atol=0.0):
+            raise ResponseSanityError(
+                "legacy pressure_complex is not channel 0 of channel_pressure (smallest tag)")
+        raw_matrix = getattr(raw, "impedance_matrix", None)
+        if raw_matrix is None:
+            raise ResponseSanityError(
+                "multi-source solve returned no impedance_matrix although impedance_matrix=True")
+        z_matrix = np.asarray(raw_matrix, dtype=np.complex128)
+        want_zm = (want_f.size, len(source_tags), len(source_tags))
+        if z_matrix.shape != want_zm or not np.all(np.isfinite(z_matrix)):
+            raise ResponseSanityError(
+                f"impedance_matrix {z_matrix.shape} must be finite {want_zm} (F, C, C)")
+        raw_areas = getattr(raw, "tag_areas_m2", None)
+        if not isinstance(raw_areas, dict):
+            raise ResponseSanityError("multi-source solve returned no tag_areas_m2 dict")
+        tag_areas = {int(k): float(v) for k, v in raw_areas.items()}
+        if set(tag_areas) != set(source_tags):
+            raise ResponseSanityError(
+                f"tag_areas_m2 keys {sorted(tag_areas)} != source_tags {list(source_tags)}")
+        if any((not np.isfinite(a)) or a <= 0.0 for a in tag_areas.values()):
+            raise ResponseSanityError(f"tag_areas_m2 must be positive and finite: {tag_areas}")
+        raw_csp = getattr(raw, "channel_sphere_pressure", None)
+        if want_balloon:
+            if raw_csp is None:
+                raise ResponseSanityError(
+                    "balloon requested but the multi-source solver returned no "
+                    "channel_sphere_pressure")
+            channel_sphere = np.asarray(raw_csp, dtype=np.complex128)
+            want_cs = (want_f.size, len(source_tags), np.asarray(sp).shape[1])
+            if channel_sphere.shape != want_cs or not np.all(np.isfinite(channel_sphere)):
+                raise ResponseSanityError(
+                    f"channel_sphere_pressure {channel_sphere.shape} must be finite {want_cs}")
+        elif raw_csp is not None:
+            channel_sphere = np.asarray(raw_csp, dtype=np.complex128)
+
     # ---- impedance -> z_throat (normalised specific acoustic impedance)
     z = None
     imp = getattr(raw, "impedance", None)
@@ -362,6 +555,12 @@ def _to_response(raw, spec: SolveSpec, mesh: MeshResult) -> Response:
         "mesh_policy": (spec.extra or {}).get("mesh_policy"),
         "source_motion": str((spec.extra or {}).get("source_motion", "normal")),
     }
+    if source_tags is not None:
+        # MEH provenance is additive: a legacy response's meta is unchanged.
+        meta["source_tags"] = list(source_tags)
+        meta["channel_tags"] = list(channel_tags)
+        meta["tag_areas_m2"] = {str(k): float(v) for k, v in tag_areas.items()}
+        meta["impedance_matrix"] = True
     return Response(
         freqs_hz=want_f.copy(),
         h_angles_deg=angles.copy(),
@@ -377,6 +576,11 @@ def _to_response(raw, spec: SolveSpec, mesh: MeshResult) -> Response:
         backend="",                      # filled by the caller (knows its own name)
         n_dof=n_dof,
         meta=base.jsonable(meta),
+        channel_tags=channel_tags,
+        channel_pressure=channel_pressure,
+        channel_sphere_pressure=channel_sphere,
+        impedance_matrix=z_matrix,
+        tag_areas_m2=tag_areas,
     )
 
 
@@ -456,6 +660,25 @@ class BeatBackend:
         _refuse_unsupported_solver_knobs(self.device, spec.extra)
         import hornlab_beat_bem as beat
         check_symmetry_pairing(mesh)
+        # MEH (C4/C5): `source_tags` switches the multi-source path on. Absent = today's exact
+        # config (velocity_sources={2: 1.0}, no new keys), so old solve hashes/payloads are
+        # byte-for-byte unchanged.
+        source_tags = _source_tags(spec.extra)
+        if source_tags is None:
+            velocity_sources = {SOURCE_TAG: 1.0}
+            meh_kwargs: dict = {}
+        else:
+            if not _solveconfig_has_field(beat.SolveConfig, IMPEDANCE_MATRIX_FIELD):
+                from ..config import ConfigError
+                raise ConfigError(
+                    "MEH multi-source solve requested (solve.extra['source_tags']) but the "
+                    "installed hornlab-beat-bem SolveConfig has no 'impedance_matrix' field: "
+                    "the solver fork branch hornlab-search/meh-multisource (task M2) is not "
+                    "installed. M8 bumps the hornlab-beat-bem pin to that branch after GPU "
+                    "validation; this is a pin bump, not a hornlab-search setting.")
+            _check_source_tags_in_mesh(mesh, source_tags)
+            velocity_sources = {t: 1.0 for t in source_tags}
+            meh_kwargs = {IMPEDANCE_MATRIX_FIELD: True}
         obs_kw = {}
         if spec.observation.balloon and int(spec.observation.balloon_points) > 0:
             obs_kw["sphere_grid"] = base.balloon_grid_shape(int(spec.observation.balloon_points))
@@ -479,7 +702,9 @@ class BeatBackend:
             # millimetre mesh and does NOT apply here: 0.001 would give a 1000x-too-large horn
             # that solves fine and looks smooth.
             mesh_scale=1.0,
-            velocity_sources={SOURCE_TAG: 1.0},
+            velocity_sources=velocity_sources,
+            # MEH (C4): only present on the multi-source path; absent otherwise.
+            **meh_kwargs,
             # WP5: always sent explicitly; 'normal' is the breathing cap (today), 'axial' a rigid
             # piston along +z. The default is in `extra` only when it differs, so old solve hashes
             # are untouched.
@@ -510,12 +735,25 @@ class BeatBackend:
         log.debug("beat frequencies_hz: %r  mesh: %s", freqs, mesh.path)
         deadline = None if self.timeout_s is None else time.perf_counter() + float(self.timeout_s)
         groups = [[f] for f in freqs] if self.per_frequency_calls else [freqs]
+        # MEH (2026-10-31): a long sweep grows the persistent host's VRAM pool until a CUDA
+        # launch failure on the 8 GB card (measured: 41 frequencies peaked 7,908/8,188 MiB and
+        # died with code 719 after completing the sweep). ``worker_restart_every`` recycles the
+        # host between chunks; absent = today's single host, so no other solve changes.
+        restart_every = int((spec.extra or {}).get("worker_restart_every", 0) or 0)
         raws = []
-        for g in groups:
+        for index, g in enumerate(groups, start=1):
             if deadline is not None and time.perf_counter() > deadline:
                 raise TimeoutError(f"solve exceeded timeout_s={self.timeout_s} after "
                                    f"{len(raws)}/{len(groups)} frequency calls")
             raws.append(beat.solve_frequencies(mesh.path, g, cfg))
+            if restart_every and index % restart_every == 0 and index < len(groups):
+                try:
+                    worker.shutdown(verify=True)
+                except Exception as exc:  # noqa: BLE001 - a surviving host is not fatal here
+                    log.warning("worker recycle after %d/%d calls could not verify release (%r); "
+                                "forcing recovery", index, len(groups), exc)
+                    worker.recover_after_failure(self.name)
+                worker.mark_cold(self.name)
         return _stack(raws, freqs)
 
     def _solve(self, mesh: MeshResult, spec: SolveSpec, *, surface_traces: bool):

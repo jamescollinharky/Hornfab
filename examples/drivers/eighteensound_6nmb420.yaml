@@ -1,0 +1,32 @@
+# 18 Sound 6NMB420 — T2 backup mid (6.5 in; low Le).
+# Transcribed from docs/research/typologies/mini_meh_2026-10-29/appendix_A_web_survey_raw.md
+# section 8(a), row labelled V (manufacturer datasheet PDF read 2026-10-29).
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md. Existing files are untouched.
+name: 18 Sound 6NMB420
+kind: cone
+source: https://www.eighteensound.it/en/products/lf-driver/6-5/8/6NMB420.pdf
+notes: >-
+  Datasheet row V. Mmd and Cms are marked as derived in appendix A s8, not printed on the
+  sheet: Mmd = Mms - 2*(8/3)*rho*a^3 with a = sqrt(Sd/pi), using Mms = 8.5 g and
+  Sd = 130 cm2; Cms = Vas/(rho*c^2*Sd^2) with Vas = 6.1 L and Sd = 130 cm2.
+  Rms is not carried because Qms is published. The URL is abbreviated in the table as
+  .../6NMB420.pdf and is expanded here to the full path used by this maker's 6ND410 row.
+  frame_od_mm / motor_od_mm / dish_mm are not published in the appendix A s8 table;
+  omitted, so M5 keeps its [inferred] placeholders. Sens is the appendix A s8
+  "Sens dB" column.
+derived: [mmd_g, cms_mm_per_n]
+re_ohm: 5.3
+le_mh: 0.10
+bl_tm: 9.0
+sd_cm2: 130
+xmax_mm: 3.0
+p_aes_w: 200
+fs_hz: 110
+qms: 2.7
+mms_g: 8.5
+mmd_g: 6.8
+cms_mm_per_n: 0.25
+vas_l: 6.1
+cutout_mm: 148
+depth_mm: 73
+sens_db_2v83: 100

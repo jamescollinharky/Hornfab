@@ -1,0 +1,34 @@
+# B&C 18SW115 — 18 in long-throw woofer (M10 bass-box shortlist).
+# Transcribed from the maker's product page, read 2026-10-31:
+#   https://www.bcspeakers.com/en/products/lf-driver/18-0/8/18SW115
+# C8 contract: docs/meh/00_MEH_CONTRACTS.md.
+name: B&C 18SW115
+kind: cone
+source: https://www.bcspeakers.com/en/products/lf-driver/18-0/8/18SW115
+notes: >-
+  Datasheet transcription (2026-10-31). Cms is not printed on the page and is derived:
+  Cms = Vas/(rho*c^2*Sd^2) with Vas = 187 L, Sd = 1210 cm2, rho = 1.2041, c = 343.
+  Mms = 275 g is published and Mmd is not printed separately, so
+  Mmd = Mms - 2*(8/3)*rho*a^3 with a = sqrt(Sd/pi).
+  Xmax is the page's "maximum linear excursion" (one-way peak). The derived pair reproduces the
+  published Fs to 0.12 %, so the datasheet is self-consistent.
+  motor_od_mm and dish_mm are not published on the page; omitted. Sens is the table's
+  sensitivity column (the maker's published 1 W / 1 m figure; the 2.83 V condition is not
+  restated in the extraction).
+derived: [mmd_g, cms_mm_per_n]
+re_ohm: 5.3
+le_mh: 1.9
+bl_tm: 30.3
+sd_cm2: 1210
+xmax_mm: 14
+p_aes_w: 1700
+fs_hz: 32
+qms: 5.6
+mms_g: 275
+mmd_g: 226.458
+cms_mm_per_n: 0.090161
+vas_l: 187
+cutout_mm: 425
+depth_mm: 242
+frame_od_mm: 460
+sens_db_2v83: 97

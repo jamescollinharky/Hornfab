@@ -13,6 +13,7 @@ import os
 import re
 import time
 from collections import Counter
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -740,9 +741,13 @@ def mesh_surface(runs: Path, run_id: str, h: str, max_tris: int = 60000) -> dict
     meta = _read_json(d / "designs" / h / "mesh_meta.json") or {}
     q = (meta.get("result") or {}).get("quadrants") or _row_quadrants(d, h) \
         or (_config(d).get("mesh") or {}).get("quadrants")
+    snap_axes = {"1": (0, 1), "14": (0,), "12": (1,)}.get(str(q), ())
+    out_pts, out_tris, decimated = _cluster_decimate(pts, tris, max_tris, snap_axes)
     out = {"quadrants": str(q or "1234"), "n_tris": int(len(tris)),
-           "verts": np.round(pts * 1000, 2).ravel().tolist(),
-           "tris": tris[:max_tris].ravel().tolist()}
+           "verts": np.round(out_pts * 1000, 2).ravel().tolist(),
+           "tris": out_tris.ravel().tolist()}
+    if decimated:
+        out["decimated"] = True
     # WP12: ``mesh_meta.json["mounting"]`` (the mesher + normalized blocks) is served additively so
     # the 3D view can draw the solved mesh's own outline. Absent on every non-enclosure run — the
     # key then stays absent, never fabricated.
@@ -855,24 +860,88 @@ def balloon(runs: Path, run_id: str, h: str) -> dict:
 # ---------------------------------------------------------------------------- campaigns
 
 
+@dataclass
+class _Snapshot:
+    """One request's worth of campaign/brief filesystem reads, each performed at most once.
+
+    One ``/api/leaders`` call used to re-walk every run dir ~43 times and re-parse every brief
+    YAML ~48 times, because each campaign in the list rebuilt the auto groups and the brief list
+    from scratch.  This object is built at the public entry point and threaded down
+    (``list_campaigns`` -> ``_auto_groups`` -> ``_auto_campaign_detail`` -> ``campaign_detail``),
+    so the walks/parses/globs happen once per call.  Every field is filled lazily, so an entry
+    point that needs only the briefs never pays for the run summaries.
+
+    Deliberately NOT cached at module level: it lives for exactly one call, so a campaign
+    directory written between two requests is always seen by the next one, and a live search's
+    growing ``search.ndjson`` is re-read through ``run_summary``'s own per-file stamp memo.
+    """
+
+    runs: Path
+    root: Path
+    _briefs: list[dict] | None = field(default=None, repr=False)
+    _claimed: set[str] | None = field(default=None, repr=False)
+    _run_list: list[tuple[Path, dict]] | None = field(default=None, repr=False)
+    _auto: dict[str, list[tuple[Path, dict]]] | None = field(default=None, repr=False)
+    _evidence: set[str] | None = field(default=None, repr=False)
+
+    def briefs(self) -> list[dict]:
+        if self._briefs is None:
+            self._briefs = list_briefs(self.root)
+        return self._briefs
+
+    def brief(self, name: str | None) -> dict:
+        """The raw YAML body of the brief called ``name`` ({} when no brief has that name)."""
+        return next((b["brief"] for b in self.briefs() if b["name"] == name), {})
+
+    def claimed(self) -> set[str]:
+        if self._claimed is None:
+            self._claimed = _campaign_run_ids(self.runs)
+        return self._claimed
+
+    def run_list(self) -> list[tuple[Path, dict]]:
+        if self._run_list is None:
+            self._run_list = [(d, run_summary(d)) for d in _run_dirs(self.runs)]
+        return self._run_list
+
+    def auto_groups(self) -> dict[str, list[tuple[Path, dict]]]:
+        if self._auto is None:
+            self._auto = _group_auto_runs(self.run_list(), self.claimed())
+        return self._auto
+
+    def evidence(self) -> set[str]:
+        if self._evidence is None:
+            self._evidence = _evidence_campaigns(self.runs)
+        return self._evidence
+
+
+def _snapshot(runs: Path, root: Path | None = None) -> _Snapshot:
+    """A fresh per-request snapshot.  Never stored by the module (see ``_Snapshot``)."""
+    return _Snapshot(runs=runs, root=runs.parent if root is None else root)
+
+
 def _evidence_campaigns(runs: Path) -> set[str]:
     """Campaign ids committed as evidence (docs/evidence/campaigns/<id>.campaign.json)."""
     d = runs.parent / "docs" / "evidence" / "campaigns"
     return {p.name.split(".")[0] for p in d.glob("campaign_*.campaign.json")} if d.is_dir() else set()
 
 
-def superseded(runs: Path, cid: str) -> bool:
+def superseded(runs: Path, cid: str, snap: _Snapshot | None = None) -> bool:
     """A campaign is superseded if it is older than the newest committed evidence campaign and is not
     itself committed evidence. The committed set is the reviewed record (campaigns before the
     2026-10-22 fixes scored native configs on their own targets without the size envelope; see
-    docs/evidence/TYPOLOGY_SCREEN_2026-10-22.md); anything newer was run with the current code."""
+    docs/evidence/TYPOLOGY_SCREEN_2026-10-22.md); anything newer was run with the current code.
+
+    ``snap`` supplies the precomputed evidence set (the glob ran per campaign before)."""
     if AUTO_ID.match(cid):
         return False
-    ev = _evidence_campaigns(runs)
+    ev = snap.evidence() if snap is not None else _evidence_campaigns(runs)
     return bool(ev) and cid not in ev and cid < max(ev)
 
 
-def list_campaigns(runs: Path) -> list[dict]:
+def list_campaigns(runs: Path, snap: _Snapshot | None = None) -> list[dict]:
+    """Every campaign of ``runs``: the real ones (campaign.json) newest first, then the auto
+    campaigns for runs no campaign.json claims.  ``snap`` is one request's shared reads."""
+    snap = snap if snap is not None else _snapshot(runs)
     out = []
     if not runs.is_dir():
         return out
@@ -882,13 +951,13 @@ def list_campaigns(runs: Path) -> list[dict]:
         if not c:
             continue
         out.append(clean({"id": p.name, "tier": c.get("tier"), "brief": c.get("brief_name"),
-                          "superseded": superseded(runs, p.name),
+                          "superseded": superseded(runs, p.name, snap),
                           "seeds": c.get("seeds"), "n_entries": len(c.get("entries", [])),
                           "families": [e.get("name") for e in c.get("entries", [])]}))
     # Runs that no campaign.json claims (the night runner, a hand-launched or GUI-launched search)
     # still get a per-brief leaderboard: grouped by brief and mode, listed AFTER the real
     # campaigns so a real campaign of the same tier keeps precedence in leaders().
-    for cid, members in sorted(_auto_groups(runs).items()):
+    for cid, members in sorted(snap.auto_groups().items()):
         names = sorted({s.get("name") or d.name for d, s in members})
         out.append(clean({"id": cid, "tier": members[0][1].get("mode") or "screen",
                           "brief": members[0][1].get("brief"), "superseded": False, "seeds": None,
@@ -913,15 +982,15 @@ def _campaign_run_ids(runs: Path) -> set[str]:
     return out
 
 
-def _auto_groups(runs: Path) -> dict[str, list[tuple[Path, dict]]]:
-    """Every run not claimed by a campaign.json, grouped by (brief, mode). Runs without a brief
-    (scored on the config's own target) stay in the run list only."""
-    claimed = _campaign_run_ids(runs)
+def _group_auto_runs(run_list: list[tuple[Path, dict]],
+                     claimed: set[str]) -> dict[str, list[tuple[Path, dict]]]:
+    """Group the already-summarized runs (newest first) by ``auto_<brief>__<mode>``, skipping the
+    runs a campaign.json claims and the runs without a brief (they stay in the run list only).
+    Pure: the walks live on ``_Snapshot``."""
     groups: dict[str, list[tuple[Path, dict]]] = {}
-    for d in _run_dirs(runs):
+    for d, s in run_list:
         if d.name in claimed:
             continue
-        s = run_summary(d)
         brief, mode = s.get("brief"), s.get("mode") or "screen"
         if not brief or not s.get("n"):
             continue
@@ -931,8 +1000,21 @@ def _auto_groups(runs: Path) -> dict[str, list[tuple[Path, dict]]]:
     return groups
 
 
-def _auto_campaign_detail(runs: Path, cid: str) -> dict:
-    members = _auto_groups(runs).get(cid)
+def _auto_groups(runs: Path, snap: _Snapshot | None = None) -> dict[str, list[tuple[Path, dict]]]:
+    """Every run not claimed by a campaign.json, grouped by (brief, mode).
+
+    ``snap`` is the request's shared reads; without one this builds its own, exactly as before."""
+    if snap is None:
+        snap = _snapshot(runs)
+    return snap.auto_groups()
+
+
+def _auto_campaign_detail(runs: Path, cid: str, snap: _Snapshot | None = None,
+                          curves: bool = True) -> dict:
+    """One auto campaign's entries.  ``curves=False`` is the leaderboard path: it drops the
+    per-design curve payload (``best``) that ``leaders()`` never reads, keeping the standings."""
+    snap = snap if snap is not None else _snapshot(runs)
+    members = snap.auto_groups().get(cid)
     if not members:
         raise FileNotFoundError(cid)
     by_name: dict[str, list[tuple[Path, dict]]] = {}
@@ -943,7 +1025,8 @@ def _auto_campaign_detail(runs: Path, cid: str) -> dict:
         js = [s["best_j"] for _, s in rs if s.get("best_j") is not None]
         best_d, best_s = min(((d, s) for d, s in rs if s.get("best_j") is not None),
                              key=lambda t: t[1]["best_j"], default=(None, None))
-        best = design_curves(best_d, best_s["best_hash"]) if best_s and best_s.get("best_hash") else None
+        best = (design_curves(best_d, best_s["best_hash"])
+                if curves and best_s and best_s.get("best_hash") else None)
         entries.append({
             "name": name, "group": None, "symmetry": None, "skipped": False, "skip_reason": None,
             "family": rs[0][1].get("family"),
@@ -961,16 +1044,21 @@ def _auto_campaign_detail(runs: Path, cid: str) -> dict:
         })
     entries.sort(key=lambda e: (e["best_j"] is None, e["median_j"] if e["median_j"] is not None else 0))
     brief = members[0][1].get("brief")
-    brief_raw = next((b["brief"] for b in list_briefs(runs.parent) if b["name"] == brief), {})
+    brief_raw = snap.brief(brief)
     return clean({"id": cid, "tier": members[0][1].get("mode") or "screen", "brief": brief,
                   "seeds": None, "superseded": False, "auto": True,
                   "target": (brief_raw or {}).get("target"), "entries": entries,
                   "leaderboard_md": None})
 
 
-def campaign_detail(runs: Path, cid: str) -> dict:
+def campaign_detail(runs: Path, cid: str, snap: _Snapshot | None = None,
+                    curves: bool = True) -> dict:
+    """One campaign's entries and brief target.  ``curves=False`` skips the per-design curve
+    payload (``best`` stays None) for the leaderboard, which reads standings only; the detail
+    views keep the default full payload."""
+    snap = snap if snap is not None else _snapshot(runs)
     if AUTO_ID.match(cid):
-        return _auto_campaign_detail(runs, cid)
+        return _auto_campaign_detail(runs, cid, snap, curves)
     if not CAMPAIGN_ID.match(cid):
         raise ValueError(f"not a campaign id: {cid!r}")
     c = _read_json(runs / cid / "campaign.json")
@@ -987,7 +1075,7 @@ def campaign_detail(runs: Path, cid: str) -> dict:
             if rd.parent.resolve() == runs.resolve() and RUN_ID.match(rd.name):
                 s = run_summary(rd)
                 dims, best_run = s.get("dims"), rd.name
-                if s.get("best_hash"):
+                if curves and s.get("best_hash"):
                     best = design_curves(rd, s["best_hash"])
         entries.append({
             "name": e.get("name"), "group": e.get("group"), "symmetry": e.get("symmetry"),
@@ -1006,10 +1094,10 @@ def campaign_detail(runs: Path, cid: str) -> dict:
             "best": best, "dims": dims, "best_run_id": best_run,
         })
     entries.sort(key=lambda e: (e["best_j"] is None, e["median_j"] if e["median_j"] is not None else 0))
-    brief_raw = next((b["brief"] for b in list_briefs(runs.parent) if b["name"] == c.get("brief_name")), {})
+    brief_raw = snap.brief(c.get("brief_name"))
     lb = runs / cid / "leaderboard.md"
     return clean({"id": cid, "tier": c.get("tier"), "brief": c.get("brief_name"), "seeds": c.get("seeds"),
-                  "superseded": superseded(runs, cid),
+                  "superseded": superseded(runs, cid, snap),
                   "target": (brief_raw or {}).get("target"),       # from the brief file named by the campaign
                   "entries": entries,
                   "leaderboard_md": lb.read_text(encoding="utf-8") if lb.exists() else None})
@@ -1022,9 +1110,14 @@ def brief_dirs(root: Path) -> tuple[Path, Path]:
     return root / "examples" / "briefs", root / "examples" / "briefs" / "user"
 
 
-def list_briefs(root: Path) -> list[dict]:
+def list_briefs(root: Path, cached: list[dict] | None = None) -> list[dict]:
     """Every brief under examples/briefs/ at any depth: kind ``shipped`` (top level), ``user``
-    (briefs/user/) or the subfolder path (e.g. a campaign folder)."""
+    (briefs/user/) or the subfolder path (e.g. a campaign folder).
+
+    ``cached`` lets a per-request ``_Snapshot`` hand down its one parse; there is deliberately no
+    module-level cache (a brief saved between two requests must show up on the next one)."""
+    if cached is not None:
+        return cached
     shipped, _user = brief_dirs(root)
     out = []
     files = sorted(p for p in shipped.rglob("*.yaml") if not p.name.startswith(".")) \
@@ -1275,12 +1368,18 @@ def queue_steps(log: Path) -> list[dict]:
 TIER_RANK = {"compare": 2, "screen": 1}
 
 
-def leaders(runs: Path) -> list[dict]:
+def leaders(runs: Path, snap: _Snapshot | None = None) -> list[dict]:
     """Per brief, the leading family of the latest campaign of the strongest tier (compare beats
     screen; dry-run has no scores). 'clearly_ahead' applies the ranking rule: the leader's median beats
-    the runner-up's by more than both spreads (screen tier has one repeat: never 'clearly')."""
+    the runner-up's by more than both spreads (screen tier has one repeat: never 'clearly').
+
+    One snapshot for the whole call, and the per-campaign details are read with ``curves=False``:
+    the leaderboard only reads standings, so the curve payloads (the bulk of the old 18 s) are
+    never built.  Both are per-call, so a campaign dir created between two calls is seen by the
+    second one."""
+    snap = snap if snap is not None else _snapshot(runs)
     chosen: dict[str, dict] = {}
-    for c in list_campaigns(runs):                       # newest first
+    for c in list_campaigns(runs, snap):                 # newest first
         tier, brief = c.get("tier"), c.get("brief")
         if not brief or tier not in TIER_RANK or c.get("superseded"):
             continue
@@ -1290,7 +1389,7 @@ def leaders(runs: Path) -> list[dict]:
     out = []
     for brief, c in sorted(chosen.items()):
         try:
-            d = campaign_detail(runs, c["id"])
+            d = campaign_detail(runs, c["id"], snap, curves=False)
         except (FileNotFoundError, ValueError):
             continue
         scored = [e for e in d["entries"] if e.get("median_j") is not None and not e.get("skipped")]
@@ -1312,24 +1411,28 @@ def leaders(runs: Path) -> list[dict]:
 # ---------------------------------------------------------------------------- typologies
 
 
-def typologies(root: Path, runs: Path) -> list[dict]:
+def typologies(root: Path, runs: Path, snap: _Snapshot | None = None) -> list[dict]:
     """Every catalog family (classical, hybrid, Magnus-native, legacy) with: parameter count, brief
     compatibility (the CLI's own ``campaign.is_compatible``), the budgets a campaign would give it
     (``campaign.budget_for_tier``), and its best result in the latest campaign of the strongest tier per
-    brief, with the best design's size and wall cross-section."""
+    brief, with the best design's size and wall cross-section.
+
+    One snapshot for the whole call; the per-campaign details keep their curve payloads (the
+    profiles are part of this view)."""
     from hornlab_search.search.campaign import budget_for_tier, is_compatible
-    briefs = list_briefs(root)
+    snap = snap if snap is not None else _snapshot(runs, root)
+    briefs = snap.briefs()
     cfgs = {c["catalog_name"]: c for c in list_configs(root) if c.get("catalog_name")}
     # per family: its result in the newest campaign of each scored tier per brief THAT CONTAINS IT
     # (a later campaign that re-ran only some families must not hide the others' last result)
     results: dict[str, list[dict]] = {}
     seen: set[tuple] = set()
-    for c in list_campaigns(runs):                       # newest first
+    for c in list_campaigns(runs, snap):                 # newest first
         tier, brief = c.get("tier"), c.get("brief")
         if not brief or tier not in TIER_RANK or c.get("superseded"):
             continue
         try:
-            d = campaign_detail(runs, c["id"])
+            d = campaign_detail(runs, c["id"], snap)
         except (FileNotFoundError, ValueError):
             continue
         ranked = sorted((e for e in d["entries"] if e.get("median_j") is not None), key=lambda e: e["median_j"])
@@ -1379,8 +1482,8 @@ def typologies(root: Path, runs: Path) -> list[dict]:
 # ---------------------------------------------------------------------------- evolution (time-lapse)
 
 EVO_VERSION = 2
-M3D_VERSION = 1
-M3D_DEFAULT_CAP = 6000
+M3D_VERSION = 2
+M3D_DEFAULT_CAP = 30000
 
 
 def _improvement_flags(rows: list[dict]) -> list[bool]:
@@ -1405,6 +1508,84 @@ def _decimate(pts: list, n: int) -> list:
         return pts
     step = (len(pts) - 1) / (n - 1)
     return [pts[round(i * step)] for i in range(n)]
+
+
+def _cluster_once(pts: np.ndarray, tris: np.ndarray, cell: float,
+                  snap_axes: tuple[int, ...]):
+    """One vertex-clustering pass at grid size ``cell`` (metres): every occupied grid cell becomes
+    one vertex at its members' centroid, indices are rebuilt, degenerate and duplicate triangles are
+    dropped, and unused cells are compacted away. ``snap_axes`` holds the symmetry-plane axes of a
+    quarter/half mesh; a cell that contains a vertex lying on such a plane keeps that coordinate at
+    exactly zero, so the mirror seam stays gap-free."""
+    keys = np.floor(pts / cell).astype(np.int64)
+    _, inv = np.unique(keys, axis=0, return_inverse=True)
+    inv = inv.ravel()
+    ncell = int(inv.max()) + 1 if inv.size else 0
+    sums = np.zeros((ncell, 3), dtype=float)
+    np.add.at(sums, inv, pts)
+    counts = np.bincount(inv, minlength=ncell).astype(float)
+    reps = sums / counts[:, None]
+    for ax in snap_axes:
+        on = np.abs(pts[:, ax]) <= 1e-12
+        if np.any(on):
+            hit = np.zeros(ncell, dtype=bool)
+            hit[inv[on]] = True
+            reps[hit, ax] = 0.0
+
+    t = inv[tris]
+    keep = (t[:, 0] != t[:, 1]) & (t[:, 1] != t[:, 2]) & (t[:, 0] != t[:, 2])
+    t = t[keep]
+    if not t.size:
+        return reps[:0], np.zeros((0, 3), dtype=np.int64)
+    # Dedupe by sorted corner set: a collapsed quad would otherwise render as two coincident,
+    # oppositely wound faces (z-fighting reads as flickering holes).
+    _, first = np.unique(np.sort(t, axis=1), axis=0, return_index=True)
+    t = t[np.sort(first)]
+    used = np.unique(t)
+    remap = -np.ones(len(reps), dtype=np.int64)
+    remap[used] = np.arange(len(used))
+    return reps[used], remap[t]
+
+
+def _cluster_decimate(pts: np.ndarray, tris: np.ndarray, cap: int,
+                      snap_axes: tuple[int, ...] = ()):
+    """Hole-free triangle decimation toward ``cap`` triangles.
+
+    Stride subsampling (``tris[::k]``) keeps every k-th triangle of a connected sheet, so half or
+    more of the surface is punched out as scattered single-triangle holes — exactly the "randomly
+    transparent triangles" the owner saw. Vertex clustering instead welds neighbouring vertices,
+    which coarsens the sheet but keeps it continuous. The grid size is bisected on the surface's
+    own area so the result lands just under ``cap`` (and never zero unless the budget is absurd).
+    Returns ``(pts, tris, decimated)``; untouched when ``len(tris) <= cap``."""
+    n_full = int(len(tris))
+    if n_full <= cap:
+        return pts, tris, False
+    a, b, c = pts[tris[:, 0]], pts[tris[:, 1]], pts[tris[:, 2]]
+    area = float(np.linalg.norm(np.cross(b - a, c - a), axis=1).sum()) * 0.5
+    diagonal = float(np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)))
+    if not np.isfinite(area) or area <= 0 or diagonal <= 0:
+        return pts, tris, False
+    # A sheet occupies ~area/cell^2 cells; seed loosely around the count the budget implies.
+    seed = math.sqrt(area / max(1.0, cap / 2.0))
+    lo = max(seed * 1e-3, diagonal * 1e-6)   # fine grid: ~everything survives
+    hi = max(seed * 3.0, diagonal)           # coarse grid: ~nothing survives
+    best = None
+    smallest = None
+    for _ in range(20):
+        cell = math.sqrt(lo * hi)
+        rp, rt = _cluster_once(pts, tris, cell, snap_axes)
+        if len(rt) > cap:
+            lo = cell
+            if smallest is None or len(rt) < len(smallest[1]):
+                smallest = (rp, rt)
+        else:
+            if len(rt) and (best is None or len(rt) > len(best[1])):
+                best = (rp, rt)
+            hi = cell
+        if hi / lo < 1.02:
+            break
+    rp, rt = best if best is not None else (smallest if smallest is not None else (pts, tris))
+    return rp, rt, True
 
 
 def _hull(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
@@ -1530,8 +1711,8 @@ def evolution_frames3d(runs: Path, run_id: str, max_tris_per_frame: int = M3D_DE
     Frame selection is EXACTLY ``evolution()``'s rule, shared through ``_improvement_flags``: a row
     is a frame when it is ok and sets a new best-so-far J. Only frames whose ``designs/<hash>/mesh.msh``
     the search actually saved are returned; an improved row without a saved mesh is skipped (never
-    invented) and disclosed in ``note``. Triangle decimation is stride subsampling: k =
-    ceil(n_tris_full / cap), keep every k-th triangle, ``decimated`` true iff k > 1.
+    invented) and disclosed in ``note``. A frame above ``cap`` triangles is decimated hole-free by
+    vertex clustering (``_cluster_decimate``); ``decimated`` is true exactly when that happened.
 
     Cache: ``runs/.gui_cache/evolution_<id>_m3d.json``, keyed on ``search.ndjson`` (size, mtime) plus
     every improved frame's ``mesh.msh`` (path, mtime_ns, size) -- a grown search or a (re)written/
@@ -1585,17 +1766,17 @@ def evolution_frames3d(runs: Path, run_id: str, max_tris_per_frame: int = M3D_DE
         q = (_as_dict(meta.get("result")).get("quadrants") or r.get("quadrants")
              or cfg_q or "1234")
         n_full = int(len(tris))
-        k = max(1, math.ceil(n_full / cap)) if n_full else 1
-        sel = tris[::k] if k > 1 else tris
+        snap_axes = {"1": (0, 1), "14": (0,), "12": (1,)}.get(str(q), ())
+        out_pts, out_tris, decimated = _cluster_decimate(pts, tris, cap, snap_axes)
         frames.append(clean({
             "n": r.get("n"),
             "objective": float(r["objective"]) if r.get("objective") is not None else None,
             "mesh_hash": h,
             "quadrants": str(q),
-            "verts": np.round(pts * 1000, 2).ravel().tolist(),
-            "tris": sel.ravel().tolist(),
+            "verts": np.round(out_pts * 1000, 2).ravel().tolist(),
+            "tris": out_tris.ravel().tolist(),
             "n_tris_full": n_full,
-            "decimated": bool(k > 1),
+            "decimated": bool(decimated),
             "n_verts": int(len(pts)),
         }))
 
@@ -1659,6 +1840,14 @@ def _preview_config(root: Path, name: str) -> dict:
         _PREVIEW_CONFIG_CACHE[key] = cached
     for entry in cached[1]:
         if entry.get("name") == name:
+            return entry
+    # A TYPOLOGY LINK carries the catalog name (`#/typology/<catalog name>` from /api/typologies),
+    # which differs from the config's own `name:` whenever examples/catalog.yaml renames it - all
+    # five cone_plughorn configs are like that (catalog `cone_plughorn_7sh` vs config
+    # `cone_plughorn__evo7sh_narrow`), so the link used to 404 and the page showed "preview endpoint
+    # unavailable". Exact config name wins; the catalog name is the fallback.
+    for entry in cached[1]:
+        if entry.get("catalog_name") == name:
             return entry
     raise FileNotFoundError(f"unknown config {name!r}")
 
@@ -2122,6 +2311,37 @@ def preview_shape(root: Path, config_name: str, q: dict) -> dict:
         gcurve_capable=gcurve_capable(cfg.raw))
 
 
+def _tessellate_part(part, tol: float = 1.0, ang: float = 0.3):
+    """(points, triangles, skipped_faces) for the 3D preview; never raises for a valid solid.
+
+    ``build123d``'s ``Shape.tessellate`` walks every face and assumes each one comes back with a
+    triangulation, so a SINGLE face without one kills the whole payload with
+    ``AttributeError: 'NoneType' object has no attribute 'NbNodes'``. That happens on a valid,
+    gmsh-meshable solid: ``cone_plughorn__morph_wide_8in`` has one planar boolean-remnant face
+    (634 mm^2) that no deflection/sag tolerance triangulates, while the same STEP meshes fine.
+    The preview is a visual, so tessellate face by face and report what could not be drawn
+    instead of blanking the viewport.
+    """
+    try:
+        verts, tris = part.tessellate(tol, ang)
+        return [[p.X, p.Y, p.Z] for p in verts], [list(t) for t in tris], 0
+    except Exception:  # noqa: BLE001 - fall through to the per-face path
+        pass
+    pts: list[list[float]] = []
+    idx: list[list[int]] = []
+    skipped, base = 0, 0
+    for face in part.faces():
+        try:
+            fv, ft = face.tessellate(tol, ang)
+        except Exception:  # noqa: BLE001 - one un-triangulable face is not a blank viewport
+            skipped += 1
+            continue
+        pts.extend([[p.X, p.Y, p.Z] for p in fv])
+        idx.extend([[base + int(i) for i in tri] for tri in ft])
+        base += len(fv)
+    return pts, idx, skipped
+
+
 def _plughorn_preview(cfg, effective, notes, detail, config_name, brief_name, quadrants, started,
                       unavailable) -> dict:
     """Sandbox preview of a ``plughorn`` design: H/V wall sections and the front opening from the
@@ -2167,10 +2387,15 @@ def _plughorn_preview(cfg, effective, notes, detail, config_name, brief_name, qu
         t1 = time.perf_counter()
         try:
             part = tool.build_body(p)
-            verts, tris = part.tessellate(1.0, 0.3)
-            shape3d = {"available": True, "warnings": [], "roles": ["horn.inner"],
-                       "verts": np.round(np.array([[v.X, v.Y, v.Z] for v in verts]), 3).ravel().tolist(),
-                       "tris": np.asarray(tris, dtype=np.int64).ravel().tolist()}
+            pts, idx, skipped = _tessellate_part(part)
+            if not idx:
+                raise RuntimeError("the solid tessellated to no triangles")
+            warn = ([f"{skipped} face(s) could not be triangulated (degenerate boolean remnant) "
+                     f"and are not drawn; the solid itself is valid and meshes"]
+                    if skipped else [])
+            shape3d = {"available": True, "warnings": warn, "roles": ["horn.inner"],
+                       "verts": np.round(np.asarray(pts, dtype=float), 3).ravel().tolist(),
+                       "tris": np.asarray(idx, dtype=np.int64).ravel().tolist()}
         except Exception as exc:  # noqa: BLE001 - a CAD failure is explained, never a server error
             shape3d = {"available": False, "reason": f"CAD build failed: {exc}"}
         t_shape = (time.perf_counter() - t1) * 1000.0

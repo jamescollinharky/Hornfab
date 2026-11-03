@@ -17,11 +17,17 @@ Recorded by task 02 on 2026-10-12. **Status: PARTIAL — M2/M3/M4 and M5-after-d
 
 ## Pinned dependencies (40-char SHAs)
 - hornlab-waveguide-mesher: `b922e807a5cf10cf732c4557ec0b9b495762afd7`
-- hornlab-beat-bem:           `760a1ecf6075f5ccdbf97a69874c7f88441e36c1`
+- hornlab-beat-bem:           `1efdc6f934e16f288880b6d68e8dce8480b7a421`
 - hornlab-plots:              `9e4a6d0dd2ccb6e735dd00233dccccb50d12ed44`
 - hornlab-bempp-bem:          `8e6910602ece9abb2e9ce0db7a637f4bedf17f53` (installed OK, with bempp-cl 0.4.2 and numba 0.68.0)
 
 Pin history:
+- 2026-10-31: beat-bem pin → `1efdc6f` (branch `hornlab-search/meh-multisource`, cut from 760a1ec): opt-in multi-tag
+  `velocity_sources` (1..8, unit amplitude), opt-in `impedance_matrix`, `channel_*` result fields, `tag_areas_m2`;
+  one tag with no matrix is byte-identical (golden payload). Validated in M8: fork Python suite 329 pass; Julia
+  superposition/reciprocity/single-tag-parity/symmetry pass on CPU and CUDA; single-tag SPL parity vs 760a1ec
+  1.12e-5 dB / 5.91e-5 dB on two finalists (floor 0.039 dB). Owner approved the bump. Pushed to
+  `https://github.com/llevaachingada/hornlab-beat-bem`.
 - 2026-10-25: beat-bem pin → levaachingada fork @ 760a1ec (WP15 fused + WP16 source plug + WP17 fused-CUDA near correction, stage 1); fork hosted public GPL-3.0; WP16/17 branches hornlab-search/wp16-source-profile@f4ef05c / wp17-cuda-near@760a1ec — branch tip a40a204 only registers CUDA@6.2.0 in `hornlab_beat_bem/julia/Project.toml` (+ Manifest) so the WP16/17 CUDA-gated Julia testsets run on this GPU; the pinned install SHA is unchanged.
 
 ## Backends
