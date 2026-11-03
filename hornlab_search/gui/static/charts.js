@@ -4,6 +4,9 @@
 
 export const NS = "http://www.w3.org/2000/svg";
 
+/** Monotonic id source for per-instance SVG clip paths (one counter per module load). */
+let _clipSeq = 0;
+
 /** CSS variable helper */
 export const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
@@ -26,9 +29,34 @@ export function niceTicks(lo, hi, n = 5) {
 }
 
 /**
+ * Log-frequency ticks: the 1/2/5 x decade values strictly inside [lo, hi], plus the exact
+ * endpoints when neither is already within ~2 % of an included tick. Sorted, deduped, finite.
+ * logTicks(120, 12000) -> [120, 200, 500, 1000, 2000, 5000, 10000, 12000]
+ */
+export function logTicks(lo, hi) {
+  lo = Number(lo); hi = Number(hi);
+  if (!isFinite(lo) || !isFinite(hi) || lo <= 0 || hi <= 0) return [];
+  if (hi < lo) { const t = lo; lo = hi; hi = t; }
+  if (hi === lo) return [lo];
+  const out = [];
+  for (let d = Math.floor(Math.log10(lo)); d <= Math.ceil(Math.log10(hi)); d++) {
+    for (const m of [1, 2, 5]) {
+      const v = m * Math.pow(10, d);
+      if (v > lo && v < hi) out.push(v);
+    }
+  }
+  const near = v => out.some(t => Math.abs(t - v) <= 0.02 * v);
+  if (!near(lo)) out.push(lo);
+  if (!near(hi)) out.push(hi);
+  return [...new Set(out.filter(v => isFinite(v) && v > 0).map(v => +v.toFixed(6)))]
+    .sort((a, b) => a - b);
+}
+
+/**
  * Generic 2-D SVG chart.
  * series: [{pts:[[x,y],...], color, dash, dots, r, w, opacity}]
  * hlines: [{y, color, dash}]
+ * vlines: [{x, color, dash, label}]  — full-height marker lines with a top label
  * band: [x0, x1] — filled background strip
  */
 /** Pixel width an SVG will be drawn at (so text and strokes render 1:1, never scaled up). */
@@ -38,7 +66,7 @@ export function measuredWidth(svg, fallback) {
 }
 
 export function chart(svg, { W = 460, H = 240, xlog = false, xlim, ylim,
-    xticks, yticks, xlabel, ylabel, band, hlines = [], series, fill }) {
+    xticks, yticks, xlabel, ylabel, band, hlines = [], vlines = [], series, fill }) {
   svg.innerHTML = "";
   W = measuredWidth(svg, W);
   const m = { l: 44, r: 12, t: ylabel ? 20 : 10, b: 32 };   // unit label sits above the plot, clear of the top tick
@@ -49,9 +77,17 @@ export function chart(svg, { W = 460, H = 240, xlog = false, xlim, ylim,
   const [x0, x1] = xlim.map(tx), [y0, y1] = ylim;
   const X = v => m.l + (tx(v) - x0) / (x1 - x0) * (W - m.l - m.r);
   const Y = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+  if (xlog && !xticks) xticks = logTicks(xlim[0], xlim[1]);   // span-derived; explicit callers win
+  // Clip every plot mark (band, fills, series, marker lines) so nothing draws past the domain
+  // into the margins — the old band-rect bleed is gone.
+  const clipId = "hl-clip-" + (++_clipSeq);
+  const defs = el("defs", {}, svg);
+  el("rect", { x: m.l, y: m.t, width: Math.max(0, W - m.l - m.r), height: Math.max(0, H - m.t - m.b) },
+     el("clipPath", { id: clipId }, defs));
+  const plot = el("g", { "clip-path": `url(#${clipId})` }, svg);
   if (fill) for (const f of fill)
-    el("rect", { x: m.l, width: W - m.l - m.r, y: Y(Math.min(f.y1, ylim[1])), height: Math.max(0, Y(Math.max(f.y0, ylim[0])) - Y(Math.min(f.y1, ylim[1]))), fill: f.color, opacity: f.opacity ?? 0.12 }, svg);
-  if (band) el("rect", { x: X(band[0]), y: m.t, width: Math.max(0, X(band[1]) - X(band[0])), height: H - m.t - m.b, fill: css("--band") }, svg);
+    el("rect", { x: m.l, width: W - m.l - m.r, y: Y(Math.min(f.y1, ylim[1])), height: Math.max(0, Y(Math.max(f.y0, ylim[0])) - Y(Math.min(f.y1, ylim[1]))), fill: f.color, opacity: f.opacity ?? 0.12 }, plot);
+  if (band) el("rect", { x: X(band[0]), y: m.t, width: Math.max(0, X(band[1]) - X(band[0])), height: H - m.t - m.b, fill: css("--band") }, plot);
   const g = el("g", { class: "grid" }, svg);
   for (const t of (yticks || [])) {
     el("line", { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }, g);
@@ -67,18 +103,37 @@ export function chart(svg, { W = 460, H = 240, xlog = false, xlim, ylim,
   if (ylabel) { const t = el("text", { x: m.l - 6, y: 11, "text-anchor": "end" }, svg); t.textContent = ylabel; }
   for (const h of hlines)
     el("line", { x1: m.l, x2: W - m.r, y1: Y(h.y), y2: Y(h.y), stroke: h.color, "stroke-width": 1.5, "stroke-dasharray": h.dash ? "5 4" : "none" }, svg);
+  const vlineColor = v => v.color || css("--label");
+  for (const v of vlines) {
+    if (!isFinite(v.x)) continue;
+    const lx = X(v.x);
+    el("line", { x1: lx, x2: lx, y1: m.t, y2: H - m.b, stroke: vlineColor(v),
+                 "stroke-width": 1.5, "stroke-dasharray": v.dash ? "5 4" : "none" }, plot);
+  }
   const clipY = v => Math.min(Math.max(v, y0), y1);
   for (const s of series) {
     const pts = s.pts.filter(p => p[1] != null && isFinite(p[1]));
     if (!pts.length) continue;
     if (s.dots) {
       for (const p of pts)
-        el("circle", { cx: X(p[0]), cy: Y(clipY(p[1])), r: s.r || 2.0, fill: s.color, opacity: s.opacity ?? 0.8 }, svg);
+        el("circle", { cx: X(p[0]), cy: Y(clipY(p[1])), r: s.r || 2.0, fill: s.color, opacity: s.opacity ?? 0.8 }, plot);
     } else {
       el("path", { d: pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(clipY(p[1])).toFixed(1)).join(""),
         fill: "none", stroke: s.color, "stroke-width": s.w || 1.8,
-        "stroke-dasharray": s.dash ? "5 4" : "none", "stroke-linejoin": "round" }, svg);
+        "stroke-dasharray": s.dash ? "5 4" : "none", "stroke-linejoin": "round" }, plot);
     }
+  }
+  // marker labels sit at the top of the plot; switch anchor near an edge so they never clip
+  const pw = W - m.l - m.r;
+  for (const v of vlines) {
+    if (!isFinite(v.x) || !v.label) continue;
+    const lx = X(v.x);
+    const anchor = (lx - m.l) < 0.12 * pw ? "start" : (lx > W - m.r - 0.12 * pw) ? "end" : "middle";
+    const dx = anchor === "start" ? 4 : anchor === "end" ? -4 : 0;
+    const col = vlineColor(v);
+    const tt = el("text", { x: lx + dx, y: m.t + 11, "text-anchor": anchor,
+      style: `fill:${col};paint-order:stroke;stroke:${css("--surface")};stroke-width:3px;stroke-linejoin:round` }, svg);
+    tt.textContent = v.label;
   }
 }
 
@@ -373,7 +428,7 @@ function sample(rows, fi, ai) {
 const MS = { 1: ["l", "t"], 2: ["t", "r"], 3: ["l", "r"], 4: ["r", "b"], 5: ["l", "t", "r", "b"], 6: ["t", "b"], 7: ["l", "b"],
              8: ["l", "b"], 9: ["t", "b"], 10: ["t", "r", "l", "b"], 11: ["r", "b"], 12: ["l", "r"], 13: ["t", "r"], 14: ["l", "t"] };
 
-export function isobarMap(svg, rows, angles, freqs, { H = 300, title = "", angleTicks = null } = {}) {
+export function isobarMap(svg, rows, angles, freqs, { H = 300, title = "", angleTicks = null, xlim, f0 } = {}) {
   svg.innerHTML = "";
   if (!rows || !rows.length || !angles || !angles.length || !freqs || freqs.length < 2) return;
   const W = measuredWidth(svg, 520);
@@ -381,9 +436,20 @@ export function isobarMap(svg, rows, angles, freqs, { H = 300, title = "", angle
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H);
   svg.dataset.chart = "1";
   const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  // Axis domain: the brief-band union when supplied; otherwise the solved grid. Invalid/zero
+  // values fall back to the data domain, never to a guessed range.
+  const dataLo = Number(freqs[0]), dataHi = Number(freqs[freqs.length - 1]);
+  let dLo = dataLo, dHi = dataHi;
+  if (Array.isArray(xlim) && xlim.length >= 2) {
+    const a = Number(xlim[0]), b = Number(xlim[1]);
+    if (isFinite(a) && isFinite(b) && a > 0 && b > 0 && b > a) { dLo = a; dHi = b; }
+  }
+  if (!(isFinite(dataLo) && isFinite(dataHi) && dataLo > 0 && dataHi > dataLo)) return;
+  if (!(isFinite(dLo) && isFinite(dHi) && dLo > 0 && dHi > dLo)) { dLo = dataLo; dHi = dataHi; }
   const lf = freqs.map(Math.log10), lf0 = lf[0], lf1 = lf[lf.length - 1];
+  const xlo = Math.log10(dLo), xhi = Math.log10(dHi);
   const a0 = angles[0], a1 = angles[angles.length - 1];
-  const X = f => m.l + (Math.log10(f) - lf0) / (lf1 - lf0) * pw;
+  const X = f => m.l + (Math.log10(f) - xlo) / (xhi - xlo) * pw;
   const Y = a => m.t + (a1 - a) / (a1 - a0) * ph;                     // +90 at the top
   // fractional row index of a log-frequency (rows are on the solved, log-spaced grid)
   const fIndex = l => { let i = 0; while (i < lf.length - 2 && l > lf[i + 1]) i++; return i + Math.max(0, Math.min(1, (l - lf[i]) / (lf[i + 1] - lf[i]))); };
@@ -393,23 +459,33 @@ export function isobarMap(svg, rows, angles, freqs, { H = 300, title = "", angle
   const cv = document.createElement("canvas"); cv.width = cw; cv.height = chh;
   const ctx = cv.getContext("2d"), img = ctx.createImageData(cw, chh);
   const vals = new Float32Array(cw * chh);
+  // Only the solved data domain carries colour; band margins stay transparent and carry a NaN
+  // sentinel so marching squares skips them (never extrapolate the edge colours into the margins).
+  const tol = 1e-9 * Math.max(1, Math.abs(lf0), Math.abs(lf1));
   for (let py = 0; py < chh; py++) {
     const ai = aIndex(a1 - (py + 0.5) / chh * (a1 - a0));
     for (let px = 0; px < cw; px++) {
-      const v = sample(rows, fIndex(lf0 + (px + 0.5) / cw * (lf1 - lf0)), ai);
+      const lg = xlo + (px + 0.5) / cw * (xhi - xlo);
+      if (lg < lf0 - tol || lg > lf1 + tol) { vals[py * cw + px] = NaN; continue; }
+      const v = sample(rows, fIndex(lg), ai);
       vals[py * cw + px] = v;
       const c = hexRgb(bandColor(v)), o = (py * cw + px) * 4;
       img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
     }
   }
   ctx.putImageData(img, 0, 0);
-  el("image", { href: cv.toDataURL(), x: m.l, y: m.t, width: pw, height: ph, preserveAspectRatio: "none" }, svg);
+  const clipId = "hl-iso-clip-" + (++_clipSeq);
+  const defs = el("defs", {}, svg);
+  el("rect", { x: m.l, y: m.t, width: pw, height: ph }, el("clipPath", { id: clipId }, defs));
+  const clipped = el("g", { "clip-path": `url(#${clipId})` }, svg);
+  el("image", { href: cv.toDataURL(), x: m.l, y: m.t, width: pw, height: ph, preserveAspectRatio: "none" }, clipped);
   // contour lines every 3 dB (marching squares on the raster grid), white as in Boundary Lab
   const sx = pw / cw, sy = ph / chh;
   for (let L = ISOBAR_MIN + ISOBAR_STEP; L < ISOBAR_MAX; L += ISOBAR_STEP) {
     let d = "";
     for (let py = 0; py < chh - 1; py++) for (let px = 0; px < cw - 1; px++) {
       const v0 = vals[py * cw + px], v1 = vals[py * cw + px + 1], v2 = vals[(py + 1) * cw + px + 1], v3 = vals[(py + 1) * cw + px];
+      if (!isFinite(v0) || !isFinite(v1) || !isFinite(v2) || !isFinite(v3)) continue;   // unsolved margin cell
       const c = (v0 > L) | ((v1 > L) << 1) | ((v2 > L) << 2) | ((v3 > L) << 3);
       if (c === 0 || c === 15) continue;
       const it = (va, vb) => (L - va) / (vb - va);
@@ -426,18 +502,17 @@ export function isobarMap(svg, rows, angles, freqs, { H = 300, title = "", angle
       // dark halo first (under), white core second (over): the 0.55-opaque halo composites
       // ≈ 3.7:1 over #FFDF00 and the white core on it ≈ 5:1 — legible on every colormap band
       el("path", { d, fill: "none", stroke: "#10181d", "stroke-opacity": 0.55,
-                   "stroke-width": L === -6 ? 3.4 : 2.6 }, svg);
+                   "stroke-width": L === -6 ? 3.4 : 2.6 }, clipped);
       el("path", { d, fill: "none", stroke: "#ffffff", "stroke-opacity": L === -6 ? 0.98 : 0.8,
-                   "stroke-width": L === -6 ? 1.8 : 1.1 }, svg);
+                   "stroke-width": L === -6 ? 1.8 : 1.1 }, clipped);
     }
   }
   // grid and axes (angleTicks: optional — the balloon view passes 0..180 theta ticks over a
   // 0..180 polar-angle slice; default keeps the ±90° behaviour all other callers rely on)
   const g = el("g", {}, svg);
-  for (const t of [200, 500, 1000, 2000, 5000, 10000, 20000]) {
-    if (Math.log10(t) < lf0 - 1e-9 || Math.log10(t) > lf1 + 1e-9) continue;
+  for (const t of logTicks(dLo, dHi)) {
     el("line", { x1: X(t), x2: X(t), y1: m.t, y2: m.t + ph, stroke: "#808080", "stroke-opacity": 0.7, "stroke-width": 1.0 }, g);
-    el("text", { x: X(t), y: m.t + ph + 14, "text-anchor": "middle" }, svg).textContent = t >= 1000 ? t / 1000 + "k" : String(t);
+    el("text", { x: X(t), y: m.t + ph + 14, "text-anchor": "middle" }, svg).textContent = t >= 1000 ? t / 1000 + "k" : t;
   }
   for (const a of (angleTicks || [-90, -60, -30, 0, 30, 60, 90])) {
     if (a < a0 || a > a1) continue;
@@ -445,6 +520,19 @@ export function isobarMap(svg, rows, angles, freqs, { H = 300, title = "", angle
     el("text", { x: m.l - 6, y: Y(a) + 3, "text-anchor": "end" }, svg).textContent = (a > 0 ? "+" : "") + a + "°";
   }
   el("rect", { x: m.l, y: m.t, width: pw, height: ph, fill: "none", stroke: css("--rule") }, svg);
+  // scoring floor: dashed vertical marker inside the plot, edge-aware label at the top
+  // (drawn after the grid so the marker and its halo label stay on top)
+  const f0n = Number(f0);
+  if (isFinite(f0n) && f0n > 0 && f0n >= dLo && f0n <= dHi) {
+    const lx = X(f0n);
+    el("line", { x1: lx, x2: lx, y1: m.t, y2: m.t + ph, stroke: css("--warn"),
+                 "stroke-width": 1.5, "stroke-dasharray": "5 4" }, clipped);
+    const anchor = (lx - m.l) < 0.12 * pw ? "start" : (lx > m.l + pw - 0.12 * pw) ? "end" : "middle";
+    const dx = anchor === "start" ? 4 : anchor === "end" ? -4 : 0;
+    const tt = el("text", { x: lx + dx, y: m.t + 11, "text-anchor": anchor,
+      style: `fill:${css("--warn")};paint-order:stroke;stroke:${css("--surface")};stroke-width:3px;stroke-linejoin:round` }, svg);
+    tt.textContent = `f0 ${Number.isInteger(f0n) ? f0n : +f0n.toFixed(1)} Hz`;
+  }
   el("text", { x: m.l + pw / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = "Frequency (Hz)";
   if (title) el("text", { x: m.l, y: 14, class: "iso-title" }, svg).textContent = title;
   // colour bar: the same discrete bands, 3 dB ticks
@@ -467,12 +555,14 @@ export function isobarMap(svg, rows, angles, freqs, { H = 300, title = "", angle
     const r = svg.getBoundingClientRect(), k = W / r.width;
     const x = (ev.clientX - r.left) * k, y = (ev.clientY - r.top) * k;
     if (x < m.l || x > m.l + pw || y < m.t || y > m.t + ph) { cross.style.display = "none"; return; }
-    const f = Math.pow(10, lf0 + (x - m.l) / pw * (lf1 - lf0)), a = a1 - (y - m.t) / ph * (a1 - a0);
-    const v = sample(rows, fIndex(Math.log10(f)), aIndex(a));
+    const f = Math.pow(10, xlo + (x - m.l) / pw * (xhi - xlo)), a = a1 - (y - m.t) / ph * (a1 - a0);
+    const lg = Math.log10(f), solved = lg >= lf0 - tol && lg <= lf1 + tol;
+    const v = solved ? sample(rows, fIndex(lg), aIndex(a)) : null;
     vl.setAttribute("x1", x); vl.setAttribute("x2", x); vl.setAttribute("y1", m.t); vl.setAttribute("y2", m.t + ph);
     hl.setAttribute("x1", m.l); hl.setAttribute("x2", m.l + pw); hl.setAttribute("y1", y); hl.setAttribute("y2", y);
     txt.textContent = (f >= 1000 ? (f / 1000).toFixed(2) + " kHz" : Math.round(f) + " Hz") + " · " +
-      (a >= 0 ? "+" : "") + a.toFixed(0) + "° · " + (v < ISOBAR_MIN ? "below " + ISOBAR_MIN : v.toFixed(1)) + " dB";
+      (a >= 0 ? "+" : "") + a.toFixed(0) + "° · " +
+      (solved ? (v < ISOBAR_MIN ? "below " + ISOBAR_MIN : v.toFixed(1)) + " dB" : "no solved data");
     const tx = x + 190 > m.l + pw ? x - 188 : x + 10, ty = y < m.t + 24 ? y + 22 : y - 8;
     txt.setAttribute("x", tx + 6); txt.setAttribute("y", ty);
     box.setAttribute("x", tx); box.setAttribute("y", ty - 13); box.setAttribute("width", 178); box.setAttribute("height", 18);

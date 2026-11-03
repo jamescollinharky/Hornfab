@@ -581,6 +581,12 @@ def run_detail(runs: Path, run_id: str) -> dict:
     feasibility = cfg.get("feasibility")
     if isinstance(feasibility, dict) and feasibility:
         out["feasibility"] = clean(feasibility)
+    # The active objective block rides in the same committed config.yaml. Additive passthrough
+    # only: an absent block stays absent here too (no shape invention); the run-detail seed card
+    # uses it to name the below-f0 scoring rule honestly.
+    objective = cfg.get("objective") or (cfg.get("brief") or {}).get("objective")
+    if objective is not None:
+        out["objective"] = clean(objective)
     return out
 
 

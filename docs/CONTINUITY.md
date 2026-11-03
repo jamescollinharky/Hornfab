@@ -2,6 +2,29 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-02 - GUI: FREQUENCY-AXIS RANGE FROM THE BRIEF BAND + SCORING-FLOOR f0 MARKER; MEH BENCH SCRIPTS
+
+- **Landed (was uncommitted in this tree):** `charts.js` now clips every plot mark to the domain (the band
+  rectangle no longer bleeds into the margins), derives 1/2/5 x decade ticks plus the exact endpoints
+  (`logTicks`), takes its axis domain from the brief-band union with honest fallbacks (never a guessed
+  range), keeps the isobar raster blank in the band margins (NaN sentinel so marching squares cannot
+  extrapolate edge colour), and marks the objective scoring floor `f0` as an edge-aware dashed vertical
+  marker drawn after the grid.
+- `app.js`: new `freqAxisLimits` (union of the brief band and the solved grid); every run-detail frequency
+  chart, the campaign overlay and compare route through it (no hardcoded FT tick list); c-bw and c-di carry
+  the `f0` marker; `isobarMap` receives `xlim`/`f0`; `seedDerivationHtml(feas, objective)` names the
+  objective actually in play, and the one-argument call keeps the original v3 wording.
+- `gui/data.py`: `run_detail` passes the committed `objective` block through additively — absent stays absent,
+  no shape invention.
+- New offline pins `tests/test_gui_freq_range.py` (checks (a)-(d) in its docstring); the two existing pinned
+  call-site assertions were updated to the new signature.
+- **Verification [measured]:** `python -m compileall -q hornlab_search/gui tools/bench tests/test_gui_freq_range.py`
+  -> OK; `.venv\Scripts\python.exe -m pytest tests/test_gui_freq_range.py tests/test_gui_brief_authoring.py
+  tests/test_gui_param_tips.py -q` -> **37 passed**.
+- `tools/bench/` committed (`cpu_vs_cuda_meh`, `cuda_cpu_40designs`, `cuda_threads`, `full_range_cuda_cpu`):
+  the CPU-vs-CUDA MEH benchmark scripts behind the 2026-11-02 bench runs. `__pycache__` stays git-ignored.
+- No solver, config, pin or tolerance changes.
+
 ## 2026-11-01 - HARDWARE DECISION STUDY: RENTAL FIRST; FULL-WALL MESH IS MUCH LARGER
 
 - Owner clarified this is a theoretical rent-versus-buy decision; no rental machines configured. Rental spend $0, no new BEM solves/screens. `docs/evidence/HARDWARE_2026-11-01.md` records the study, current published rates and explicitly conditional costs.

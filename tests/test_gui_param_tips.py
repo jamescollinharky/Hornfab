@@ -225,7 +225,7 @@ def test_wired_seed_derivation_card():
     """Site 3 — seed-derivation rows: the pinned call site stays literal; the card marks its knob
     cells (data-seedknob) and the run-detail view attaches catalog titles with sum.name."""
     src = APPJS.read_text(encoding="utf-8")
-    assert "${seedDerivationHtml(d.feasibility)}" in src              # the pinned template, untouched
+    assert "${seedDerivationHtml(d.feasibility, d.objective)}" in src   # the pinned template
     assert 'data-seedknob="${esc(r.knob ?? "")}"' in src
     assert 'paramTipHtml(sum.name, td.dataset.seedknob, td.dataset.seedknob)' in src
     assert '.seed-derivation-card td[data-seedknob]' in src           # scoped to this one card

@@ -2,7 +2,7 @@
 // Single-page app with hash routing. No build step, vanilla ES modules.
 
 import { chart, heat, cmap, drawCbar, niceTicks, diFromCuts, groupColor,
-         el, NS, css, fmt, FT, DEFW, polarMap, wallSection, familyColor, measuredWidth, isobarMap } from "./charts.js";
+         el, NS, css, fmt, DEFW, polarMap, wallSection, familyColor, measuredWidth, isobarMap } from "./charts.js";
 import { TERMS as GLOSSARY, TERM_ORDER, tip } from "./glossary.js";
 import { loadParamCatalog, paramTipHtml, typologyTipHtml, typologyChipsHtml } from "./paramtips.js";
 import { init3d } from "./view3d.js";
@@ -27,6 +27,27 @@ const fmtDeg = v => v == null ? "–" : Number(v).toFixed(0) + "°";
 const fmtMm  = v => v == null ? "–" : Math.round(v) + " mm";
 const fmtDb  = v => v == null ? "–" : Number(v).toFixed(1) + " dB";
 const fmtPct = v => v == null ? "–" : Number(v).toFixed(0) + "%";
+
+/**
+ * Axis limits for a frequency chart: the union of the brief band's finite endpoints and the
+ * solved grid's finite first/last frequencies, so the full brief band is visible AND no solved
+ * point can overflow past the axis. Falls back to the band, then to [100, 10000]. Pure.
+ */
+export function freqAxisLimits(band, freqs) {
+  const positive = v => { const n = Number(v); return isFinite(n) && n > 0 ? n : null; };
+  const vals = [];
+  const b = Array.isArray(band) ? band : [];
+  for (const v of b.slice(0, 2)) { const n = positive(v); if (n != null) vals.push(n); }
+  const f = Array.isArray(freqs) ? freqs : [];
+  if (f.length) {
+    const a = positive(f[0]), z = positive(f[f.length - 1]);
+    if (a != null) vals.push(a);
+    if (z != null) vals.push(z);
+  }
+  if (!vals.length) return [100, 10000];
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  return hi > lo ? [lo, hi] : [lo, lo * 1.05];      // never a zero-width log axis
+}
 
 // ── API helpers ────────────────────────────────────────────────────
 
@@ -1194,10 +1215,13 @@ async function viewCampaignDetail(id) {
     if (tgt) allBW.push(tgt);
     const bwmax = Math.min(200, Math.ceil(Math.max(...allBW) * 1.08 / 10) * 10) || 180;
     const band = [target.band_lo_hz || freqsRef[0], target.band_hi_hz || freqsRef[freqsRef.length - 1]];
-    const xlim = [freqsRef[0], freqsRef[freqsRef.length - 1]];
+    const xlim = freqAxisLimits(band, freqsRef);
+    const f0c = Number(target.f0_hz);
+    const f0Finite = isFinite(f0c) && f0c > 0 ? f0c : null;
+    const vlines = f0Finite ? [{ x: f0Finite, color: css("--warn"), dash: true, label: "f0 " + fmtHz(f0Finite) }] : [];
     chart(bwSvg, {
-      H: 260, xlog: true, xlim, ylim: [0, bwmax], xticks: FT, yticks: niceTicks(0, bwmax, 5),
-      xlabel: "Hz", ylabel: "deg", band,
+      H: 260, xlog: true, xlim, ylim: [0, bwmax], yticks: niceTicks(0, bwmax, 5),
+      xlabel: "Hz", ylabel: "deg", band, vlines,
       fill: tgt ? [{ y0: tgt * 0.9, y1: tgt * 1.1, color: css("--best"), opacity: 0.10 }] : [],
       hlines: tgt ? [{ y: tgt, color: css("--label"), dash: true }] : [],
       series: entries.map((e, idx) => { const b = e.best || {}, F2 = b.freqs || freqsRef;
@@ -1210,8 +1234,8 @@ async function viewCampaignDetail(id) {
       if (dit != null) dall.push(dit);
       const dlo = Math.floor(Math.min(...dall) - 1), dhi = Math.ceil(Math.max(...dall) + 1);
       chart(diSvg, {
-        H: 260, xlog: true, xlim, ylim: [dlo, dhi], xticks: FT, yticks: niceTicks(dlo, dhi, 5),
-        xlabel: "Hz", ylabel: "dB", band,
+        H: 260, xlog: true, xlim, ylim: [dlo, dhi], yticks: niceTicks(dlo, dhi, 5),
+        xlabel: "Hz", ylabel: "dB", band, vlines,
         hlines: dit != null ? [{ y: dit, color: css("--label"), dash: true }] : [],
         series: entries.map((e, idx) => { const b = e.best || {}, F2 = b.freqs || freqsRef;
           return { pts: F2.map((f, i) => [f, (b.di || [])[i] ?? null]), color: familyColor(idx), w: idx === 0 ? 2.4 : 1.6 }; }),
@@ -1725,19 +1749,52 @@ function mountingRankWarnHtml(mixed) {
     `a different objective landscape (J improves under the enclosure); never rank across mountings.</span></p>`;
 }
 
+/** K-law preflight summary (the feasibility facts already stored in config.yaml). Rendered above
+ *  the derivation table: mouth size the law requires, the brief envelope, the coverage the
+ *  envelope can hold at f0, and a per-plane fit pill. "Held by the envelope" is never presented
+ *  as the built horn's performance. Pure; "" when no K-law key is present; "–" for missing. */
+function seedKlawHtml(feas) {
+  const keys = ["f0_hz", "required_mouth_w_mm", "required_mouth_h_mm", "envelope_mouth_w_mm",
+                "envelope_mouth_h_mm", "held_coverage_w_deg", "held_coverage_v_deg",
+                "feasible_w", "feasible_v"];
+  if (!keys.some(k => feas[k] != null)) return "";
+  const roundOrDash = (v, unit = "") => {
+    const n = Number(v);
+    return (v != null && isFinite(n)) ? Math.round(n) + unit : "–";
+  };
+  const f0s = (feas.f0_hz != null && isFinite(Number(feas.f0_hz))) ? fmtHz(Number(feas.f0_hz)) : "–";
+  const mouth = `${roundOrDash(feas.required_mouth_w_mm)} × ${roundOrDash(feas.required_mouth_h_mm)} mm`;
+  const env = `${roundOrDash(feas.envelope_mouth_w_mm)} × ${roundOrDash(feas.envelope_mouth_h_mm)} mm`;
+  const held = `H ${roundOrDash(feas.held_coverage_w_deg, "°")} / V ${roundOrDash(feas.held_coverage_v_deg, "°")}`;
+  const planePill = (label, ok, need) => {
+    if (ok === true) return pill(`${label} fits`, "good");
+    if (ok === false)
+      return `<span class="pill warn" title="does not fit the envelope">${esc(`${label} short: needs ${roundOrDash(need)} mm`)}</span>`;
+    return `<span class="muted">–</span>`;
+  };
+  return `<div class="seed-klaw">` +
+    `<p class="hint" style="margin:0" role="note">f0 ${esc(f0s)} · K-law mouth ${esc(mouth)} · envelope ${esc(env)}</p>` +
+    `<p class="hint" style="margin:2px 0 0" role="note">held at f0 by the envelope: ${esc(held)}</p>` +
+    `<div class="pill-row" style="margin:6px 0 0">${planePill("H", feas.feasible_w, feas.required_mouth_w_mm)}` +
+    `${planePill("V", feas.feasible_v, feas.required_mouth_h_mm)}</div></div>`;
+}
+
 /** The brief-driven seed derivation card (S1a feasibility record, written to the run's config.yaml
- *  under `feasibility`). Rendered ONLY when feasibility.derivation is a non-empty array; every
- *  sub-key may be absent (never crashes, "–" for missing numbers), and a missing feasibility block
- *  renders literally nothing. Pure; returns HTML or "". */
-function seedDerivationHtml(feas) {
+ *  under `feasibility`). Rendered when feasibility.derivation is a non-empty array OR a K-law
+ *  summary is present; every sub-key may be absent (never crashes, "–" for missing numbers), and a
+ *  missing feasibility block renders literally nothing. `objective` (optional) selects the honest
+ *  below-f0 suffix; omitting it keeps the original "(masked under v3)" string. Pure; HTML or "". */
+function seedDerivationHtml(feas, objective) {
   if (!feas || typeof feas !== "object") return "";
   const rows = (Array.isArray(feas.derivation) ? feas.derivation : []).filter(r => r && typeof r === "object");
-  if (!rows.length) return "";
+  const klaw = seedKlawHtml(feas);
+  if (!rows.length && !klaw) return "";
   const rule = (feas.rule != null && feas.rule !== "")
     ? `<code>${esc(feas.rule)}</code>` : `<span class="muted">–</span>`;
   const cap = `${rule} — derived values clamped into the brief envelope and each knob's existing ` +
     `bounds; widening never automatic`;
-  // below-f0 counts: only the groups whose screen_/verify_ keys arrived; the mask sentence stays
+  // below-f0 counts: only the groups whose screen_/verify_ keys arrived. The suffix names the
+  // objective actually in play; the one-argument call keeps the original v3 wording.
   const count = (n, total) =>
     `${n != null ? esc(n) : "–"}/${total != null ? esc(total) : "–"}`;
   const groups = [];
@@ -1745,8 +1802,15 @@ function seedDerivationHtml(feas) {
     groups.push(`screen: ${count(feas.screen_freqs_below_f0, feas.screen_freqs_total)} solved freqs below f0`);
   if (feas.verify_freqs_below_f0 != null || feas.verify_freqs_total != null)
     groups.push(`verify: ${count(feas.verify_freqs_below_f0, feas.verify_freqs_total)}`);
+  let suffix = "(masked under v3)";
+  if (objective && typeof objective === "object") {
+    if (Number(objective.version) === 3 || objective.cov_below_f0 === "mask")
+      suffix = "(masked under v3: cov + dislope score only f ≥ f0)";
+    else if (objective.cov_below_f0 === "one_sided")
+      suffix = "(one_sided: below f0 a wider pattern is forgiven, a narrower one still scores)";
+  }
   const counts = groups.length
-    ? `<p class="hint" style="margin:6px 0 0" role="note">${groups.join(" · ")} (masked under v3)</p>` : "";
+    ? `<p class="hint" style="margin:6px 0 0" role="note">${groups.join(" · ")} ${suffix}</p>` : "";
   const body = rows.map(r => {
     const knob = (r.knob != null && r.knob !== "") ? esc(r.knob) : "–";
     // derived: the number in mm; when it was not derived AND nothing was applied, the entry's own
@@ -1764,12 +1828,12 @@ function seedDerivationHtml(feas) {
       : `<span class="muted">seeded</span>`;
     return `<tr><td data-seedknob="${esc(r.knob ?? "")}">${knob}</td><td class="r">${derived}</td><td>${esc(applied)}</td><td>${flag}</td></tr>`;
   }).join("");
-  return `<div class="fig seed-derivation-card"><h3>Seed derivation (brief-driven, clamp-only)</h3>
-      <div class="cap">${cap}</div>${counts}
-      <div class="tbl-wrap"><table>
+  const table = rows.length ? `<div class="tbl-wrap"><table>
         <thead><tr><th>Knob</th><th class="r">Derived</th><th>Applied</th><th>Result</th></tr></thead>
         <tbody>${body}</tbody>
-      </table></div></div>`;
+      </table></div>` : "";
+  return `<div class="fig seed-derivation-card"><h3>Seed derivation (brief-driven, clamp-only)</h3>
+      ${klaw}<div class="cap">${cap}</div>${counts}${table}</div>`;
 }
 
 /** The brief editor's objective-version options (v3 = the below-f0 scoring floor). Pure; returns
@@ -1874,7 +1938,7 @@ async function viewRunDetail(id) {
 
       ${restartScheduleHtml(d, id)}
 
-      ${seedDerivationHtml(d.feasibility)}
+      ${seedDerivationHtml(d.feasibility, d.objective)}
 
       <!-- Actions -->
       <div class="btn-row">
@@ -1895,7 +1959,7 @@ async function viewRunDetail(id) {
       <div class="grid2">
         <div class="fig">
           <h3>${tip("bw", "Beamwidth (−6 dB)")} vs target</h3>
-          <div class="cap">Total angle between the −6 dB points. Shaded: target ±10 %; lighter panel: the scored band.</div>
+          <div class="cap">Total angle between the −6 dB points. Shaded: target ±10 %. Panel: the brief band. Dashed marker: the scoring floor f0.</div>
           <div class="legend">
             <span><i style="color:var(--best)"></i>best, horizontal</span>
             <span><i style="color:var(--best)" class="dash"></i>best, vertical</span>
@@ -1940,7 +2004,7 @@ async function viewRunDetail(id) {
       <div class="fig">
         <div class="fig-head"><h3>${tip("polar", "Directivity (isobars)")}</h3>
           <label class="evo-opt" style="color:var(--ink)"><input type="checkbox" id="iso-start"> also show the starting design</label></div>
-        <div class="cap">Level relative to on-axis at 2 m, in 3 dB colour bands from −30 to 0 dB, with white contour lines every 3 dB (the heavier line is −6 dB: the beamwidth edge). Frequency across, angle up. Hover for a readout. Interpolated between the ${((d.best || {}).freqs || []).length} solved frequencies.</div>
+        <div class="cap">Level relative to on-axis at 2 m, in 3 dB colour bands from −30 to 0 dB, with white contour lines every 3 dB (the heavier line is −6 dB: the beamwidth edge). Frequency across, angle up. Hover for a readout. Interpolated between the ${((d.best || {}).freqs || []).length} solved frequencies. Axis spans the brief band; the colour map is drawn only across the solved frequencies.</div>
         <div class="maps iso-maps" id="polar-maps"></div>
       </div>
 
@@ -2018,6 +2082,9 @@ async function viewRunDetail(id) {
 
   const F = S.freqs || B.freqs || [];
   const band = [t.band_lo_hz || 700, t.band_hi_hz || 5500];
+  const xlim = freqAxisLimits(band, F);            // full brief band, unioned with the solved grid
+  const f0 = Number(t.f0_hz);
+  const f0Finite = isFinite(f0) && f0 > 0 ? f0 : null;
 
   // One convention on every chart: horizontal plane solid, vertical plane dashed; start amber, best teal.
   const series2 = (key, w) => [
@@ -2036,8 +2103,9 @@ async function viewRunDetail(id) {
     if (th) { fill.push({ y0: th * 0.9, y1: th * 1.1, color: css("--best"), opacity: 0.10 }); hlines.push({ y: th, color: css("--label") }); }
     if (tv && tv !== th) { fill.push({ y0: tv * 0.9, y1: tv * 1.1, color: css("--best"), opacity: 0.07 }); hlines.push({ y: tv, color: css("--label"), dash: true }); }
     chart(document.getElementById("c-bw"), {
-      xlog: true, xlim: [F[0], F[F.length - 1]], ylim: [0, bmax], fill,
-      xticks: FT, yticks: niceTicks(0, bmax, 5), xlabel: "Hz", ylabel: "deg", band, hlines,
+      xlog: true, xlim, ylim: [0, bmax], fill,
+      yticks: niceTicks(0, bmax, 5), xlabel: "Hz", ylabel: "deg", band, hlines,
+      vlines: f0Finite ? [{ x: f0Finite, color: css("--warn"), dash: true, label: "f0 " + fmtHz(f0Finite) }] : [],
       series: series2("bw", 2.2),
     });
   }
@@ -2048,9 +2116,10 @@ async function viewRunDetail(id) {
     const dall = [...(S.di || []), ...(B.di || []), dit].filter(v => v != null);
     const dlo = Math.floor(Math.min(...dall) - 1), dhi = Math.ceil(Math.max(...dall) + 1);
     chart(document.getElementById("c-di"), {
-      xlog: true, xlim: [F[0], F[F.length - 1]], ylim: [dlo, dhi],
-      xticks: FT, yticks: niceTicks(dlo, dhi, 5), xlabel: "Hz", ylabel: "dB", band,
+      xlog: true, xlim, ylim: [dlo, dhi],
+      yticks: niceTicks(dlo, dhi, 5), xlabel: "Hz", ylabel: "dB", band,
       hlines: [{ y: dit, color: css("--label"), dash: true }],
+      vlines: f0Finite ? [{ x: f0Finite, color: css("--warn"), dash: true, label: "f0 " + fmtHz(f0Finite) }] : [],
       series: [
         { pts: F.map((f, i) => [f, (S.di || [])[i] ?? null]), color: css("--seed"), w: 1.7 },
         { pts: F.map((f, i) => [f, (B.di || [])[i] ?? null]), color: css("--best"), w: 2.2 },
@@ -2063,8 +2132,8 @@ async function viewRunDetail(id) {
     const aall = [...(S.on_axis || []), ...(B.on_axis || [])].filter(v => v != null);
     const alo = Math.floor(Math.min(...aall, -3) - 1), ahi = Math.ceil(Math.max(...aall, 3) + 1);
     chart(document.getElementById("c-axis"), {
-      xlog: true, xlim: [F[0], F[F.length - 1]], ylim: [alo, ahi],
-      xticks: FT, yticks: niceTicks(alo, ahi, 5), xlabel: "Hz", ylabel: "dB", band,
+      xlog: true, xlim, ylim: [alo, ahi],
+      yticks: niceTicks(alo, ahi, 5), xlabel: "Hz", ylabel: "dB", band,
       hlines: [{ y: 0, color: css("--label") }],
       series: [
         { pts: F.map((f, i) => [f, (S.on_axis || [])[i] ?? null]), color: css("--seed"), w: 1.7 },
@@ -2080,8 +2149,8 @@ async function viewRunDetail(id) {
     const zall = [...(S.z_re || []), ...(B.z_re || []), ...X(B), ...X(S)].filter(v => v != null);
     const zlo = Math.min(0, Math.floor(Math.min(...zall) * 10) / 10), zhi = Math.max(1.2, Math.ceil(Math.max(...zall) * 10) / 10);
     chart(document.getElementById("c-zre"), {
-      xlog: true, xlim: [F[0], F[F.length - 1]], ylim: [zlo, zhi],
-      xticks: FT, yticks: niceTicks(zlo, zhi, 5), xlabel: "Hz", ylabel: "×ρc", band,
+      xlog: true, xlim, ylim: [zlo, zhi],
+      yticks: niceTicks(zlo, zhi, 5), xlabel: "Hz", ylabel: "×ρc", band,
       hlines: [{ y: 1.0, color: css("--label"), dash: true }, { y: 0.7, color: css("--warn"), dash: true }, { y: 0, color: css("--label") }],
       series: [
         { pts: F.map((f, i) => [f, (S.z_re || [])[i] ?? null]), color: css("--seed"), w: 1.7 },
@@ -2152,7 +2221,7 @@ async function viewRunDetail(id) {
       sv.setAttribute("role", "img"); sv.setAttribute("aria-label", lbl + " isobar plot");
       mapsEl.appendChild(sv);
       // drawn after layout, so each plot is measured at its real width
-      requestAnimationFrame(() => isobarMap(sv, rows, D2.angles || [], D2.freqs || F, { title: lbl, H: 300 }));
+      requestAnimationFrame(() => isobarMap(sv, rows, D2.angles || [], D2.freqs || F, { title: lbl, H: 300, xlim, f0: f0Finite }));
     }
   }
   drawIsobars();
@@ -2226,9 +2295,10 @@ async function viewRunDetail(id) {
     sensT.innerHTML = "<tr><td class='muted'>No sensitivity data.</td></tr>";
   }
 
-  // P9 (catalog hover docs): the seed-derivation call site is pinned as seedDerivationHtml(d.feasibility)
-  // with no config-name argument, so the card's knob cells identify themselves via data-seedknob and
-  // this pass attaches the catalog-grounded tooltip using sum.name. Missing docs keep the raw cell.
+  // P9 (catalog hover docs): the seed-derivation call site is seedDerivationHtml(d.feasibility,
+  // d.objective) with no config-name argument, so the card's knob cells identify themselves via
+  // data-seedknob and this pass attaches the catalog-grounded tooltip using sum.name. Missing docs
+  // keep the raw cell.
   for (const td of ROOT.querySelectorAll(".seed-derivation-card td[data-seedknob]"))
     if (td.dataset.seedknob) td.innerHTML = paramTipHtml(sum.name, td.dataset.seedknob, td.dataset.seedknob);
 
@@ -2516,7 +2586,14 @@ async function viewCompare() {
     const dA = cmp.a || {}, dB = cmp.b || {};
     const FA = dA.freqs || [], FB = dB.freqs || [];
     const F = FA.length ? FA : FB;
-    const band = [700, 5500];
+    // The brief band rides in each side's solve-group fingerprint (freqs_hz identity); fall back
+    // to the historical default only when an older response carries no identity.
+    const gIdent = (cmp.group_a && cmp.group_a.freqs_hz) || (cmp.group_b && cmp.group_b.freqs_hz) || {};
+    const band = [gIdent.band_lo_hz ?? 700, gIdent.band_hi_hz ?? 5500];
+    const xlim = freqAxisLimits(band, F);          // same full-band axis as run detail
+    const f0c = Number(cmp.f0_hz ?? (cmp.target || {}).f0_hz ?? dA.f0_hz ?? dB.f0_hz);
+    const f0Compare = isFinite(f0c) && f0c > 0 ? f0c : null;
+    const vlines = f0Compare ? [{ x: f0Compare, color: css("--warn"), dash: true, label: "f0 " + fmtHz(f0Compare) }] : [];
 
     // G3: solve-group distinction (C-2 additive keys). group_a/group_b carry the non-default
     // fingerprint keys (backend always included); mixed_keys lists where the sides differ — when
@@ -2575,8 +2652,8 @@ async function viewCompare() {
       if (!allV.length) return;
       const lo = Math.floor(Math.min(...allV) - 1), hi = Math.ceil(Math.max(...allV) + 1);
       chart(svg, {
-        xlog: true, xlim: [F[0], F[F.length - 1]], ylim: [lo, hi],
-        xticks: FT, yticks: niceTicks(lo, hi, 5), xlabel: "Hz", ylabel, band,
+        xlog: true, xlim, ylim: [lo, hi],
+        yticks: niceTicks(lo, hi, 5), xlabel: "Hz", ylabel, band, vlines,
         series: [
           { pts: F.map((f, i) => [f, (dA[keyA] || [])[i] ?? null]), color: css("--seed"), w: 1.8 },
           { pts: F.map((f, i) => [f, (dB[keyB] || [])[i] ?? null]), color: css("--best"), w: 1.8 },

@@ -875,7 +875,7 @@ def test_s1a_views_are_wired():
     # task 3: the mounting warn rides with the generic banner (kept) and the DI guard
     assert "[badgeRows, mixedBanner, mountingRankWarnHtml(mixed), diNote]" in src
     # task 4: seed card between the restart schedule and the Actions row, fed d.feasibility
-    assert "${restartScheduleHtml(d, id)}\n\n      ${seedDerivationHtml(d.feasibility)}\n\n      <!-- Actions -->" in src
+    assert "${restartScheduleHtml(d, id)}\n\n      ${seedDerivationHtml(d.feasibility, d.objective)}\n\n      <!-- Actions -->" in src
 
 
 # ── Inline 3D + 3D time-lapse (owner requests, views only) ───────────────────────────────
