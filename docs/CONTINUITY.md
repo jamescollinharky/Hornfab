@@ -1,6 +1,54 @@
 # CONTINUITY
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
+
+## 2026-11-03 - Ath OSSE+SF mid_ports mesher fork + solana_osse_meh_sf
+
+- **Mesher fork:** `jamescollinharky/hornlab-waveguide-mesher` branch
+  `hornlab-search/osse-midports` @ `55da4f46d662d8dcd7a9f94a609eeea4009fcd62`
+  (base `b922e807`). Opt-in top-level `mid_ports` re-tags inner-wall triangles to
+  tag 10 (flush L1 exits); absent = byte-identical. Pinned in `pyproject.toml` +
+  `TOOLCHAIN.md`; `docs/FORKS.md` updated. Mac checkout:
+  `~/Desktop/projects/forks/hornlab-waveguide-mesher`.
+- **Search wiring:** `families.to_mesher_config` emits `mid_ports` for OSSE when
+  present; `mesh/build.py` requires tag 10 and echoes `midPorts` into
+  `mesh_meta.json`. Offline tests `tests/test_design_mid_ports.py` +
+  `tests/test_mesh_mid_ports.py`; `test_mesh_pin` / doctor pinned-shas green.
+- **Config:** `examples/typologies/solana_osse_meh_sf.yaml` — Ath SF seed (same as
+  `solana_osse_sf_search`) + `mid_ports` tblr + brief `solana_meh_1in_90x90`.
+  Shape-check [measured] Mac+4090: ~2900 dofs / 14000, mouth 450×450, depth 152,
+  round coupling. Flat CAD MEH (`solana_meh*`) remains the fallback; Ath+SF+MEH
+  is now the Solana MEH-context estimate path.
+- **MEH evaluate:** OSSE mid_ports path supplies port area via
+  `mesh_meta.json["mid_ports"]` (`_meh_layout`); CAD `derived` still preferred when present.
+- **4090 [measured]:** screen `20261103T052310Z-screen-ce9d4f` seed **J=39.604** (2921 dofs,
+  solve 38.5 s). CMA `20261103T052647Z-screen-cd22a5` live on pod `kt44oly5cdlaps` — early
+  best **J≈22.3** (was 39.6); Mac GUI pull-loop syncs that run into local `runs/`.
+
+## 2026-11-02 (evening) - Solana/SAWMOD bench + RunPod cloud path landed on branch
+
+- **Branch:** `feat/solana-sawmod-wg-bench` rebased onto `origin/main` @ `0fb7d98` (PR #21
+  hardware decision). WIP stashed → FF → restored; INDEX/ISSUES conflict merge kept main +
+  Solana/SAWMOD/cloud rows.
+- **Cloud GPU path:** `tools/cloud/` (`runpod_ctl.py`, `bootstrap_linux.sh`, `run_job.sh`,
+  `runpod_env.example`) + `docs/CLOUD_GPU_RUNBOOK.md`. Secrets stay local (`.env.local`
+  gitignored). POSIX BEAT orphan cleanup: bare `julia … solver.jl --worker` hosts now
+  match in `solve/worker.py` (not only Windows `julialauncher*`); test in
+  `tests/test_solve_worker.py`.
+- **RunPod [measured]:** RTX 4090 pod bootstrapped; CP-9a selftest deltas **0.020 / 0.039 dB**;
+  Solana CD screen J≈41.9 on CUDA; `examples/osse_baseline_4090.yaml` (fused BM, band/dof
+  raises for 24 GB) queued for ~200-eval CMA. One GPU at a time; hosts cleared via
+  `run_job.sh`.
+- **Solana:** phase-1 Ath WG (`solana_osse` + brief) + evidence; phase-2 MEH CAD seed
+  `solana_meh` / `solana_meh_search` + brief `solana_meh_1in_90x90` from DIY Guide Rev 2.0
+  (DH450 + 4×6NDL38, face 450 mm vs DIY 410 disclosed). Mouth probes under
+  `examples/typologies/_solana_mouth_probes/` (athscript / morph_fixed_0 / gcurve_off —
+  SF mouth ~450 vs morph-only ~356).
+- **SAWMOD:** control WG + knuckle + `walls: lr` MEH probe; CAD/`step_build` accept `lr`.
+- **Still owed:** stop/finish live OSSE search as needed; Solana CD mouth-matched
+  (`gcurve_off`) screen+verify on 4090; Ath midports MEH path; SAWMOD Ath knuckle+ports /
+  LF / BL refine.
+
 ## 2026-11-02 - P11 TURNED ON: PUBLIC HF DATASET REPO PUBLISHED FOR THE COLLABORATOR
 
 - **Owner directive:** set up Hugging Face storage so the GitHub collaborator can pull "the solves we've done".
@@ -42,6 +90,48 @@ Newest entry first. Every push updates this file and `docs/ISSUES.md` in the sam
   (PS 5.1 re-encoded UTF-8 as ANSI, mangling em dashes and quotes) and were restored from git and re-edited with
   a UTF-8-safe editor before the commit; the committed diff contains no replacement characters.
 
+
+## 2026-11-02 - Cloud GPU runner (RunPod-first tooling)
+
+- Added `tools/cloud/`: `runpod_ctl.py` (GraphQL create/status/ssh/stop/terminate),
+  `bootstrap_linux.sh`, `run_job.sh` (force-clear BEAT hosts → CLI with explicit
+  `--backend beat_cuda` → `shutdown(verify=True)` → `runs/cloud_job_*.json`),
+  `runpod_env.example`. Secrets stay out of git (`.env.local` gitignored).
+- Runbook: `docs/CLOUD_GPU_RUNBOOK.md` (CP-9a gates, Solana screen first, ~$50 pilot
+  suggestion). Research still in `CLOUD_GPU_REPORT.md`.
+- POSIX worker hygiene: `beat_host_roots` now finds orphaned bare `julia … solver.jl
+  --worker` hosts (Linux/macOS), not only Windows `julialauncher*`. Test added in
+  `tests/test_solve_worker.py`. Offline worker tests green.
+- Superseded same evening: first paid 4090 pod ran CP-9a + Solana screen (see evening
+  entry above).
+
+## 2026-11-01 (late afternoon) - Solana 2.0 WG reconstruction (phase 1) + SAWMOD phase-2 probes
+
+- **Solana:** DIY Guide Rev 2.0 + `Advanced/athscript.cfg` snapshotted under
+  `docs/research/typologies/solana_2026-11-01/` (Drive guide `1-JxZ-…`, files
+  `151N2rq4…`). Dossier `SOLANA_WAVEGUIDE_2026-11-01.md`. Config `solana_osse` +
+  brief `solana_control_1in_90x90` (verbatim Ath pins: L=140, SF m=8, morph 353×353).
+- Dry-run **4284 dofs**; mouth with SF **~450 mm** vs Ath morph 353 / STL outer ~376
+  (morph-only ~356 — mesher/Ath delta disclosed). Screen Metal:
+  `runs/20261101T211314Z-screen-72f3bd` — **J=41.9**, 27.9 s, `di_source=balloon`.
+  Evidence `docs/evidence/SOLANA_WG_2026-11-01.md`. Phase 2+: mid ports / MEH / mouth delta.
+- **SAWMOD phase-2 probes (same session):** knuckle CD-only
+  `sawmod_knuckle_osse` (SF digitized) Metal `20261101T210541Z-screen-3c1938` J=241 /
+  2948 dofs; flat-wall MEH `sawmod_meh_lr2` (`walls: lr`, cone 103/66, hp_hz 250) dry-run
+  3950 dofs + multi-source Metal `20261101T210635Z-screen-ab4075` J=21.5 (v5; `n_nan=12`,
+  `load=100`, z_throat null — provisional). beat-bem bumped to pin `1efdc6f` for MEH path.
+  CAD `tools/cad/meh.py` + `step_build` accept `walls: lr`. LF/BL still later.
+
+## 2026-11-01 (afternoon) - SAWMOD control-waveguide benchmark (phase 1)
+
+- Whitepaper snapshot + dossier: `docs/research/typologies/sawmod_2026-11-01/`,
+  `SAWMOD_CONTROL_WAVEGUIDE_2026-11-01.md`. Config `sawmod_control_osse` + brief
+  `sawmod_control_1in_100x70` (pinned OS-SE L=115, morph rate 4, no knuckles).
+- Mesh: L=115 mm, mouth after morph **280×196** mm (`morph_allow_shrinkage: 1` required;
+  raw OSSE ~395 mm). Screen Metal solve OK: **1464 dofs**, J=345.2, 5.4 s —
+  `runs/20261101T205918Z-screen-e7b5a2`. Evidence
+  `docs/evidence/SAWMOD_CONTROL_WG_2026-11-01.md` (freestanding vs paper baffle caveat).
+- Phase 2+ still owed: knuckles, mid ports, LF slot, BL SAWMOD refine.
 
 ## 2026-11-01 (10:20 EDT) - PACKAGED FOR HANDOFF: QUICKSTART, SCREEN LAUNCHER, BOTH VERIFIED WINNERS
 

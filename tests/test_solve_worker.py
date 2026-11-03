@@ -84,6 +84,20 @@ def test_orphaned_julialauncher_without_parent_is_found():
     assert {300, 301} <= worker.host_tree_pids(t.procs)
 
 
+def test_orphaned_posix_julia_solver_worker_is_found():
+    """Linux/macOS persistent host: bare ``julia`` + solver.jl --worker, parent gone."""
+    orphan = ProcInfo(
+        400, 99999, "julia",
+        "/home/u/.julia/juliaup/julia --project=/opt/venv/lib/python3.12/site-packages/"
+        "hornlab_beat_bem/julia_cuda /opt/venv/lib/python3.12/site-packages/"
+        "hornlab_beat_bem/julia/solver.jl --worker",
+    )
+    bystander = ProcInfo(401, 1, "julia", "/usr/bin/julia -e '1+1'")  # not our package
+    t = Table(BYSTANDERS + [orphan, bystander])
+    assert [r.pid for r in worker.beat_host_roots(t.lister())] == [400]
+    assert 401 not in worker.host_tree_pids(t.procs)
+
+
 def test_no_hosts_means_nothing_to_clear():
     t = Table(BYSTANDERS)
     assert worker.clear_stale_hosts(lister=t.lister, killer=t.killer, vram_probe=lambda: 9999, sleep=nosleep) == []

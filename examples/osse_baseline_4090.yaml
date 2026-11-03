@@ -1,0 +1,63 @@
+# osse_baseline retuned for cloud RTX 4090 (24 GB VRAM). Original
+# examples/osse_baseline.yaml stays at the measured 8 GB RTX 4060 caps.
+#
+# Cloud 4090 search: fused CUDA. Band/caps raised for HF screens; CP-9b ceiling
+# ladder still owed. Without fused, ~10k dofs / ~21 GB OOM'd on this card.
+name: osse_baseline_4090
+family: OSSE
+
+seed_params:
+  r0_mm:   17.78        # 1.4 in exit radius
+  a_deg:   37.5         # coverage HALF-angle in the mesher's convention
+  a0_deg:  15.5
+  L_mm:    260.0
+  n:       4.0
+  s:       0.7
+  q:       0.995
+  k:       1.0
+  exponent: 4.0         # superellipse cross-section
+  aspect_ratio: 1.25
+
+bounds:
+  r0_mm:        {lo: 17.78, hi: 17.78, search: false}
+  a_deg:        {lo: 5.0,   hi: 55.0}
+  a0_deg:       {lo: 2.0,   hi: 30.0}
+  L_mm:         {lo: 140.0, hi: 420.0}
+  n:            {lo: 2.0,   hi: 8.0}
+  s:            {lo: 0.0,   hi: 1.0}
+  q:            {lo: 0.90,  hi: 1.00}
+  k:            {lo: 0.3,   hi: 2.5}
+  exponent:     {lo: 1.0,   hi: 8.0}
+  aspect_ratio: {lo: 1.0,   hi: 2.0}
+
+target:
+  coverage_h_deg: 75.0        # TOTAL included angle, -6 dB
+  coverage_v_deg: 45.0
+  band_lo_hz: 700.0
+  band_hi_hz: 16000.0         # HF screen on 4090 fused (was 5500 smoke)
+  di_target_db: null
+  di_slope_target: 0.0
+
+weights: {cov: 1.0, rip: 1.0, di: 0.3, dislope: 0.5, flat: 0.5, load: 0.0}
+
+mesh:
+  epw: 6.0
+  quadrants: "1"
+  dof_cap_screen: 16000       # 16 kHz fused: cut mesh_too_large rate vs 12k
+  dof_cap_verify: 18000
+  dof_cap_final:  20000
+  dof_per_triangle: 0.51
+
+solve:
+  backend: beat_cuda
+  cuda_fused: true            # WP15 fused BM — main speed/VRAM win on 4090
+  distance_m: 2.0
+  angle_count: 73             # must be ODD
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-5
+  timeout_s: 1800
+
+search: {algorithm: cma, sigma0: 0.25, seed: 1234, budget: 200,
+         popsize: null, tolfun: 1.0e-3}

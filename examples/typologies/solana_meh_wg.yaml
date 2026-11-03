@@ -1,0 +1,68 @@
+# solana_meh_wg: WG estimate in MEH context (CD + 4 midports).
+#
+# This is the Solana waveguide as a multiple-entry horn: MEH CAD pyramid air
+# path with tblr entry ports for 4 x B&C 6NDL38 + B&C DH450. Midports ARE
+# required here — freestanding Ath CD-only is solana_osse, not this file.
+#
+# Geometry is NOT athscript.cfg (Ath morph WG + ports as one solid is still
+# out of scope). Same solid as solana_meh; budget 1 for a single screen eval.
+# DIY face 410 mm refuses drivers_collide @ 4x6.5/90x90 — seed face 450 mm
+# (disclosed; dossier §6).
+#
+# PRIMARY: DIY Guide Rev 2.0 + dossier
+#   docs/research/typologies/SOLANA_WAVEGUIDE_2026-11-01.md
+name: solana_meh_wg
+family: FREEFORM
+brief_file: ../briefs/solana_meh_1in_90x90.yaml
+seed_params:
+  cad:
+    tool: meh
+    cov_h_deg: 90.0
+    cov_v_deg: 90.0
+    z_frac: 0.35
+    across_frac: 0.4
+    port_along_mm: 25.0
+    slide_mm: 30.0
+    walls: tblr
+    env_w_mm: 450.0
+    env_h_mm: 450.0
+    env_d_mm: 340.0
+    box_t_mm: 18.0
+    roll_mm: 20.0
+    wall_t_mm: 6.0
+    spacer_mm: 3.0
+    exit_mm: 25.4            # B&C DH450
+    cd_duct_mm: 25.0         # [inferred] duct depth not on DH450 sheet
+    cd_body_d_mm: 69.0
+    cd_body_len_mm: 48.0
+    cone_cutout_mm: 145.0    # B&C 6NDL38
+    cone_depth_mm: 85.0
+    clearance_mm: 3.0
+bounds: {}
+mesh:
+  epw: 4.2
+  quadrants: "1"
+  dof_cap_screen: 12000
+  dof_cap_verify: 14000
+  dof_cap_final: 14000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_cuda
+  # cuda_fused refuses multi-channel MEH solves
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 1800
+search:
+  algorithm: cma
+  sigma0: 0.2
+  seed: 1234
+  budget: 1
+  popsize: null
+  tolfun: 0.001
+description: >
+  Solana WG in MEH context: CAD pyramid + 4 midports (DH450 + 4x6NDL38).
+  Not Ath athscript (see solana_osse). Screen budget 1.

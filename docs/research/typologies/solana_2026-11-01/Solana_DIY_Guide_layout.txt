@@ -1,0 +1,339 @@
+Solana
+DIY Instructions
+
+
+
+
+The Solana is a versatile
+point source loudspeaker
+featuring flexible uses in DJ
+booth monitoring, fill,
+domestic, and home
+theater applications.
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​   ​   ​   ​   ​   ​   ​   ​   ​   ​   1
+Design Overview
+This is a compact 2-way top that prioritizes smooth, well controlled directivity, portability, and moderate output in a symmetric
+package.
+
+
+
+
+                                  Genetic Algorithm Shape Optimization
+                                  The Solana platform represents a case study in algorithmic loudspeaker shape optimization using the
+                                  boundary element method. The waveguide profile was iterated and developed via an evolutionary
+                                  algorithm to minimize off-axis lobing and polar irregularities, while achieving pattern control down to the
+                                           low-midrange. Version 1.0 was the result of a focused optimization campaign with a basic
+                                           genetic algorithm script that produced 350 candidates over 7 generations. Version 2.0 is the
+                                           product of a more advanced GA that simulated over 4,400 unique shapes before arriving at the
+                                           final geometry.
+
+
+
+
+Enclosure Design
+The provided enclosure plans specify a simple ~25 liter rear chamber tuned at
+70Hz with a single rear port that serves as a carrying handle. The quad 6.5”
+woofers are effectively loaded into a 6th order bandpass system that is best
+suited for crossing over to subs around 100Hz using a 4th order acoustic slope.
+However the enclosure can be modified by lengthening the port for full-range
+use at lower SPLs. A target rear chamber tuning frequency of 50Hz is
+recommended for low-tuned enclosure modifications.
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​           ​       ​      ​       ​       ​      ​       ​       ​      ​         2
+Specifications
+Dimensions: 41cm x 41cm x 34cm
+(16” x 16” x 13”)
+Weight: 12.5KG (27.5LBS)
+Horizontal Directivity: 90° constant directivity
+Vertical Directivity: 90° constant directivity (symmetric)
+Acoustic Crossover Frequency: 1200Hz LR6
+Maximum Output: See THD limited max SPL
+on page 4
+Drivers: 4x 6.5” midrange drivers, 1x 1” compression driver
+Construction Material: 18mm birch plywood
+Amplification: Bi-amplified with DSP
+Recommended Amplification: 500W+ for LF, 80W+ for
+HF
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​        ​   ​   ​   ​   ​   ​   ​   ​   ​   3
+Measurements Ground plane, 1/48 smoothing, 30 cycle FDW
+
+
+
+
+Distortion limited max SPL is calculated via ⅓ octave stepped sine tone bursts with 683ms length for frequencies <300Hz and 171ms length
+for frequencies >300Hz. A 2,000ms rest period is used between bursts. The polar plot is normalized to the design’s 10 degree reference axis
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​        ​      ​       ​      ​      ​       ​      ​      ​       ​      4
+  Assembly Introduction & Requirements
+                                             Download Required Files HERE
+
+
+  Drivers (for each waveguide)
+   Type            Model             Notes
+   LF              B&C 6NDL38        4Ω/8Ω/16Ω are all acceptable
+
+   HF              B&C DH450         16Ω version is preferred for lower noise floor, but 8Ω works fine
+
+
+
+
+  LF wiring note: 4x8-ohm LF drivers can be wired in series-parallel for a nominal 8-ohm load. 4x16-ohm drivers can be wired in parallel
+  for a nominal 4 ohm load. 4x4 ohm drivers can be wired in series-parallel for a nominal 4 ohm load. Use the appropriate wiring strategy
+  according to driver availability and amplifier capabilities.
+
+
+  FDM Printing Requirements
+          Minimum print volume: 250x210x220mm for 4-piece assembly OR 340x320x340mm for 2-piece print.
+          Printer Enclosure: An enclosure is recommended to minimize warping during printing.
+          Material: Consider the environment you will keep your speaker in long-term as it relates to temperature changes and mechanical
+          stress. Carbon or glass fiber-filled filaments are recommended as they help the parts maintain dimensional stability during
+          printing. Epoxy or fiberglass coatings can be applied on the back side of the waveguide module after assembly for additional
+          strength across layer lines. TPU is used for the optional midrange mounting gasket.
+
+Best: PET-CF/GF, PPA-CF/GF, PPS-CF/GF, PAHT-CF, PA6/12-CF/GF, PEEK
+Good: PETG-CF/GF, PA6/12*, ABS-CF/GF, ASA-CF/GF, PC
+Acceptable: ASA*, ABS*, PETG*, PCTG
+Avoid: PLA, TPU (for structural pieces)
+
+
+  Rev. 2.0 | Released by John White on 2026-08-31​ ​           ​        ​       ​       ​        ​       ​   ​   ​      ​       5
+Hardware, Tools, and Fasteners (for 1 unit)
+Please follow the hardware type and quantity carefully for best results.
+
+   A.​ 16x M5 x 20mm button cap fastener
+   B.​ 16x M5 heat set threaded insert (important - must be 7.1mm
+       outside diameter)
+   C.​ 2x M5 x 12mm countersunk fastener
+   D.​ 20x M4 threaded insert (must be 6.0mm outside diameter)
+   E.​ 16x M4 x 12mm button cap fastener
+   F.​ 16x M4 x 20mm button cap fastener
+   G.​ 16x M4 tee nut or furniture insert
+   H.​ 3x M6 tee nut or furniture insert
+   I.​ 3x M6 x 20mm countersunk fastener
+   J.​ 1x Speakon NLT4MPXX or NLT4MPXX-BAG receptacle
+   K.​ 1x Penn Elcom M1557/M20 Universal Speaker Mounting Top Hat
+
+   ●​   ½ sheet of 1220x2440x18mm (4’x8’x3/4”) plywood - baltic birch is preferred
+   ●​   Adhesive for assembling 3D printed pieces - two part epoxy for plastic is recommended
+   ●​   Soldering iron for threaded inserts
+   ●​   Sandpaper
+   ●​   Wood glue or construction adhesive for cabinet assembly
+   ●​   Assorted wood clamps (8-12 are recommended)
+   ●​   Hex keys, spanners, and screwdrivers as needed
+   ●​   Measurement microphone and audio interface for DSP tuning
+   ●​   1.5 - 2.0mm (14-16 gauge) internal speaker wiring
+   ●​   10mm (⅜”) wide gasket tape
+   ●​   2.5cm (1”) thick polyester enclosure lining
+   ●​   Brad nails or cabinet screws
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​          ​       ​      ​    ​      ​        ​   ​   ​   ​   6
+DSP Settings
+Important note - for designs such as the Solana, it's critical to state that the electrical crossover points and slopes (the ones
+configured in DSP) are not always equal to the acoustic crossover points and slopes (what the drivers are actually
+producing). For best results, configure target acoustic slopes within your measurement software, and then use a combination
+of gain, parametric EQs, and electrical LPFs/HPFs to align the measured response until it matches the targets.
+
+The following DSP settings are provided as target curves for tuning. The Loudspeaker Measurement & System Alignment
+Guide is a comprehensive resource that can be referenced for measuring and aligning the Solana.
+
+Channel 1 (Woofers)
+Target Acoustic LPF: 1200Hz LR 36dB/octave
+Target Acoustic HPF: 100Hz LR 24dB/octave
+Minimum Safe Electrical HPF: 70Hz LR 12dB/octave
+
+Channel 2 (Compression Driver)
+Target Acoustic LPF: None
+Target Acoustic HPF: 1200Hz LR 36dB/octave
+Minimum Safe Electrical HPF: 1000Hz LR 12dB/octave
+
+
+
+
+Measure with a 10 degree microphone reference axis.
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​      ​      ​      ​      ​      ​      ​      ​      ​      ​      7
+FDM Printing
+Adjust settings as needed for your printing setup. The
+below settings are recommended as a starting point.
+
+
+   ●​ 4x quarter.stl (or 2x half.stl)
+   ●​ 4x Midflange.stl (35% infill)
+   ●​ 1x throatadapter.stl (100% infill)
+   ●​ 12x butterflypin.stl (100% infill)
+
+
+Waveguide Print Settings:
+Infill: 35%
+Infill Pattern: Adaptive cubic or cubic
+Wall Loops: 3
+Layer Height: 0.20mm
+Supports: On build plate only. 40% overhang threshold.
+Use organic supports if available
+
+
+If printing the optional TPU midrange gaskets, use 100% infill.
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​       ​    ​   ​   ​   ​   ​   ​   ​   ​   8
+Assembly
+   1.​ Sand the mating flanges of each waveguide
+       piece with a medium grit sandpaper to allow
+       for better adhesive bonding. Apply adhesive
+       to the mating surfaces and join the
+       waveguide pieces together. Insert the
+       butterfly pins into their pockets and apply a
+       liberal amount of adhesive around them.
+       Place the joined pieces on a flat surface and
+       use clamps to align the seams and allow time
+       for the adhesive to set. Repeat this for all
+       pieces of the waveguide.
+
+
+
+
+Example of butterfly pin epoxy potting and
+clamping strategy. A flat piece of scrap wood is
+used as a platform to apply downward clamping
+force for seam alignment
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​     ​   ​   ​   ​   ​   ​   ​   ​   ​   9
+   2.​ Use a soldering iron to insert the 16x M4 heat set inserts into
+       the waveguide body.
+
+
+
+
+   3.​ Use a soldering iron to insert the 16x M5 heat set inserts into the midrange
+       mounting flanges
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​      ​      ​         ​   ​    ​   ​   ​   ​   ​   10
+   4.​ Attach the four midrange flanges to the waveguide body using
+       M4x12mm fasteners. The flanges need to seal airtight against the
+       waveguide body. You can either print the optional TPU gasket
+       supplied in the files, or apply a ring of foam gasket tape.
+
+
+
+
+   5.​ Attach the compression driver to the compression driver mounting flange
+       using M5x12 countersunk fasteners. The compression driver mounting
+       flange is self-aligning - tighten each fastener down gradually and evenly so
+       that the exit aperture is centered on the mounting flange.
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​     ​      ​      ​      ​     ​   ​   ​   ​   ​   11
+   6.​ Fasten the compression driver assembly to the main
+       waveguide body using 4x M4x12 fasteners.
+
+
+
+
+   7.​ Attach the four midrange drivers to the midrange mounting
+       flanges using M5x20mm fasteners.
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​   ​      ​      ​   ​   ​   ​   ​   ​   ​   12
+   8.​ Cut all required enclosure panels from 18mm plywood. There are
+       no 3d toolpaths or bevel cuts required. Enclosure files are
+       provided in the download package in 3 formats:
+          a.​ A .dxf containing panel outlines. All pockets are machined
+               at a 5mm depth. The pocket on the front baffle where the
+               waveguide occupies is machined at a 6.5mm depth.
+          b.​ A 3d .STEP file containing each panel
+          c.​ A parametric Fusion .f3d file containing each panel with
+               timeline edits preserved.
+
+
+
+
+   9.​ Using a 10mm (⅜”) roundover bit on a router,
+       apply a fillet to the inside and outside edges of
+       the port pieces.
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​         ​      ​        ​   ​   ​   ​   ​   ​   ​   13
+   10.​Insert 16x M4 tee nuts or furniture inserts into the baffle
+       panel.
+
+
+
+
+   11.​Insert 3x M6 tee nuts or furniture inserts into the bottom panel for the pole
+       mount.
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​            ​      ​      ​          ​   ​   ​   ​   ​   ​   14
+   12.​Assembly the enclosure using the appropriate adhesive, wood clamps,
+       and brad nails or screws. Ensure that the port pieces are oriented with
+       the rounded edges facing inwards/outwards to the enclosure. Line the
+       interior of the enclosure walls with 2.5cm (1”) thick polyfill.
+
+
+
+
+   13.​Wire the drivers as needed for your application and insert the waveguide module
+       into the enclosure. Use M4x20mm button cap fasteners to attach the waveguide
+       module to the enclosure with a ring of gasket tape. Install the speaker pole mount
+       and NL4 receptacle. Wiring the woofers to pins 1+/- and the compression driver to
+       pins 2+/- is recommended.
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​         ​      ​      ​       ​      ​   ​   ​   ​   ​   15
+Changelog
+
+ Version                                    Release Date                     Changes
+
+ 1.0                                        2025-05-08                       Initial 1.0 release
+
+ 1.01                                       2025-05-06                       Add enclosure simulation guidelines
+
+ 1.02                                       2025-05-26                       Add Klippel NFS results
+
+ 1.03                                       2025-06-01                       Refine enclosure simulation guidelines
+                                                                             Add WinISD template
+
+ 2.0                                        2026-08-31                       2.0 redesign:
+                                                                                 -​ Modularize assembly/simplify
+                                                                                    construction
+                                                                                 -​ Improve waveguide directivity
+                                                                                 -​ Improve entry port geometry for
+                                                                                    less chuffing
+                                                                                 -​ Add high tuned enclosure plans
+
+
+
+
+Rev. 2.0 | Released by John White on 2026-08-31​ ​       ​   ​   ​   ​   ​       ​       ​         ​   ​     16
+

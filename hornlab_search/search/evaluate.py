@@ -624,6 +624,17 @@ def _cad_meta(mesh_dir: Path) -> dict | None:
     return cad if isinstance(cad, dict) else None
 
 
+def _mid_ports_meta(mesh_dir: Path) -> dict | None:
+    """``mesh_meta.json["mid_ports"]`` from the OSSE mesher-fork path, or None."""
+    try:
+        meta = json.loads((Path(mesh_dir) / "mesh_meta.json").read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        log.debug("no mesh_meta.json in %s: %s", mesh_dir, exc)
+        return None
+    block = meta.get("mid_ports")
+    return block if isinstance(block, dict) else None
+
+
 def _write_json(path: Path, obj) -> None:
     path.write_text(json.dumps(to_jsonable(obj), indent=1, sort_keys=True), encoding="utf-8")
 
@@ -1050,8 +1061,13 @@ def _meh_ctx(system, solution, block: dict, target: Target) -> dict:
     }
 
 
-def _meh_layout(design: Design, cad: dict | None) -> tuple[dict, dict]:
-    """(``layout_derived`` for M4 inner, full derived dict) from the CAD mesh provenance.
+def _meh_layout(design: Design, cad: dict | None,
+                mid_ports: dict | None = None) -> tuple[dict, dict]:
+    """(``layout_derived`` for M4 inner, full derived dict) from mesh provenance.
+
+    Prefer the MEH CAD ``derived()`` block when present. Else accept OSSE
+    ``mid_ports`` (mesher fork): one full port rectangle = across_mm × port_along_mm
+    (same as CAD ``port_across * port_along``).
 
     The inner optimiser needs the printed port area and the L1 recipe. We deliberately do NOT
     hand it the tool's ``v_front_cm3``: the front-chamber volume must stay the fill-dependent
@@ -1066,10 +1082,29 @@ def _meh_layout(design: Design, cad: dict | None) -> tuple[dict, dict]:
         ports = derived.get("ports") or []
         if ports and isinstance(ports[0], dict):
             port_area = ports[0].get("area_mm2")
+    if port_area is None and mid_ports:
+        across = mid_ports.get("across_mm")
+        along = mid_ports.get("port_along_mm")
+        if across is not None and along is not None:
+            port_area = float(across) * float(along)
+        else:
+            port_area = mid_ports.get("expected_area_mm2")
+        # Synthetic recipe for the inner optimiser: mid_ports knobs + shell thickness as neck.
+        if not recipe:
+            recipe = dict((design.params or {}).get("mid_ports") or {})
+            wt = (design.params or {}).get("wall_thickness_mm")
+            if wt is not None:
+                recipe.setdefault("wall_t_mm", float(wt))
+            derived = {
+                "port_area_mm2": float(port_area) if port_area is not None else None,
+                "source": "osse_mid_ports",
+                "mid_ports": dict(mid_ports),
+            }
     if port_area is None:
         raise ValueError(
-            "MEH mesh provenance carries no port area; the meh CAD tool's derived() block "
-            "is required (task M5 echoes it into mesh_meta.json)[\"cad\"][\"derived\"]")
+            "MEH mesh provenance carries no port area; need either the meh CAD "
+            "derived() block in mesh_meta.json[\"cad\"][\"derived\"] or OSSE "
+            "mid_ports areas in mesh_meta.json[\"mid_ports\"]")
     neck_mm = recipe.get("wall_t_mm")
     layout = {
         "derived": {
@@ -1111,6 +1146,7 @@ def _compute_meh(design, cfg, mode, mspec, sspec, key, design_dir, backend, ctx,
     st["mesh"] = mesh
     st["area"], st["grid"] = _grid_info(design_dir)
     cad = _cad_meta(design_dir)
+    mid_ports = _mid_ports_meta(design_dir)
     st["cad"] = ({k: cad.get(k) for k in CAD_ECHO_KEYS} if cad else _cad_info(design_dir))
     why = envelope_violation(mesh, brief)
     if why:
@@ -1152,7 +1188,7 @@ def _compute_meh(design, cfg, mode, mspec, sspec, key, design_dir, backend, ctx,
     except (KeyError, TypeError) as exc:
         raise ValueError(f"meh.groups is malformed: {exc!r}") from None
 
-    layout, derived = _meh_layout(design, cad)
+    layout, derived = _meh_layout(design, cad, mid_ports=mid_ports)
     params = getattr(ctx, "objective_params", None)
     score = inner_score if params is None else functools.partial(inner_score, params=params)
     solution = optimise_network(resp, layout, brief, drivers, score=score)

@@ -1,0 +1,453 @@
+Shared Aperture Waveguide Module
+          Theory and Design Reference
+
+
+
+
+                 2026-04-07
+
+                 John White
+
+
+
+
+                                        1
+1. Introduction
+        The design of high output, wide-bandwidth loudspeaker systems with controlled
+directivity presents a set of competing constraints in acoustic, geometric, and ergonomic
+domains. Conventional multiway direct radiating systems are often limited by spatial separation
+between sources, which leads to frequency dependent interference and off-axis lobing through
+the crossover regions. While careful crossover design and driver placement can mitigate these
+effects, they cannot eliminate the underlying issue of distributed acoustic origins.
+        Coaxial topologies address this limitation by approximating a coincident source,
+improving phase coherence and polar consistency. However, such systems introduce their own
+constraints, including limitations in scalability, amplitude modulation distortion, and achievable
+bandwidth partitioning across transducers. In high-output applications, these constraints can
+become prohibitive.
+        Multiple entry horn (MEH) and related waveguide architectures offer an alternative
+approach by acoustically summing multiple sources into a shared radiating aperture. When
+properly implemented, these systems can approximate a point source while maintaining high
+efficiency and controlled directivity. However, practical implementations are constrained by
+geometric requirements - particularly the need to maintain sufficiently small source-to-source
+spacing relative to the wavelengths at crossover frequencies, while simultaneously preserving
+favorable waveguide expansion near the throat.
+        This document introduces the Shared Aperture Waveguide Module (SAWMOD), a
+compact three-way loudspeaker topology that integrates high frequency and midrange
+transducers into a unified waveguide structure with an augmented low frequency section
+featuring a passive side/rear rejection mechanism. The design incorporates a unique waveguide
+geometry featuring localized contour elements (“knuckles”) that enable reduced effective source
+spacing for bandpass-coupled midrange drivers while maintaining controlled wavefront
+expansion.
+        ​
+​       The presented mechanisms of this paper are:
+             ●​ A waveguide topology that relaxes conventional geometric constraints associated
+                with multiple entry horn designs
+             ●​ A method for improving acoustic source spacing without excessive disruption to
+                throat expansion
+             ●​ A parametric contouring approach that enables targeted directivity control
+                through wavefront shaping
+             ●​ An integrated low-frequency system that extends pattern control to lower
+                frequencies through spatial and acoustic interaction mechanisms
+
+       The following sections describe the design objectives, geometric formulation, and
+acoustic behavior of the SAWMOD system, supported by simulation and measurement based
+analysis and experimental observations.
+
+
+
+
+                                                                                                2
+2. Acoustic Objectives
+The system is designed as a three way architecture with defined crossover regions chosen to
+balance bandwidth allocation, directivity control, and transducer performance:
+
+   ●​ Low-Mid Crossover: ~350 Hz
+   ●​ Mid-High Crossover: ~1.6 kHz
+
+A key objective is to maintain consistent directivity through these crossover regions. In
+particular, the mid-high transition imposes a stringent constraint on allowable spatial separation
+between acoustic sources. As a design guideline, the effective center-to-center spacing
+between radiating elements should remain on the order of ≤¼ wavelength at the crossover
+frequency to minimize off-axis interference. For a 1.6 kHz crossover, this corresponds to
+approximately 53.5 mm.
+
+The target nominal coverage pattern of the system is:
+
+   ●​ Horizontal: 100°
+   ●​ Vertical: 70°
+
+Maintaining this coverage with minimal frequency-dependent narrowing or lobing is a primary
+design goal. Achieving the desired acoustic performance within a compact form factor
+introduces several geometric challenges:
+
+2.1 Waveguide Throat Region
+   ●​ The waveguide must support smooth wavefront expansion from the high frequency
+      compression driver while accommodating the injection of midrange energy. Conventional
+      approaches often require placing midrange injection ports close to the throat to satisfy
+      spacing constraints, which can disrupt the initial expansion and introduce acoustic
+      discontinuities.
+
+2.2 Midrange Source Placement
+Bandpass-loaded midrange drivers must be positioned such that:
+   ●​ Their effective acoustic centers remain within the spacing constraint at the crossover
+      frequency
+   ●​ Their coupling into the waveguide minimizes high-Q resonances and excessive
+      diffraction
+
+2.3 Aperture Development
+   ●​ The waveguide must transition from a compact throat to a rectangular mouth geometry
+      suitable for pattern control and arrayability (for future designs sharing this topology),
+      while preserving a controlled directivity profile across the operating bandwidth.
+
+
+                                                                                                     3
+The integration of low-frequency transducers introduces additional requirements:
+
+   ●​ Extension of directivity control below the midrange band
+   ●​ Efficient use of enclosure volume within a compact footprint
+   ●​ Thermal and mechanical considerations for high power operation
+
+The selected configuration utilizes dual sidefiring low frequency drivers coupled to a shared
+enclosure volume, with spatial arrangement chosen to influence the system’s polar response
+near the low-mid crossover region.
+
+
+3. Waveguide Topology
+       For the purpose of this document, this waveguide topology is referred to as a three
+segment device consisting of axial cross section segments denoted as S1 (the throat), S2, (the
+segment located at the centroid of the bandpass injection ports), and S3 (the segment at the
+mouth).
+
+
+
+
+The SAWMOD waveguide incorporates localized inward-extending contour features at the S2
+region, referred to as knuckles. These features modify the cross sectional geometry of the
+waveguide in a manner that is not captured by traditional monotonic flare descriptions. Rather
+than uniformly expanding from throat to mouth, the waveguide introduces controlled local
+deviations that alter both the spatial distribution of the boundary and the effective propagation
+path of the wavefront. The knuckles serve two primary geometric functions:
+
+
+
+
+                                                                                                    4
+    1.​ Reduction of Effective
+        Source Spacing
+        By extending inward from the
+waveguide walls, the knuckles allow
+the midrange injection ports to be
+positioned closer to the central axis
+without requiring a corresponding
+reduction in the overall
+cross-sectional area at S2. This
+enables reduced center-to-center
+spacing between the midrange
+apertures and the high-frequency
+source, improving conditions for
+constructive summation through the
+crossover region.
+​       The illustration on the right
+displays the center-center bandpass
+injection port distances comparatively
+between a conical multiple entry horn
+and the SAWMOD having the same
+horizontal coverage.
+
+    2.​ Modification of Local
+        Expansion Rate
+        The presence of the knuckles
+alters the local rate of cross-sectional
+expansion in the vicinity of S2. Instead of
+a purely monotonic flare, the waveguide
+exhibits a compound expansion profile in
+which the apparent flare rate is locally
+reduced along the primary axis while
+remaining consistent with the global
+aperture growth. Moreover, the
+parametric model used to define the
+shape of the device at S2 provides an
+additional degree of freedom for shaping
+the polar response, particularly in
+frequency regions where the bandpass
+injection ports create pattern narrowing.
+
+
+
+
+                                              5
+3.1 Waveguide Contour Methodology
+​       The waveguide topology consists of a compound contour that supports uniform
+directivity development along the primary horizontal axis, and allows for compensatory pattern
+widening in the lower treble to alleviate the polar narrowing effects of the midrange bandpass
+injection ports1. The profile was developed in Ath4 - a parametric script-based waveguide mesh
+generation tool. The cross-sectional bounding shape of the waveguide at S2 is driven by a
+superformula with the following parameters:
+
+
+
+
+         The superformula approach introduces a large degree of freedom in defining the
+aperture shape and resulting directivity characteristics. To define a curve that creates a smooth
+transition of the geometry axially, an implementation of the OS-SE profile is used:
+
+
+
+
+L = 115
+s = 0.8
+q = 0.996
+n=4
+r = 12.7
+α0 = 0
+k=1
+
+
+
+
+1
+    https://www.diyaudio.com/community/threads/compact-almost-fullrange-meh.430398/post-8160276
+
+
+                                                                                                    6
+Ath4’s rectangular morph interpolation feature is used between S2 and S3 to gradually transition
+to a rectangular exit with a morph rate of 4.
+
+         While the horizontal cross section of the SAWMOD features a curve resembling an
+exponential profile, the waveguide as a whole cannot be accurately described as exponential as
+it features a dual-contour hybrid profile defined by the knuckles and valleys. By adjusting
+parameters in the superformula, OS-SE curve, and morph rate, the depth and width of the
+knuckle features can be controlled, having an effect on the wavefront shape as it progresses
+through the device. Functionally, the knuckles modify the spatial rate at which boundary
+conditions influence wavefront curvature.
+
+           ●​ This aids in the creation of a rectangular-bounded wavefront shape at the mouth
+              of the device.
+           ●​ Allows for more control in defining horizontal beamwidth in the 3-7kHz region to
+              compensate for polar narrowing effects of bandpass injection ports.
+
+
+
+
+4. Wavefront Simulation Analysis
+        The following field analyses were performed in AKABAK. A control waveguide was
+generated using Ath4 having the same OS-SE guiding curve parameters as the SAWMOD.
+Axial length, throat entrance angle, and mouth dimensions are identical between the two
+candidates for a comparative analysis.
+​
+
+
+
+
+The compression driver was modeled as an idealized uniform velocity source at the waveguide
+throat, isolating the effects of waveguide geometry from phase plug-specific behavior. The
+simulation was configured as a half-space infinite baffle arrangement. Axial planar slices were
+positioned at S2, S2.5, and S3 to illustrate the wavefront shaping effects of the knuckles
+
+
+                                                                                                  7
+4.1 Directivity & Radiation Impedance Comparison
+
+
+
+
+                                                   8
+4.2 Sound pressure field analysis (3dB contours)
+                                S1 (53.5mm axial offset)
+
+
+
+
+                              S2.5 (84.25mm axial offset)
+
+
+
+
+                                S3 (115mm axial offset)
+
+
+
+
+                                                            9
+4.3 Simulation Results
+Performance between the two variants is largely similar, with a few notable differences:
+   1.​ The additional degree of freedom afforded by the knuckle features allows for a
+       compensatory pattern widening from 3-7kHz. The comparison between simulated and
+       measured indicates that the pattern was successfully optimized for constant directivity.
+   2.​ Radiation impedance has increased slightly.
+   3.​ The wavefront shape at the mouth is largely similar but with a slightly more
+       rectangular-bounded pattern in the HF.
+
+        The SAWMOD waveguide departs from conventional monotonic flare geometries by
+introducing controlled, localized contour features that serve both geometric and acoustic
+functions. By doing so, it addresses a central limitation of multiple entry horn designs: the
+tradeoff between source spacing and waveguide expansion integrity.
+        The resulting topology enables closer effective spacing of midrange injection sources,
+controlled wavefront evolution through critical regions of the device and additional flexibility in
+shaping directivity without increasing overall system size
+
+
+5. Low Frequency Transducer Integration
+The SAWMOD features two sidefiring 10
+inch low frequency transducers that share
+a 22 liter sealed chamber and are
+mounted magnet-out. This allows for
+superior thermal performance compared
+to typical sealed chamber low frequency
+transducers as air exchange with the
+motor structures can happen freely.
+Additionally, mounting the transducers
+reversed allows for a more compact
+arrangement as the central waveguide
+module occupies a significant portion of
+the sealed chamber. The center-center
+spacing of each 10” transducer is
+optimized to create a directional interference pattern to aid side rejection, thus lowering the
+horizontal directivity control cutoff. The system is acoustically crossed to the midrange section at
+approximately 350 Hz, a frequency chosen to balance wavelength-relative source spacing with
+practical enclosure constraints.
+
+
+
+
+                                                                                                      10
+5.1 Slot-Loaded Radiation Behavior
+        Each low-frequency driver radiates through a semi-enclosed side slot formed by the
+enclosure geometry. This slot-loaded configuration modifies the radiation impedance and
+effective loading conditions experienced by the transducers relative to a conventional sealed
+enclosure.
+
+       Simulation results comparing the slot-loaded configuration to a conventional sealed
+arrangement indicate a measurable increase in on-axis sensitivity in the upper bass and
+low–midrange region.
+
+
+
+
+        While the slot structure introduces resonant behavior characteristic of a Helmholtz
+system, its influence on system response is best understood as part of a coupled acoustic
+system rather than a simple resonator in isolation. At frequencies approaching the low–mid
+crossover, the spatial separation between the two low frequency drivers becomes a dominant
+factor in determining the horizontal radiation pattern.
+        Simulation of the two sources in isolation (i.e., without the slot structure) shows the
+expected interference pattern based on their center-to-center spacing, including the formation of
+lateral and rearward lobes.
+
+
+
+
+These results establish a baseline expectation for the achievable degree of side and rear
+rejection based purely on geometric spacing. In this configuration, the level of off-axis
+
+
+                                                                                                11
+attenuation is limited by the relatively large wavelengths involved and the finite spacing between
+sources.
+
+5.2 Measured Slot Behavior
+Measurements of an early SAWMOD prototype reveal a significantly different radiation pattern
+than predicted by spacing alone. In particular, a pronounced off-axis cancellation is observed,
+accompanied by increased rear rejection relative to the simulated baseline.
+
+
+
+
+This cancellation occurs at frequencies corresponding to the resonant behavior of the side-slot
+structure and is only present when both the low-frequency and midrange sections are active.
+When measured independently, neither the low-frequency nor midrange sections exhibit this null
+to the same degree. The below measurements were taken at 90 degrees off-axis illustrating the
+null that occurs only when both sets of drivers are playing concurrently.
+
+
+
+
+The measured behavior suggests the presence of a coupled acoustic interaction between:
+
+   ●​ The low-frequency transducers
+   ●​ The midrange bandpass system
+   ●​ The side-slot cavity structure
+
+A plausible interpretation is that the slot volume and its associated resonance introduce a
+frequency-dependent phase offset between the radiated fields of the low frequency and
+
+
+
+                                                                                               12
+midrange sources. At specific angles and frequencies, this phase relationship results in
+enhanced destructive interference, producing the observed off-axis null.
+
+However, this mechanism has not been fully characterized, and the interaction should be
+considered an observed system-level phenomenon rather than a fully modeled or optimized
+feature at this stage of development.
+
+To better understand and control this behavior, a series of physical modifications were made to
+the side-slot structure by introducing openings (“holes”) in the slot boundaries. These
+modifications alter the acoustic impedance and damping characteristics of the cavity, thereby
+affecting its interaction with the radiated field.
+
+
+
+
+This demonstrates that the slot structure plays an active role in shaping the system’s polar
+response and can be tuned to achieve different trade-offs between forward directivity, side
+rejection, and pattern smoothness.
+
+
+
+
+                                                                                               13
+5.3 Low Frequency Integration Summary
+The low frequency section of the SAWMOD system combines spatial source arrangement and
+enclosure-based acoustic interaction to extend directional control below the midrange band.
+
+Key observations include:
+
+   ●​ The slot-loaded configuration increases acoustic efficiency in the 150-400 Hz region
+      relative to a conventional sealed enclosure
+   ●​ Source spacing alone provides a baseline level of directional control, but does not fully
+      account for measured behavior
+   ●​ Additional off-axis cancellation effects arise from coupled interactions between the low
+      frequency drivers, midrange system, and slot cavity
+   ●​ The magnitude and character of these effects can be modified through changes to the
+      slot geometry
+
+These results indicate that the low-frequency system operates as an integrated acoustic
+structure rather than a set of independent radiators, and that enclosure geometry can play a
+significant role in shaping system-level directivity. Further investigation is required to fully
+characterize and predict these interactions.
+
+
+6. Conclusion
+        The Shared Aperture Waveguide Module (SAWMOD) is a compact multiway
+loudspeaker topology intended to address the limitations of conventional direct radiating,
+coaxial, and multiple entry horn systems. The approach centers on integrating multiple acoustic
+sources into a shared waveguide structure while maintaining controlled directivity and
+minimizing interference through critical crossover regions.
+        A key feature of the design is the introduction of localized contour modifications
+(“knuckles”) within the waveguide, enabling reduced effective source spacing for
+bandpass-coupled midrange drivers without compromising near-throat wavefront development.
+Simulation results indicate that this approach supports more consistent directivity behavior
+through the mid-high crossover region, while providing additional flexibility in shaping the polar
+response through geometric control.
+        The low frequency system extends this shared aperture concept by combining spatial
+source arrangement with enclosure-based acoustic interaction. Simulated and measured results
+show that the slot-loaded configuration increases efficiency in the upper bass and low midrange
+region, while also contributing to directional control. Measurements further indicate the presence
+of coupled interactions between the low frequency, midrange, and enclosure structures,
+producing off-axis cancellation effects not predicted by source spacing alone. These behaviors
+highlight the role of enclosure geometry as an active element in system-level directivity, though
+their underlying mechanisms require further investigation.
+
+
+
+
+                                                                                                   14
+      Future work will focus on more rigorous characterization of the observed coupling
+phenomena, refinement of the waveguide contouring methodology, and validation through
+expanded measurement and simulation studies.
+
+
+
+
+                                                                                          15
+

@@ -1,0 +1,48 @@
+# Solana 2.0 MEH brief — published product drivers / coverage / XO from
+# John White DIY Guide Rev 2.0 (Drive 1-JxZ-kiKPOWCt2scCjO30Zmw2UrZ6M3o;
+# docs/research/typologies/SOLANA_WAVEGUIDE_2026-11-01.md §1–2).
+#
+# Phase 2 of the Solana reconstruction: CD + 4× mid MEH (phase 1 was CD-only
+# OSSE waveguide `solana_osse`). Geometry is still the MEH CAD pyramid+ports
+# tool, NOT the Ath morph WG — this brief scores the multi-entry layout and
+# inner network against the published driver/XO/coverage targets.
+#
+# Contract notes: MEH xo_orders allow {2,4,8} only — published acoustic target
+# is LR6 @ 1200 Hz; we search [4, 8]. Published rear chamber ~25 L sits above
+# the MEH validator's v_rear_l hi=20 L, so the search box caps at 20 L.
+name: solana_meh_1in_90x90
+description: >-
+  Solana 2.0 MEH top (DIY Guide Rev 2.0 drivers/XO/90x90): 1 in CD (B&C DH450) +
+  4 x 6.5 in (B&C 6NDL38). DIY box is 410x410x340 mm; MEH-CAD seed uses a 450 mm
+  face so 4x6.5 tblr clears drivers_collide under our pyramid tool (disclosed).
+driver: {exit_radius_mm: 12.7, exit_angle_deg: 0.0}
+envelope: {max_mouth_w_mm: 450.0, max_mouth_h_mm: 450.0, max_depth_mm: 340.0}
+symmetry: hv
+source: {cap: auto}
+target:
+  coverage_h_deg: 90.0
+  coverage_v_deg: 90.0
+  band_lo_hz: 100.0
+  band_hi_hz: 12000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 700.0
+weights: {cov: 1.0, rip: 0.5, di: 0.0, dislope: 0.3, flat: 0.0, load: 0.0, distd: 0.5, diag: 0.0,
+          lw_resid: 0.5, notch: 1.0, xo_lob: 1.0, headroom: 1.0}
+objective: {version: 5, cov_narrow_ratio: 2.0, cov_below_f0: one_sided}
+meh:
+  groups:
+    cd:  {tag: 2,  drivers: [bc_dh450]}
+    mid: {tag: 10, count: 4, drivers: [bc_6ndl38]}
+  hp_hz: 100
+  xo_hz: {lo: 1100, hi: 1400}
+  xo_orders: [4, 8]          # published LR6 not in MEH_XO_ORDERS; nearest steeper is 8
+  delay_ms: {lo: -1.0, hi: 2.0}
+  v_front_fill: {lo: 0.0, hi: 0.7}
+  v_rear_l: {lo: 10.0, hi: 20.0}   # DIY ~25 L; contract max 20 L
+  amp_v_rms: 40.0
+  port_air_mps_max: 17.0
+  max_boost_db: 6.0
+  spl_target: [[100, 112], [250, 118], [12000, 118]]
+  listening_window: {h_deg: [0, 10, 20, 30], v_deg: [0, 10]}

@@ -1,0 +1,59 @@
+# SAWMOD-like MEH: flat-wall pyramid + 2 mid ports on L/R walls near S2.
+#
+# Whitepaper targets: 100×70, ports ~53.5 mm from throat, mid c-c ~40 mm on knuckles.
+# This CAD cannot grow Ath knuckles — ports sit on flat walls with across_frac toward
+# the axis to approximate the reduced spacing. Multi-source tags 2+10 when the MEH
+# solve path is live.
+name: sawmod_meh_lr2
+family: FREEFORM
+brief_file: ../briefs/sawmod_meh_1in_100x70.yaml
+seed_params:
+  cad:
+    tool: meh
+    cov_h_deg: 100.0
+    cov_v_deg: 70.0
+    z_frac: 0.40            # ~S2 on a ~130-150 mm horn (tune after derived z_port)
+    across_frac: 0.85       # push ports toward axis (paper knuckle c-c ~40 mm)
+    port_along_mm: 28.0
+    slide_mm: 0.0
+    walls: lr               # left+right = horizontal knuckle plane
+    env_w_mm: 360.0
+    env_h_mm: 280.0
+    env_d_mm: 250.0
+    box_t_mm: 18.0
+    roll_mm: 16.0
+    wall_t_mm: 6.0
+    spacer_mm: 3.0
+    exit_mm: 25.4
+    cd_duct_mm: 20.0
+    cd_body_d_mm: 90.0
+    cd_body_len_mm: 48.0
+    cone_cutout_mm: 103.0   # B&C 4NDF34 (known C9 cone; 5" class not in M1 table)
+    cone_depth_mm: 66.0
+    clearance_mm: 3.0
+bounds: {}
+mesh:
+  epw: 5.0
+  quadrants: "1"
+  dof_cap_screen: 9000
+  dof_cap_verify: 9000
+  dof_cap_final: 9000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_metal
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 900
+search:
+  algorithm: cma
+  sigma0: 0.2
+  seed: 1234
+  budget: 1
+  popsize: null
+  tolfun: 0.001
+description: >
+  SAWMOD-like MEH probe (flat walls + LR mid ports near S2). Not Ath knuckles.

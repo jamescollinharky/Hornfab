@@ -1,0 +1,126 @@
+# sawmod_knuckle_osse: SAWMOD whitepaper WG WITH S2 superformula knuckles.
+#
+# PRIMARY: SAWMOD Whitepaper §3.1 (John White, 2026-04-07) — Gielis SF at S2 digitized
+# from the published equation figure:
+#   r(θ)=(|cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3)^(-1/n1)
+#   a=1, b=1.2, m=4, n1=1.5, n2=14, n3=2.5
+# OS-SE pins same as control; morph rate 4 → 100×70 rectangle; gcurve_dist = S2/L
+# = 53.5/115. CD-only (no mid ports yet). All knobs search:false.
+#
+# DOSSIER: docs/research/typologies/SAWMOD_CONTROL_WAVEGUIDE_2026-11-01.md (+ phase-2 addendum)
+name: sawmod_knuckle_osse
+family: OSSE
+brief_file: ../briefs/sawmod_control_1in_100x70.yaml
+
+seed_params:
+  r0_mm: 12.7
+  a0_deg: 0.0
+  L_mm: 115.0
+  a_deg: 50.0
+  n: 4.0
+  s: 0.8
+  q: 0.996
+  k: 1.0
+  exponent: 2.0                 # mesher: circular section required with gcurve
+  aspect_ratio: 1.0
+  s1: 0.0                       # gcurve forbids throat stretch
+  s2: 0.0
+  gcurve_type: 2                # superformula
+  gcurve_width_mm: 120.0        # S2 bounding width (text gap; tune if mesh refuses)
+  gcurve_aspect_ratio: 0.7      # 70/100 coverage aspect
+  gcurve_dist: 0.465            # S2 @ 53.5 mm / L 115
+  gcurve_rot_deg: 0.0
+  gcurve_sf_a: 1.0
+  gcurve_sf_b: 1.2
+  gcurve_sf_m1: 4.0
+  gcurve_sf_m2: 4.0
+  gcurve_sf_n1: 1.5
+  gcurve_sf_n2: 14.0
+  gcurve_sf_n3: 2.5
+  morph_target: 1
+  morph_width_mm: 280.0
+  morph_height_mm: 196.0
+  morph_corner_mm: 12.0
+  morph_exponent: 4.0
+  morph_rate: 4.0
+  morph_fixed: 0.0
+  morph_allow_shrinkage: 1
+
+bounds:
+  r0_mm: {lo: 12.7, hi: 12.7, search: false}
+  a0_deg: {lo: 0.0, hi: 0.0, search: false}
+  L_mm: {lo: 115.0, hi: 115.0, search: false}
+  a_deg: {lo: 50.0, hi: 50.0, search: false}
+  n: {lo: 4.0, hi: 4.0, search: false}
+  s: {lo: 0.8, hi: 0.8, search: false}
+  q: {lo: 0.996, hi: 0.996, search: false}
+  k: {lo: 1.0, hi: 1.0, search: false}
+  exponent: {lo: 2.0, hi: 2.0, search: false}
+  aspect_ratio: {lo: 1.0, hi: 1.0, search: false}
+  s1: {lo: 0.0, hi: 0.0, search: false}
+  s2: {lo: 0.0, hi: 0.0, search: false}
+  gcurve_type: {lo: 2, hi: 2, search: false}
+  gcurve_width_mm: {lo: 120.0, hi: 120.0, search: false}
+  gcurve_aspect_ratio: {lo: 0.7, hi: 0.7, search: false}
+  gcurve_dist: {lo: 0.465, hi: 0.465, search: false}
+  gcurve_rot_deg: {lo: 0.0, hi: 0.0, search: false}
+  gcurve_sf_a: {lo: 1.0, hi: 1.0, search: false}
+  gcurve_sf_b: {lo: 1.2, hi: 1.2, search: false}
+  gcurve_sf_m1: {lo: 4.0, hi: 4.0, search: false}
+  gcurve_sf_m2: {lo: 4.0, hi: 4.0, search: false}
+  gcurve_sf_n1: {lo: 1.5, hi: 1.5, search: false}
+  gcurve_sf_n2: {lo: 14.0, hi: 14.0, search: false}
+  gcurve_sf_n3: {lo: 2.5, hi: 2.5, search: false}
+  morph_target: {lo: 1, hi: 1, search: false}
+  morph_width_mm: {lo: 280.0, hi: 280.0, search: false}
+  morph_height_mm: {lo: 196.0, hi: 196.0, search: false}
+  morph_corner_mm: {lo: 12.0, hi: 12.0, search: false}
+  morph_exponent: {lo: 4.0, hi: 4.0, search: false}
+  morph_rate: {lo: 4.0, hi: 4.0, search: false}
+  morph_fixed: {lo: 0.0, hi: 0.0, search: false}
+  morph_allow_shrinkage: {lo: 1, hi: 1, search: false}
+
+target:
+  coverage_h_deg: 100.0
+  coverage_v_deg: 70.0
+  band_lo_hz: 500.0
+  band_hi_hz: 8000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 1850.0
+weights:
+  cov: 1.0
+  rip: 1.0
+  di: 0.3
+  dislope: 0.5
+  flat: 0.5
+  load: 0.0
+objective:
+  version: 3
+mesh:
+  epw: 6.0
+  quadrants: "1"
+  dof_cap_screen: 5000
+  dof_cap_verify: 12000
+  dof_cap_final: 12000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_metal
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 900
+search:
+  algorithm: cma
+  sigma0: 0.15
+  seed: 1234
+  budget: 1
+  popsize: null
+  tolfun: 0.001
+description: >
+  SAWMOD knuckled WG: OS-SE L=115 + S2 superformula (digitized) + morph rate 4.
+  Replica bench; CD-only.

@@ -178,6 +178,13 @@ _OSSE = {
     "s": _f(note="termination s"),
     "rot_deg": _f(note="rotation, deg (OSSE only)"),
     "h": _f(note="half-sine bulge, mm"),
+    # Opt-in L1 MEH mid-port patches on native OSSE walls (mesher fork mid_ports).
+    # Absent = byte-identical mesher config / mesh. Emitted as top-level mid_ports.
+    "mid_ports": KeySpec(
+        dict,
+        note="walls/z_frac/across_frac/port_along_mm/slide_mm -> tag 10 flush exits",
+        section="top",
+    ),
 }
 
 _ROSSE = {
@@ -406,6 +413,33 @@ def _validate_osse_like(design: Design) -> None:
             raise _bad(fam, "R_mm", f"must be > 0, got {p['R_mm']!r}")
     if "r0_mm" in p and p["r0_mm"] <= 0:
         raise _bad(fam, "r0_mm", f"must be > 0, got {p['r0_mm']!r}")
+    if fam == "OSSE" and "mid_ports" in p:
+        _validate_mid_ports(p["mid_ports"], fam)
+
+
+def _validate_mid_ports(raw, fam: str) -> None:
+    """Light schema check; the mesher fork refuses bad values at build time."""
+    if not isinstance(raw, dict):
+        raise _bad(fam, "mid_ports", "must be a mapping")
+    legal = {"walls", "z_frac", "across_frac", "port_along_mm", "slide_mm"}
+    unknown = set(raw) - legal
+    if unknown:
+        raise _bad(fam, "mid_ports", f"unknown key(s) {sorted(unknown)} (legal: {sorted(legal)})")
+    for req in ("walls", "z_frac", "across_frac", "port_along_mm"):
+        if req not in raw:
+            raise _bad(fam, f"mid_ports.{req}", "required when mid_ports is present")
+    walls = str(raw["walls"]).strip().lower()
+    if walls not in ("tb", "lr", "tblr"):
+        raise _bad(fam, "mid_ports.walls", f"must be tb|lr|tblr, got {raw['walls']!r}")
+    zf = float(raw["z_frac"])
+    if not 0.0 < zf < 1.0:
+        raise _bad(fam, "mid_ports.z_frac", f"must be in (0, 1), got {zf!r}")
+    af = float(raw["across_frac"])
+    if not 0.0 < af <= 1.0:
+        raise _bad(fam, "mid_ports.across_frac", f"must be in (0, 1], got {af!r}")
+    if not float(raw["port_along_mm"]) > 0.0:
+        raise _bad(fam, "mid_ports.port_along_mm",
+                   f"must be > 0, got {raw['port_along_mm']!r}")
 
 
 def _validate_icw(design: Design) -> None:

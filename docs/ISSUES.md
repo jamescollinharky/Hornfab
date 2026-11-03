@@ -18,6 +18,30 @@ Updated in the same commit as `docs/CONTINUITY.md` on every push. Last synced 20
 | #11 | [Q] Collin: OK with the hornlab-search name? | closed (keep until objection) | user | `docs/plan/README.md` |
 | #13 | hardening-review: Stage A surrogate gate-integrity and real-data traps | **open — fixes MERGED to main** (FF to 6d1d5c7 on 2026-10-22 carries e0b9b61 + 11304f6 + cloud reconciliation 152a829 verbatim; oracle pre-merge sign-off; full offline suite 533 PASS at the merged tree; awaiting owner close) | phase-2 (cloud) | `docs/plan/11_PHASE2_SURROGATE.md` §4 |
 
+Local-only, updated 2026-11-03 (**Ath OSSE+SF mid_ports fork + solana_osse_meh_sf; no GitHub issue state changed**):
+- **Mesher fork landed:** `hornlab-search/osse-midports` @ `55da4f4` (tag-10 L1 flush on native OSSE); pin in pyproject/TOOLCHAIN.
+- **Solana MEH-context path:** `solana_osse_meh_sf`; 4090 screen **J=39.604**; CMA live best **J≈22.3** (`20261103T052647Z-screen-cd22a5`). Flat CAD MEH = fallback.
+- **Solana owed:** finish/pull CMA; mouth-matched CD (`gcurve_off`) verify; enclosure/LF.
+- **SAWMOD owed:** Ath knuckle+ports (not flat MEH), LF 10″, BL refine.
+
+Local-only, updated 2026-11-02 evening (**Solana/SAWMOD + RunPod path on `feat/solana-sawmod-wg-bench`; no GitHub issue state changed**):
+- **Cloud landed:** `tools/cloud/*`, `docs/CLOUD_GPU_RUNBOOK.md`, POSIX orphan-julia cleanup; **4090 CP-9a 0.020/0.039 dB**; Solana CUDA screen; `osse_baseline_4090` CMA in flight / owed finish+pull.
+- **Solana landed:** Ath WG + evidence; MEH CAD `solana_meh` / `solana_meh_search` + brief; mouth probes `_solana_mouth_probes/`.
+- **Solana owed:** mouth-matched CD (`gcurve_off`) 4090 screen+verify; Ath midports; enclosure/LF.
+- **SAWMOD landed:** control WG + knuckle + `walls: lr` MEH probe; CAD/`step_build` accept `lr`.
+- **SAWMOD owed:** Ath knuckle+ports (not flat MEH), LF 10″, BL refine.
+
+Local-only, added 2026-11-01 late afternoon (**Solana 2.0 phase 1 + SAWMOD phase-2 probes; no GitHub issue state changed**):
+- **Solana landed:** DIY Guide + `athscript.cfg` snapshot, dossier, `solana_osse` / `solana_control_1in_90x90`, Metal screen 4284 dofs J=41.9
+- **Solana caveats:** freestanding; `a_deg` inferred 45; SF mouth ~450 vs Ath morph 353 / STL ~376.
+- **Solana owed:** mid ports + 4×6NDL38 MEH, enclosure/LF, mouth-delta diagnosis. (MEH CAD seed landed evening 2026-11-02; Ath midports still owed.)
+- **SAWMOD phase-2 probes landed:** knuckle Metal J=241 (`3c1938`); MEH lr2 multi-source path exercised.
+- **SAWMOD still owed:** Ath knuckle+ports (not flat MEH), LF 10″, BL refine; SAWMOD MEH follow-ups.
+
+Local-only, added 2026-11-01 afternoon (**SAWMOD control WG bench phase 1; no GitHub issue state changed**):
+- **Landed:** whitepaper PDF snapshot, dossier, pinned `sawmod_control_osse` + brief.
+- **Still owed:** Ath knuckle+ports, LF 10″ slot, Boundary Lab `Multi_region_SAWMOD` refine.
+
 Local-only, added 2026-11-01 (**PR #17 merged to main + the hardware-neutrality rule; no GitHub issue state changed**):
 - **Merged (squash):** Metal backend + Mac path, Hansen budget hint, staged A/B harness, CMA
   covariance dump, CMA pin plan, restart controls (jamescollinharky's PR #17). Two merge defects
@@ -671,4 +695,3 @@ Local-only, added 2026-10-27 (evening; no GitHub issue state changed): resume ni
 
 Local-only, added 2026-11-02 (no GitHub issue state changed): GUI frequency-axis band + scoring-floor f0 marker landed with offline pins (37 tests pass across the three GUI test files); MEH CPU-vs-CUDA benchmark scripts committed under tools/bench/.
 Local-only, added 2026-11-02 (no GitHub issue state changed): **P11 HF data sync DONE** - public dataset repo <https://huggingface.co/datasets/chingadalleva/hornlab-search-data> (7 tar shards, 10.77 GB packed: text/solve/dataset; meshes not uploaded), `tools/hf_sync.py` corrected to `hf upload`. Owner-machine finding: Xet uploads stall here; upload with `HF_HUB_DISABLE_XET=1`. Still open in P11: merge to `main` (which branches) and the two v4 re-runs.
-

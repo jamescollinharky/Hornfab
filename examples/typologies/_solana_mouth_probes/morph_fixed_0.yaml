@@ -1,0 +1,208 @@
+name: solana_probe_morph_fixed_0
+family: OSSE
+brief_file: ../../briefs/solana_control_1in_90x90.yaml
+seed_params:
+  r0_mm: 12.7
+  a0_deg: 0.0
+  L_mm: 140.0
+  a_deg: 45.0
+  n: 4.948341464
+  s: 1.165551339
+  q: 0.8006927592
+  k: 2.326215907
+  exponent: 2.0
+  aspect_ratio: 1.0
+  s1: 0.0
+  s2: 0.0
+  gcurve_type: 2
+  gcurve_width_mm: 64.69512195
+  gcurve_aspect_ratio: 1.0
+  gcurve_dist: 0.2776715106
+  gcurve_rot_deg: 0.0
+  gcurve_sf_a: 1.375827392
+  gcurve_sf_b: 1.437994835
+  gcurve_sf_m1: 8.0
+  gcurve_sf_m2: 8.0
+  gcurve_sf_n1: 2.152737774
+  gcurve_sf_n2: 5.245161223
+  gcurve_sf_n3: 3.01531782
+  morph_target: 1
+  morph_width_mm: 353.0
+  morph_height_mm: 353.0
+  morph_corner_mm: 14.0
+  morph_exponent: 4.0
+  morph_rate: 3.693701077
+  morph_fixed: 0.0
+  morph_allow_shrinkage: 1
+bounds:
+  r0_mm:
+    lo: 12.7
+    hi: 12.7
+    search: false
+  a0_deg:
+    lo: 0.0
+    hi: 0.0
+    search: false
+  L_mm:
+    lo: 140.0
+    hi: 140.0
+    search: false
+  a_deg:
+    lo: 45.0
+    hi: 45.0
+    search: false
+  n:
+    lo: 4.948341464
+    hi: 4.948341464
+    search: false
+  s:
+    lo: 1.165551339
+    hi: 1.165551339
+    search: false
+  q:
+    lo: 0.8006927592
+    hi: 0.8006927592
+    search: false
+  k:
+    lo: 2.326215907
+    hi: 2.326215907
+    search: false
+  exponent:
+    lo: 2.0
+    hi: 2.0
+    search: false
+  aspect_ratio:
+    lo: 1.0
+    hi: 1.0
+    search: false
+  s1:
+    lo: 0.0
+    hi: 0.0
+    search: false
+  s2:
+    lo: 0.0
+    hi: 0.0
+    search: false
+  gcurve_type:
+    lo: 2
+    hi: 2
+    search: false
+  gcurve_width_mm:
+    lo: 64.69512195
+    hi: 64.69512195
+    search: false
+  gcurve_aspect_ratio:
+    lo: 1.0
+    hi: 1.0
+    search: false
+  gcurve_dist:
+    lo: 0.2776715106
+    hi: 0.2776715106
+    search: false
+  gcurve_rot_deg:
+    lo: 0.0
+    hi: 0.0
+    search: false
+  gcurve_sf_a:
+    lo: 1.375827392
+    hi: 1.375827392
+    search: false
+  gcurve_sf_b:
+    lo: 1.437994835
+    hi: 1.437994835
+    search: false
+  gcurve_sf_m1:
+    lo: 8.0
+    hi: 8.0
+    search: false
+  gcurve_sf_m2:
+    lo: 8.0
+    hi: 8.0
+    search: false
+  gcurve_sf_n1:
+    lo: 2.152737774
+    hi: 2.152737774
+    search: false
+  gcurve_sf_n2:
+    lo: 5.245161223
+    hi: 5.245161223
+    search: false
+  gcurve_sf_n3:
+    lo: 3.01531782
+    hi: 3.01531782
+    search: false
+  morph_target:
+    lo: 1
+    hi: 1
+    search: false
+  morph_width_mm:
+    lo: 353.0
+    hi: 353.0
+    search: false
+  morph_height_mm:
+    lo: 353.0
+    hi: 353.0
+    search: false
+  morph_corner_mm:
+    lo: 14.0
+    hi: 14.0
+    search: false
+  morph_exponent:
+    lo: 4.0
+    hi: 4.0
+    search: false
+  morph_rate:
+    lo: 3.693701077
+    hi: 3.693701077
+    search: false
+  morph_fixed:
+    lo: 0.0
+    hi: 0.0
+    search: false
+  morph_allow_shrinkage:
+    lo: 1
+    hi: 1
+    search: false
+target:
+  coverage_h_deg: 90.0
+  coverage_v_deg: 90.0
+  band_lo_hz: 500.0
+  band_hi_hz: 8000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 700.0
+weights:
+  cov: 1.0
+  rip: 1.0
+  di: 0.3
+  dislope: 0.5
+  flat: 0.5
+  load: 0.0
+objective:
+  version: 3
+mesh:
+  epw: 6.0
+  quadrants: '1'
+  dof_cap_screen: 8000
+  dof_cap_verify: 12000
+  dof_cap_final: 12000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_metal
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 900
+search:
+  algorithm: cma
+  sigma0: 0.15
+  seed: 1234
+  budget: 1
+  popsize: null
+  tolfun: 0.001
+description: "Solana 2.0 Ath OS-SE L=140 + SF m=8 (athscript) + morph 353\xD7353.\
+  \ CD-only replica bench.\n"

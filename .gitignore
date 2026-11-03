@@ -24,3 +24,8 @@ docs/evidence/objective_v2_rescore/
 # Third-party converters (LibreDWG, ODA File Converter) and owner-supplied reference CAD (Funktion-One, copyrighted): local only
 third_party/
 reference/
+
+# Cloud GPU secrets (RunPod API keys); keep tools/cloud/runpod_env.example only
+tools/cloud/.env.local
+tools/cloud/*.secret
+.env.local

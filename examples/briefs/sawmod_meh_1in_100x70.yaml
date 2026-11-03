@@ -1,0 +1,37 @@
+# Brief: SAWMOD-like MEH top — 1 in CD + 2 mids on L/R walls (knuckle plane).
+# Phase-2 geometry probe against the whitepaper (ports near S2 / 53.5 mm, XO ~1.6 kHz).
+# Flat-wall MEH CAD (tools/cad/meh.py) — NOT the knuckled Ath surface; compares port
+# spacing / CD+mid multi-source path. LF 10" section out of scope.
+name: sawmod_meh_1in_100x70
+description: SAWMOD-like MEH probe, 100x70, 1 in CD + 2 mids on H walls, HP 250 Hz
+driver: {exit_radius_mm: 12.7, exit_angle_deg: 0.0}
+envelope: {max_mouth_w_mm: 420.0, max_mouth_h_mm: 320.0, max_depth_mm: 280.0}
+symmetry: hv
+source: {cap: auto}
+target:
+  coverage_h_deg: 100.0
+  coverage_v_deg: 70.0
+  band_lo_hz: 250.0
+  band_hi_hz: 8000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 1600.0
+weights: {cov: 1.0, rip: 0.5, di: 0.0, dislope: 0.3, flat: 0.0, load: 0.0, distd: 0.5, diag: 0.0,
+          lw_resid: 0.5, notch: 1.0, xo_lob: 1.0, headroom: 1.0}
+objective: {version: 5, cov_narrow_ratio: 2.0, cov_below_f0: one_sided}
+meh:
+  groups:
+    cd:  {tag: 2,  drivers: [bc_dh450]}
+    mid: {tag: 10, count: 2, drivers: [bc_4ndf34, faitalpro_4fe32]}  # 5" class not in tree; 4" stand-in
+  hp_hz: 250
+  xo_hz: {lo: 1400, hi: 1800}
+  xo_orders: [2, 4]
+  delay_ms: {lo: -1.0, hi: 2.0}
+  v_front_fill: {lo: 0.0, hi: 0.7}
+  v_rear_l: {lo: 0.5, hi: 4.0}
+  amp_v_rms: 40.0
+  port_air_mps_max: 17.0
+  max_boost_db: 6.0
+  spl_target: [[300, 110], [1600, 115], [8000, 115]]
+  listening_window: {h_deg: [0, 10, 20, 30], v_deg: [10]}

@@ -38,6 +38,7 @@ BBOX_MIN_M = 0.02
 BBOX_MAX_M = 5.0
 
 SOURCE_TAG = 2          # SD1D1001, hornlab_mesher.tags.PhysicalGroup.PRIMARY_SOURCE
+MID_PORT_TAG = 10       # mid_port_exit_left (OSSE mid_ports / MEH entry_mid)
 
 # Pre-mesh estimate: a coarse geometry resolve (cheap, no gmsh) gives the wall areas.
 _COARSE_RES_MM = 20.0
@@ -371,6 +372,11 @@ def build_mesh(design: Design, mesh: MeshSpec, cfg, out_dir: Path, *, mode: str 
             raise GeometryInvalidError(
                 f"mesh has no elements on physical tag {SOURCE_TAG} (SD1D1001, the source); "
                 f"tags present: {summary['tags']}")
+        if isinstance(design.params, dict) and design.params.get("mid_ports"):
+            if summary["tags"].get(MID_PORT_TAG, 0) <= 0:
+                raise GeometryInvalidError(
+                    f"mid_ports requested but mesh has no elements on tag {MID_PORT_TAG} "
+                    f"(mid_port_exit_left); tags present: {summary['tags']}")
         _check_dofs(summary["n_triangles"], summary["n_nodes_used"], mesh, cfg, mode)
         # Closed/manifold surface, no unwelded seams, reduced mesh inside its symmetry domain.
         topology.check_surface(xyz, tri, want)
@@ -394,6 +400,13 @@ def build_mesh(design: Design, mesh: MeshSpec, cfg, out_dir: Path, *, mode: str 
             "mesher": families.enclosure_section(mounting),
             "n_triangles": int(result.n_triangles),
             "n_dof": result.n_dof,
+        }
+    mid_ports_meta = (getattr(built, "metadata", None) or {}).get("midPorts")
+    if mid_ports_meta is not None:
+        # Echo mesher midPorts report + tag-10 triangle count into mesh_meta.json.
+        meta["mid_ports"] = {
+            **dict(mid_ports_meta),
+            "tag10_triangles": int(summary["tags"].get(MID_PORT_TAG, 0)),
         }
     _meta_path(out_dir).write_text(json.dumps(meta, indent=1, sort_keys=True), encoding="utf-8")
     if cache_dir is not None:

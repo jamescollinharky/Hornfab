@@ -14,7 +14,8 @@ dependencies = [
   "cma>=3.3",
   "pyyaml>=6",
   "jinja2>=3.1",
-  "hornlab-waveguide-mesher @ git+https://github.com/m3gnus/hornlab-waveguide-mesher.git@b922e807a5cf10cf732c4557ec0b9b495762afd7",
+  # OSSE mid_ports (tag 10) fork: hornlab-search/osse-midports @ 55da4f4 (base b922e807).
+  "hornlab-waveguide-mesher @ git+https://github.com/jamescollinharky/hornlab-waveguide-mesher.git@55da4f46d662d8dcd7a9f94a609eeea4009fcd62",
   # WP16+17 fork stack, hosted fork (docs/FORKS.md): WP15 fused CUDA Burton-Miller + WP16 J0 source
   # profile + WP17 fused-CUDA near correction (stage 1), all opt-in at their defaults.
   "hornlab-beat-bem @ git+https://github.com/llevaachingada/hornlab-beat-bem.git@1efdc6f934e16f288880b6d68e8dce8480b7a421",

@@ -15,7 +15,7 @@ counts.
 | Package | Fork checkout | Base branch (= current pin) |
 |---|---|---|
 | `hornlab-beat-bem` | `C:\Users\hunte\Hrns\forks\hornlab-beat-bem` | `hornlab-search/base` @ `38544d214ba2e8a4977bb82170d2fb4a3f9fa8b0` |
-| `hornlab-waveguide-mesher` | `C:\Users\hunte\Hrns\forks\hornlab-waveguide-mesher` | `hornlab-search/base` @ `b922e807a5cf10cf732c4557ec0b9b495762afd7` |
+| `hornlab-waveguide-mesher` | `C:\Users\hunte\Hrns\forks\hornlab-waveguide-mesher` (Mac: `~/Desktop/projects/forks/hornlab-waveguide-mesher`) | `hornlab-search/osse-midports` @ `55da4f46d662d8dcd7a9f94a609eeea4009fcd62` (base `b922e807`; hosted `github.com/jamescollinharky/hornlab-waveguide-mesher`) |
 
 Both were cloned from `github.com/m3gnus/*` on 2026-10-24 and verified byte-identical to the installed packages
 (apart from one non-packaged README). Plots and bempp are not forked yet; clone them the same way when needed.
@@ -64,4 +64,5 @@ Both were cloned from `github.com/m3gnus/*` on 2026-10-24 and verified byte-iden
 | `hornlab-search/fused-cuda` | beat-bem (Julia driver) | route CUDA through the existing single-matrix Burton-Miller assembler | ~9k → ~20k quarter dofs on 8 GB; 12 kHz for large horns | `research/senior_pass_2026-10-24/04_IMPLEMENTATION_PLAN.md` WP15 |
 | later | beat-bem | non-uniform source velocity on the source tag | phase-plug exit above f11 | WP16 |
 | later | beat-bem | near-singular correction on CUDA | thin septa (multicell) on the GPU | WP17 |
+| `hornlab-search/osse-midports` | mesher | opt-in `mid_ports` L1 flush tag-10 patches on native OSSE(+SF) walls | Ath OSSE+SF with MEH multi-source | Ath OSSE MEH ports plan 2026-11-03 |
 | later | mesher | only if a GRID/multicell need is found | — | — |

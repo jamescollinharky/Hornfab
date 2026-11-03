@@ -1,0 +1,40 @@
+# Brief: SAWMOD whitepaper control waveguide (Ath OS-SE + morph), 1-inch CD.
+#
+# PRIMARY: John White, Shared Aperture Waveguide Module, 2026-04-07
+#   docs/research/typologies/sawmod_2026-11-01/SAWMOD_Whitepaper.pdf
+# DOSSIER: docs/research/typologies/SAWMOD_CONTROL_WAVEGUIDE_2026-11-01.md
+#
+# Phase-1 benchmark only: CD-only control WG (no knuckles / mids / LF).
+# Coverage 100 x 70; throat r0 12.7 mm, a0 0 (published). f0 from K-law on the
+# V axis for morph H≈196 mm: 254e5/(196*70) ≈ 1851 Hz → 1850.
+name: sawmod_control_1in_100x70
+description: SAWMOD control WG reconstruction, 100x70, 1-inch CD, L=115 mm OS-SE+morph
+driver:
+  exit_radius_mm: 12.7
+  exit_angle_deg: 0.0
+  throat_angle_policy: pin
+envelope:
+  max_mouth_w_mm: 420.0         # raw OSSE before morph ~395; morph target 280x196
+  max_mouth_h_mm: 420.0
+  max_depth_mm: 200.0
+symmetry: hv
+source:
+  cap: auto
+target:
+  coverage_h_deg: 100.0
+  coverage_v_deg: 70.0
+  band_lo_hz: 500.0
+  band_hi_hz: 8000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 1850.0
+objective:
+  version: 3
+weights:
+  cov: 1.0
+  rip: 1.0
+  di: 0.3
+  dislope: 0.5
+  flat: 0.5
+  load: 0.0

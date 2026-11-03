@@ -1,0 +1,42 @@
+# Brief: Solana 2.0 waveguide reconstruction (Ath OS-SE + SF gcurve + morph), CD-only.
+#
+# PRIMARY: John White, Solana DIY Guide Rev 2.0 (2026-08-31) + Advanced/athscript.cfg
+#   docs/research/typologies/solana_2026-11-01/
+# DOSSIER: docs/research/typologies/SOLANA_WAVEGUIDE_2026-11-01.md
+#
+# Phase-1: CD-only freestanding WG (no mid ports / enclosure / LF). Coverage 90×90
+# from the DIY Guide; f0 ~700 Hz (guide: pattern control to ~700 Hz).
+name: solana_control_1in_90x90
+description: Solana 2.0 WG reconstruction, 90x90, 1-inch CD, L=140 OS-SE+SF+morph
+driver:
+  exit_radius_mm: 12.7
+  exit_angle_deg: 0.0
+  throat_angle_policy: pin
+envelope:
+  # Ath morph target 353; printed quarter STL ~188 mm half-outer. Our mesher with
+  # SF m=8 currently lands ~450 mm (dossier §4) — envelope must clear that delta
+  # for the replica bench, not the DIY box 410 mm.
+  max_mouth_w_mm: 480.0
+  max_mouth_h_mm: 480.0
+  max_depth_mm: 220.0
+symmetry: hv
+source:
+  cap: auto
+target:
+  coverage_h_deg: 90.0
+  coverage_v_deg: 90.0
+  band_lo_hz: 500.0
+  band_hi_hz: 8000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 700.0
+objective:
+  version: 3
+weights:
+  cov: 1.0
+  rip: 1.0
+  di: 0.3
+  dislope: 0.5
+  flat: 0.5
+  load: 0.0

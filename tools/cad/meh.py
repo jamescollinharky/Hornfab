@@ -131,11 +131,15 @@ class MehParams:
 
     @property
     def walls_list(self) -> tuple[str, ...]:
-        return ("tb",) if self.walls == "tb" else ("tb", "lr")
+        if self.walls == "tb":
+            return ("tb",)
+        if self.walls == "lr":
+            return ("lr",)
+        return ("tb", "lr")  # tblr
 
     def validate(self) -> None:
-        if self.walls not in ("tb", "tblr"):
-            raise ValueError(f"walls must be 'tb' or 'tblr', got {self.walls!r}")
+        if self.walls not in ("tb", "lr", "tblr"):
+            raise ValueError(f"walls must be 'tb', 'lr', or 'tblr', got {self.walls!r}")
         for name in ("cov_h_deg", "cov_v_deg"):
             if not 0.0 < float(getattr(self, name)) < 180.0:
                 raise ValueError(f"{name} must be in (0, 180), got {getattr(self, name)!r}")
@@ -793,7 +797,7 @@ def _parser() -> argparse.ArgumentParser:
         if f.name in ("z_port_mm", "port_across_mm", "repairs"):
             continue
         if f.name == "walls":
-            ap.add_argument("--walls", default=f.default, choices=("tb", "tblr"))
+            ap.add_argument("--walls", default=f.default, choices=("tb", "lr", "tblr"))
         else:
             ap.add_argument("--" + f.name.replace("_", "-"), type=float, default=f.default)
     return ap

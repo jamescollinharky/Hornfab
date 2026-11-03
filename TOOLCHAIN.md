@@ -16,7 +16,7 @@ Recorded by task 02 on 2026-10-12. **Status: PARTIAL — M2/M3/M4 and M5-after-d
 - System Python also present: `C:\Users\hunte\AppData\Local\Programs\Python\Python312\python.exe` (used internally by the beat worker host)
 
 ## Pinned dependencies (40-char SHAs)
-- hornlab-waveguide-mesher: `b922e807a5cf10cf732c4557ec0b9b495762afd7`
+- hornlab-waveguide-mesher: `55da4f46d662d8dcd7a9f94a609eeea4009fcd62` (fork `jamescollinharky/hornlab-waveguide-mesher` branch `hornlab-search/osse-midports`; base `b922e807`; opt-in `mid_ports` L1 flush tag-10 patches on native OSSE(+SF) walls; absent = byte-identical. 2026-11-03)
 - hornlab-beat-bem:           `1efdc6f934e16f288880b6d68e8dce8480b7a421`
 - hornlab-plots:              `9e4a6d0dd2ccb6e735dd00233dccccb50d12ed44`
 - hornlab-bempp-bem:          `8e6910602ece9abb2e9ce0db7a637f4bedf17f53` (installed OK, with bempp-cl 0.4.2 and numba 0.68.0)

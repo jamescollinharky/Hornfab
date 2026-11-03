@@ -1,0 +1,22 @@
+# Copy to a local untracked file (e.g. tools/cloud/.env.local) or export in your shell.
+# NEVER commit real keys.
+
+# Required for tools/cloud/runpod_ctl.py
+export RUNPOD_API_KEY="rp_xxxxxxxx"
+
+# Optional: SSH private key used to reach the pod (defaults to ~/.ssh/id_ed25519)
+export RUNPOD_SSH_KEY="$HOME/.ssh/id_ed25519"
+
+# Optional defaults for create
+# export RUNPOD_GPU_TYPE_ID="NVIDIA GeForce RTX 4090"
+# export RUNPOD_CLOUD_TYPE="SECURE"          # SECURE | COMMUNITY
+# export RUNPOD_IMAGE="runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04"
+# export RUNPOD_NETWORK_VOLUME_ID="xxxxxx" # attach a persistent volume at /workspace
+# export RUNPOD_VOLUME_MOUNT="/workspace"
+# export RUNPOD_CONTAINER_DISK_GB="40"
+# export RUNPOD_NAME="hornlab-search"
+
+# On the pod (set by bootstrap / run_job; listed here for documentation):
+# export HORNLAB_BEAT_RUNTIME_DIR="/workspace/hornlab-beat-runtime"
+# export JULIA_DEPOT_PATH="/workspace/julia-depot"
+# export HORNLAB_CLOUD_POD_ID="<pod id>"

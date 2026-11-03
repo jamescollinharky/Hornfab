@@ -193,11 +193,31 @@ def _descendants(procs: list[ProcInfo], root_pid: int) -> list[ProcInfo]:
     return out
 
 
+def _is_beat_julia_orphan(p: ProcInfo) -> bool:
+    """Orphaned Julia-side host left after the Python ``worker_host`` died.
+
+    Windows names the middle process ``julialauncher*``. Linux/macOS often leave a bare
+    ``julia`` (or ``julia-1.x``) whose args still point at this package's ``solver.jl
+    --worker``. Matching by cmdline package marker keeps Boundary Lab / other agents'
+    Julia processes out of scope.
+    """
+    name = p.name.lower()
+    cmd = p.cmdline
+    if LAUNCHER_MARKER not in cmd:
+        return False
+    if name.startswith("julialauncher"):
+        return True
+    # POSIX: julia binary + our solver worker args (measured Metal/CUDA persistent host).
+    if name.startswith("julia") and ("solver.jl" in cmd) and ("--worker" in cmd):
+        return True
+    return False
+
+
 def beat_host_roots(procs: list[ProcInfo]) -> list[ProcInfo]:
     """Top-level BEAT worker hosts: processes whose command line carries ``HOST_MARKER`` and
-    whose parent is not itself a host, plus orphaned ``julialauncher`` processes running this
-    package's solver whose parent is gone. Killing a root with ``kill_tree`` takes the whole
-    host (both Python layers, the Julia launcher and ``julia.exe``)."""
+    whose parent is not itself a host, plus orphaned Julia-side hosts running this package's
+    solver whose parent is gone. Killing a root with ``kill_tree`` takes the whole host
+    (both Python layers, the Julia launcher and ``julia``)."""
     alive = {p.pid for p in procs}
     hosts = [p for p in procs if HOST_MARKER in p.cmdline]
     host_pids = {p.pid for p in hosts}
@@ -207,8 +227,7 @@ def beat_host_roots(procs: list[ProcInfo]) -> list[ProcInfo]:
     for r in roots:
         covered.update(d.pid for d in _descendants(procs, r.pid))
     for p in procs:
-        if (p.pid not in covered and p.ppid not in alive
-                and p.name.lower().startswith("julialauncher") and LAUNCHER_MARKER in p.cmdline):
+        if p.pid not in covered and p.ppid not in alive and _is_beat_julia_orphan(p):
             roots.append(p)
             covered.add(p.pid)
             covered.update(d.pid for d in _descendants(procs, p.pid))

@@ -245,8 +245,8 @@ def _validate_meh(block: dict) -> None:
     if missing:
         raise CadParamsError(
             f"cad: missing required meh key(s) {missing}; the recipe carries every key")
-    if block["walls"] not in ("tb", "tblr"):
-        raise CadParamsError(f"cad.walls must be 'tb' or 'tblr', got {block['walls']!r}")
+    if block["walls"] not in ("tb", "lr", "tblr"):
+        raise CadParamsError(f"cad.walls must be 'tb', 'lr', or 'tblr', got {block['walls']!r}")
     bad = [k for k in keys if k != "walls" and not _isnum(block[k])]
     if bad:
         raise CadParamsError(f"cad: meh key(s) {bad} must be finite numbers")
