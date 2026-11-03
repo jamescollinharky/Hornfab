@@ -2,6 +2,14 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-03 - Interactive UMAP of solana_osse_meh_sf CMA-1000 (GitHub-viewable)
+
+- **Artifact:** `docs/evidence/UMAP_SOLANA_OSSE_MEH_SF_CMA1000.html` (+ `.md`) — standalone
+  D3 page of OK designs from run `20261103T053926Z-screen-8b32a1`, color by parameter
+  unit quartiles or total-J bands; click for values. Open via htmlpreview link in the
+  evidence md (GitHub file view is source-only).
+- **Method note:** UMAP on unit-box searchable knobs (not per-term loss); subsample of OK evals.
+
 ## 2026-11-03 - Ath OSSE+SF mid_ports mesher fork + solana_osse_meh_sf
 
 - **Mesher fork:** `jamescollinharky/hornlab-waveguide-mesher` branch

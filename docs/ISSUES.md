@@ -18,10 +18,13 @@ Updated in the same commit as `docs/CONTINUITY.md` on every push. Last synced 20
 | #11 | [Q] Collin: OK with the hornlab-search name? | closed (keep until objection) | user | `docs/plan/README.md` |
 | #13 | hardening-review: Stage A surrogate gate-integrity and real-data traps | **open — fixes MERGED to main** (FF to 6d1d5c7 on 2026-10-22 carries e0b9b61 + 11304f6 + cloud reconciliation 152a829 verbatim; oracle pre-merge sign-off; full offline suite 533 PASS at the merged tree; awaiting owner close) | phase-2 (cloud) | `docs/plan/11_PHASE2_SURROGATE.md` §4 |
 
+Local-only, updated 2026-11-03 (**UMAP evidence HTML for CMA-1000; no GitHub issue state changed**):
+- **Landed:** `docs/evidence/UMAP_SOLANA_OSSE_MEH_SF_CMA1000.{html,md}` — interactive param/J-colored UMAP of run `20261103T053926Z-screen-8b32a1` (htmlpreview link in the md).
+
 Local-only, updated 2026-11-03 (**Ath OSSE+SF mid_ports fork + solana_osse_meh_sf; no GitHub issue state changed**):
 - **Mesher fork landed:** `hornlab-search/osse-midports` @ `55da4f4` (tag-10 L1 flush on native OSSE); pin in pyproject/TOOLCHAIN.
-- **Solana MEH-context path:** `solana_osse_meh_sf`; 4090 screen **J=39.604**; CMA live best **J≈22.3** (`20261103T052647Z-screen-cd22a5`). Flat CAD MEH = fallback.
-- **Solana owed:** finish/pull CMA; mouth-matched CD (`gcurve_off`) verify; enclosure/LF.
+- **Solana MEH-context path:** `solana_osse_meh_sf`; 4090 screen **J=39.604**; CMA live best **J≈22.3** (`20261103T052647Z-screen-cd22a5`). Flat CAD MEH = fallback. CMA-1000 `20261103T053926Z-screen-8b32a1` still LIVE (~gen 70+, best **7.75**).
+- **Solana owed:** finish/pull CMA-1000; mouth-matched CD (`gcurve_off`) verify; enclosure/LF.
 - **SAWMOD owed:** Ath knuckle+ports (not flat MEH), LF 10″, BL refine.
 
 Local-only, updated 2026-11-02 evening (**Solana/SAWMOD + RunPod path on `feat/solana-sawmod-wg-bench`; no GitHub issue state changed**):
