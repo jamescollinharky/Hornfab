@@ -68,6 +68,8 @@ class App:
             return D.leaders(self.runs)
         if head == "configs":
             return D.list_configs(self.root)
+        if head == "budget-hint":
+            return self._budget_hint(q)
         if head == "catalog":
             return D.catalog(self.root)
         if head == "families":
@@ -90,6 +92,40 @@ class App:
         if head == "compare":
             return self._compare((q.get("a") or [""])[0], (q.get("b") or [""])[0])
         raise FileNotFoundError(path)
+
+    def _budget_hint(self, q: dict) -> dict:
+        """Hansen-grounded budget suggestion for Launch / Compose (``search/budget_heuristic``).
+
+        Query: ``n_knobs`` (required unless ``config`` is a known configs path), optional
+        ``restarts_mode`` / ``restarts_max``. ``config`` looks up ``n_knobs`` from ``list_configs``.
+        """
+        from hornlab_search.search.budget_heuristic import suggest_budget
+
+        n_raw = (q.get("n_knobs") or [""])[0]
+        cfg_path = (q.get("config") or [""])[0].strip()
+        mode = (q.get("restarts_mode") or [""])[0]
+        rmax_raw = (q.get("restarts_max") or ["2"])[0]
+        n: int | None = None
+        if n_raw not in ("", None):
+            try:
+                n = int(n_raw)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"n_knobs must be an int, got {n_raw!r}") from exc
+        if n is None and cfg_path:
+            match = [c for c in D.list_configs(self.root) if c.get("path") == cfg_path]
+            if not match:
+                raise ValueError(f"unknown config {cfg_path!r}")
+            n = int(match[0].get("n_knobs") or 1)
+        if n is None:
+            raise ValueError("budget-hint needs n_knobs= or config=")
+        try:
+            rmax = int(rmax_raw) if rmax_raw not in ("", None) else 2
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"restarts_max must be an int, got {rmax_raw!r}") from exc
+        out = suggest_budget(n, restarts_mode=mode or None, restarts_max=rmax)
+        if cfg_path:
+            out["config"] = cfg_path
+        return out
 
     def _compare(self, a: str, b: str) -> dict:
         from hornlab_search.cli import _first_ok_metrics, compare_metrics

@@ -12,7 +12,7 @@ from hornlab_search.design.space import DesignSpace
 from hornlab_search.mesh import sizing
 from hornlab_search.types import Design, MeshSpec
 
-from conftest import EXAMPLES
+from conftest import EXAMPLES, requires_mesher
 
 TYP = EXAMPLES / "typologies"
 
@@ -126,6 +126,7 @@ def test_ath_core_routes_morph_into_the_mesher_morph_section(tmp_path):
 
 # ------------------------------------------------------------------ TwinRay
 
+@requires_mesher
 def test_ath_twinray_seed_reproduces_the_published_mouth_and_searches_the_outline():
     cfg = _twin_cfg()
     assert cfg.family == "FREEFORM"
@@ -142,6 +143,7 @@ def test_ath_twinray_seed_reproduces_the_published_mouth_and_searches_the_outlin
     assert space.bounds["mouth_exponent"].lo < 4.0 < space.bounds["mouth_exponent"].hi
 
 
+@requires_mesher
 def test_ath_twinray_materialize_emits_the_searched_superellipse_outline():
     cfg = _twin_cfg()
     params = registry.materialize(cfg.generator, cfg.seed_params, cfg.brief)

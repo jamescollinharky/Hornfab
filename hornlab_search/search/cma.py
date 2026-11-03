@@ -46,6 +46,77 @@ log = logging.getLogger("hornlab_search.search.cma")
 
 EVALS_PER_PROJECTION = (1000, 10000)
 
+
+def covariance_summary(
+    es,
+    keys: list[str],
+    *,
+    top_eigs: int = 3,
+    top_loadings: int = 5,
+    include_C: bool = False,
+) -> dict:
+    """JSON-able snapshot of pycma's covariance ``C`` for knob importance / coupling.
+
+    Coordinates are the unit-box search axes (``DesignSpace.keys()`` order). Diagonal
+    ``C_ii`` and ``std_unit = σ√C_ii`` are the sampling scale along each knob; large values
+    mean CMA still explores that axis, small means it has collapsed locally. Eigenvectors
+    with large eigenvalues are the coupled directions of the local J-landscape — not a
+    physical variance decomposition of the acoustics.
+    """
+    names = [str(k) for k in keys]
+    C = np.asarray(getattr(es, "C"), dtype=float)
+    if C.ndim != 2 or C.shape[0] != C.shape[1]:
+        raise ValueError(f"es.C must be square, got shape {getattr(C, 'shape', None)}")
+    n = int(C.shape[0])
+    if len(names) != n:
+        raise ValueError(f"keys length {len(names)} != C dim {n}")
+    sigma = float(getattr(es, "sigma"))
+    diag = np.diag(C).astype(float)
+    std_unit = sigma * np.sqrt(np.maximum(diag, 0.0))
+    total_std = float(std_unit.sum())
+    coordinates = []
+    for i, k in enumerate(names):
+        coordinates.append({
+            "key": k,
+            "C_ii": float(diag[i]),
+            "std_unit": float(std_unit[i]),
+            "share": (float(std_unit[i] / total_std) if total_std > 0 else 0.0),
+        })
+    coordinates.sort(key=lambda r: (-r["C_ii"], r["key"]))
+    w, V = np.linalg.eigh(C)
+    order = np.argsort(w)[::-1]
+    wsum = float(np.maximum(w, 0.0).sum())
+    eigenpairs = []
+    for rank, j in enumerate(order[: max(0, int(top_eigs))]):
+        eig = float(w[j])
+        loadings = sorted(
+            ({"key": names[i], "loading": float(V[i, j])} for i in range(n)),
+            key=lambda r: (-abs(r["loading"]), r["key"]),
+        )
+        eigenpairs.append({
+            "rank": rank + 1,
+            "eigenvalue": eig,
+            "axis_length": float(math.sqrt(max(eig, 0.0))),
+            "fraction": (eig / wsum) if wsum > 0 else 0.0,
+            "top_loadings": loadings[: max(0, int(top_loadings))],
+        })
+    w_max = float(w[order[0]]) if len(order) else 0.0
+    w_min = float(w[order[-1]]) if len(order) else 0.0
+    out: dict = {
+        "keys": names,
+        "sigma": sigma,
+        "n_dim": n,
+        "condition_number": (w_max / w_min) if w_min > 0 else None,
+        "coordinates": coordinates,
+        "eigenpairs": eigenpairs,
+        "note": ("C is the CMA search-distribution covariance in the unit box; "
+                 "large C_ii / std_unit ⇒ CMA still explores that knob; "
+                 "eigenvectors are coupled search directions for J, not acoustic Sobol indices."),
+    }
+    if include_C and n <= 16:
+        out["C"] = C.tolist()
+    return out
+
 # Consecutive non-cached ``solve_failed`` evaluations (each already retried once by the backend
 # after a worker-host recovery) that stop a search. A string of solver failures says the solver
 # is unhealthy, not that the designs are bad: scoring them as 1000-penalties flattens the landscape
@@ -105,7 +176,11 @@ def _prepare(cfg, run_dir: Path, mode: str, backend, store, cache_dir, trace_fra
     metrics_compute.reset_warning_state()
     if backend is None:
         from ..solve.base import get_backend
-        backend = get_backend(cfg.solve.backend, timeout_s=float(cfg.solve.timeout_s))
+        kw: dict = {"timeout_s": float(cfg.solve.timeout_s)}
+        # WP15 cuda_fused is CUDA-only (Metal/CPU must not receive the flag).
+        if str(cfg.solve.backend) == "beat_cuda":
+            kw["cuda_fused"] = bool(getattr(cfg.solve, "cuda_fused", False))
+        backend = get_backend(cfg.solve.backend, **kw)
     worker.warm(backend)                       # once, before the seed; idempotent
     lib_shas = lib_shas or collect_lib_shas()
     ctx = make_context(cfg, store, cache_dir=cache_dir, lib_shas=lib_shas,
@@ -285,7 +360,7 @@ def search(cfg, run_dir, mode="screen", resume=None, *, backend=None, budget: in
             state["solve_fail_streak"] = 0
         return ev
 
-    def finish(status: str) -> None:
+    def finish(status: str, *, cov: dict | None = None) -> None:
         last = summarize(evals, wall)
         # run.json["stats"] is CUMULATIVE over every resume (from the ndjson); the numbers of this
         # invocation alone are kept under "last_invocation" (cache hits there include resume replays).
@@ -302,6 +377,12 @@ def search(cfg, run_dir, mode="screen", resume=None, *, backend=None, budget: in
                            "eval_no": state["best_no"]}
         if restarts is not None:               # absent key => run.json schema stays exactly today's
             upd["restarts"] = restarts_log
+        if cov is not None:                    # additive; older readers ignore the key
+            upd["cma_covariance"] = cov
+            try:
+                rundir.write_json_atomic(run_dir / "cma" / "covariance.json", cov)
+            except Exception:  # noqa: BLE001 - optional sidecar; run.json is the contract
+                log.debug("could not write cma/covariance.json", exc_info=True)
         rundir.update_run_json(run_dir, **upd)
         log.info("search %s: %d evaluations (%d new, %d cached), %d failures %s, GPU %.1f s, "
                  "%.1f s/candidate, %.0f candidates/h, 1k evals = %.1f h, 10k = %.1f h",
@@ -351,8 +432,14 @@ def search(cfg, run_dir, mode="screen", resume=None, *, backend=None, budget: in
                          where, gen, min(F), state["best"].objective, state["n_new"])
             return "budget"
 
+        keys = space.keys()
+        last_cov: dict | None = None
         if restarts is None:
             state["stop"] = sweep(es)
+            try:
+                last_cov = covariance_summary(es, keys, include_C=True)
+            except Exception:  # noqa: BLE001 - never fail a finished search on a diagnostic dump
+                log.warning("cma_covariance snapshot failed", exc_info=True)
         else:
             # 2. restarts (WP11a): up to 1 + max ES instances, each with its own cma/restart_k/
             # generation log. The budget accounting above is shared by every instance: n_new counts
@@ -380,11 +467,23 @@ def search(cfg, run_dir, mode="screen", resume=None, *, backend=None, budget: in
                 # pycma's this_evals = es.countevals - base_evals: ALL evaluations of the run,
                 # cache replays included, so the BIPOP schedule rebuilds identically on a resume.
                 evals_in_restart = len(evals) - n_all_before
-                restarts_log.append({"index": k, "stop": reason,
-                                     "n_new_in_restart": state["n_new"] - n_new_before,
-                                     "evals_in_restart": evals_in_restart,
-                                     "popsize": pop_k,
-                                     "sigma0": float(sigma_factor * float(cfg.search.sigma0))})
+                entry = {"index": k, "stop": reason,
+                         "n_new_in_restart": state["n_new"] - n_new_before,
+                         "evals_in_restart": evals_in_restart,
+                         "popsize": pop_k,
+                         "sigma0": float(sigma_factor * float(cfg.search.sigma0))}
+                try:
+                    cov_k = covariance_summary(es_k, keys, include_C=False)
+                    entry["covariance"] = {
+                        "sigma": cov_k["sigma"],
+                        "condition_number": cov_k["condition_number"],
+                        "coordinates": cov_k["coordinates"],
+                        "eigenpairs": cov_k["eigenpairs"],
+                    }
+                    last_cov = cov_k
+                except Exception:  # noqa: BLE001
+                    log.warning("cma_covariance snapshot failed (restart %d)", k, exc_info=True)
+                restarts_log.append(entry)
                 sched.observe(k, poptype, evals_in_restart)
                 if reason == "budget":
                     state["stop"] = "budget"
@@ -395,7 +494,7 @@ def search(cfg, run_dir, mode="screen", resume=None, *, backend=None, budget: in
                 log.info("restart %d stopped (%s) after %d new evaluations; population %d -> next",
                          k, reason, restarts_log[-1]["n_new_in_restart"], pop_k)
                 k += 1
-        finish("finished")
+        finish("finished", cov=last_cov)
     except KeyboardInterrupt:
         state["stop"] = "interrupted"
         finish("interrupted")

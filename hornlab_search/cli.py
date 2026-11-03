@@ -6,6 +6,7 @@
     hornlab-search search   --config <yaml> [--budget N] [--mode screen] [--resume DIR]
     hornlab-search verify   --run <dir> [--top 5]
     hornlab-search report   <run_dir> [--out report.html] [--top 5]
+    hornlab-search pin-plan --run <dir|id> [--write-config PATH]
     hornlab-search dataset  stats|verify|export
     hornlab-search compare  <run_a> <run_b>       (report metric differences, e.g. full vs quarter)
 
@@ -368,21 +369,57 @@ def _load_cfg(args):
         kwargs["brief"] = Path(brief)
     if cma_seed is not None:
         kwargs["cma_seed"] = int(cma_seed)
-    cfg = load_config(args.config, **kwargs)
-    if getattr(args, "backend", None):
-        cfg.solve.backend = args.backend             # the override is part of the effective config
-    return cfg
+    backend = getattr(args, "backend", None)
+    if backend is not None:
+        kwargs["backend"] = backend
+    return load_config(args.config, **kwargs)
 
 
 def _command_string(argv) -> str:
     return "hornlab-search " + " ".join(argv)
 
 
+def _apply_restarts_cli(cfg, mode, max_n) -> None:
+    """Apply ``--restarts-mode`` / ``--restarts-max`` onto a loaded Config (mutates in place).
+
+    Absent both flags: leave ``cfg.search.restarts`` alone (config YAML wins).
+    ``mode='off'``: clear restarts (single CMA-ES), ignoring max.
+    ``mode`` in {ipop,bipop}: set ``{mode, max}``; max defaults to the config's existing max,
+    else 2. Updates ``cfg.raw['search']`` so the run snapshot / config_sha match what ran.
+    Refuses when ``search.algorithm`` is ``cma_me`` (same rule as config validation).
+    """
+    from hornlab_search.config import ConfigError, _validate_restarts
+
+    if mode is None and max_n is None:
+        return
+    if str(getattr(cfg.search, "algorithm", "cma")) == "cma_me":
+        raise ConfigError("search.restarts is not supported with search.algorithm: cma_me "
+                          "(CLI --restarts-* refused)")
+    raw_search = cfg.raw.setdefault("search", {})
+    if not isinstance(raw_search, dict):
+        raise ConfigError("config search block must be a mapping to apply --restarts-*")
+    if mode in ("off", "none"):
+        if max_n is not None:
+            raise ConfigError("--restarts-max is meaningless with --restarts-mode off")
+        cfg.search.restarts = None
+        raw_search.pop("restarts", None)
+        return
+    if mode is None:
+        raise ConfigError("--restarts-max requires --restarts-mode ipop|bipop|off")
+    existing = getattr(cfg.search, "restarts", None) or {}
+    if max_n is None:
+        max_n = int(existing["max"]) if isinstance(existing, dict) and "max" in existing else 2
+    block = _validate_restarts({"mode": mode, "max": int(max_n)}, "cli:--restarts")
+    cfg.search.restarts = block
+    raw_search["restarts"] = dict(block)
+
+
 def _backend(cfg):
     from hornlab_search.solve.base import get_backend
     kw = {"timeout_s": float(cfg.solve.timeout_s)}
-    if str(cfg.solve.backend).startswith("beat_"):
-        kw["cuda_fused"] = bool(getattr(cfg.solve, "cuda_fused", False))   # WP15 (default False)
+    # WP15 cuda_fused is CUDA-only; never pass it for metal/cpu (BeatBackend refuses otherwise).
+    if str(cfg.solve.backend) == "beat_cuda":
+        kw["cuda_fused"] = bool(getattr(cfg.solve, "cuda_fused", False))
     return get_backend(cfg.solve.backend, **kw)
 
 
@@ -445,9 +482,8 @@ def _cmd_selftest(args) -> int:
     from hornlab_search.search import selftest
     from hornlab_search.search.gpulock import GpuBusyError, gpu_lock
     from hornlab_search.solve import worker
-    cfg = load_config(args.config or EXAMPLES / "osse_baseline.yaml")
-    if args.backend:
-        cfg.solve.backend = args.backend
+    cfg = load_config(args.config or EXAMPLES / "osse_baseline.yaml",
+                      backend=getattr(args, "backend", None))
     worker.install_handlers()
     d = _dirs(args) if hasattr(args, "runs_dir") else {"runs": REPO / "runs"}
     entered_locked_body = False
@@ -658,6 +694,8 @@ def _search_body(args, argv, d) -> int:
         kw["brief"] = Path(args.brief)
     if getattr(args, "cma_seed", None) is not None:
         kw["cma_seed"] = int(args.cma_seed)
+    if getattr(args, "backend", None) is not None:
+        kw["backend"] = args.backend
     cfg = load_config(cfg_path, **kw)
     why = _verify_only_refusal(cfg.brief, "search")
     if why:
@@ -665,8 +703,12 @@ def _search_body(args, argv, d) -> int:
             run_dir.rmdir()                      # created above, still empty
         print(why)
         return 2
-    if args.backend:
-        cfg.solve.backend = args.backend
+    try:
+        _apply_restarts_cli(cfg, getattr(args, "restarts_mode", None),
+                            getattr(args, "restarts_max", None))
+    except Exception as exc:  # ConfigError / ValueError — refuse before any GPU work
+        print(f"search FAILED: {exc}")
+        return 2
     if args.resume:
         # A resume replays the CMA sequence from search.ndjson and the solve cache; if the config
         # (weights, bounds, target, ...) changed, the replayed work and the stored rows no longer
@@ -755,9 +797,8 @@ def _verify_body(args, argv, d) -> int:
     # --brief was parsed but never applied (found 2026-10-23, same class as the 2026-10-22 search
     # bug): a 12 kHz verify (NEXT_DEV_PRIORITIES P2) would have re-solved at 5.5 kHz.
     brief = getattr(args, "brief", None)
-    cfg = load_config(run_dir / "config.yaml", brief=Path(brief) if brief else None)
-    if args.backend:
-        cfg.solve.backend = args.backend
+    cfg = load_config(run_dir / "config.yaml", brief=Path(brief) if brief else None,
+                      backend=getattr(args, "backend", None))
     d = _dirs(args)
     seen, top = set(), []
     for r in sorted((r for r in rows if r.get("ok")), key=lambda r: r["objective"]):
@@ -838,6 +879,69 @@ def _cmd_report(args) -> int:
         return 1
     out = build_report(run_dir, args.out, top_n=args.top)
     print(f"report OK: {out} ({Path(out).stat().st_size / 1e6:.2f} MB)")
+    return 0
+
+
+def _resolve_run_dir(raw: str, runs_root: Path) -> Path | None:
+    """Accept an absolute/relative run directory or a bare run id under ``runs_root``."""
+    p = Path(raw)
+    if p.is_dir() and (p / "run.json").is_file():
+        return p.resolve()
+    cand = runs_root / raw
+    if cand.is_dir() and (cand / "run.json").is_file():
+        return cand.resolve()
+    return None
+
+
+def _cmd_pin_plan(args) -> int:
+    """Recommend CMA knobs to pin from a finished run's ``cma_covariance`` (+ Spearman)."""
+    import yaml
+
+    from hornlab_search.gui.data import sensitivity
+    from hornlab_search.search.evaluate import read_ndjson
+    from hornlab_search.search.pin_from_cma import (
+        apply_pins_to_config, format_pin_plan_md, recommend_pins,
+    )
+    from hornlab_search.search.rundir import read_json, write_json_atomic
+
+    d = _dirs(args)
+    run_dir = _resolve_run_dir(args.run, d["runs"])
+    if run_dir is None:
+        print(f"pin-plan FAILED: run not found: {args.run!r}")
+        return 1
+    run_json = read_json(run_dir / "run.json", {}) or {}
+    cov = run_json.get("cma_covariance")
+    if not isinstance(cov, dict):
+        print(f"pin-plan FAILED: {run_dir}/run.json has no cma_covariance "
+              "(re-run search after the covariance dump landed)")
+        return 1
+    best = read_json(run_dir / "best.json", {}) or {}
+    best_params = best.get("params") if isinstance(best.get("params"), dict) else {}
+    cfg_path = run_dir / "config.yaml"
+    cfg = {}
+    if cfg_path.is_file():
+        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    bounds = cfg.get("bounds") if isinstance(cfg.get("bounds"), dict) else {}
+    rows = read_ndjson(run_dir / "search.ndjson") if (run_dir / "search.ndjson").is_file() else []
+    sens = sensitivity(rows, bounds) if rows and bounds else []
+    plan = recommend_pins(cov, best_params=best_params, sens=sens, bounds=bounds)
+    plan["run_dir"] = str(run_dir)
+    plan["run_id"] = run_dir.name
+    write_json_atomic(run_dir / "pin_plan.json", plan)
+    md = format_pin_plan_md(plan, run_id=run_dir.name)
+    (run_dir / "PIN_PLAN.md").write_text(md, encoding="utf-8")
+    n_pin = len(plan.get("pin") or [])
+    print(f"pin-plan OK: {n_pin} pin / {len(plan.get('keep') or [])} keep → "
+          f"{run_dir / 'pin_plan.json'} and {run_dir / 'PIN_PLAN.md'}")
+    if args.write_config:
+        out_cfg = Path(args.write_config)
+        if not cfg:
+            print("pin-plan FAILED: no config.yaml in the run; cannot --write-config")
+            return 1
+        patched = apply_pins_to_config(cfg, plan)
+        out_cfg.parent.mkdir(parents=True, exist_ok=True)
+        out_cfg.write_text(yaml.safe_dump(patched, sort_keys=False), encoding="utf-8")
+        print(f"pin-plan wrote config: {out_cfg}")
     return 0
 
 
@@ -1287,7 +1391,7 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--runs-dir", help="default <repo>/runs")
     common.add_argument("--cache-dir", help="default <repo>/cache")
     common.add_argument("--dataset-dir", help="default <repo>/dataset")
-    common.add_argument("--backend", choices=("beat_cuda", "beat_cpu", "bempp_cpu"),
+    common.add_argument("--backend", choices=("beat_cuda", "beat_metal", "beat_cpu", "bempp_cpu"),
                         help="override solve.backend in the config")
     common.add_argument("--trace-fraction", type=float, default=0.05,
                         help="fraction of designs that also record boundary traces (default 0.05)")
@@ -1327,6 +1431,13 @@ def build_parser() -> argparse.ArgumentParser:
                    help="brief YAML; overrides config target/weights and is folded into config_sha")
     q.add_argument("--cma-seed", type=int, metavar="INT",
                    help="override search.seed in the config")
+    q.add_argument("--restarts-mode", choices=("ipop", "bipop", "off"),
+                   help="override search.restarts.mode (off = single CMA-ES; "
+                        "absent = leave the config's search.restarts alone)")
+    q.add_argument("--restarts-max", type=int, metavar="N",
+                   help="override search.restarts.max (0..64); required with "
+                        "--restarts-mode ipop|bipop unless the config already has max "
+                        "(default 2 when the config has no restarts block)")
     v = sub.add_parser("verify", parents=[common], help="re-solve a run's top designs at verify fidelity")
     v.add_argument("--run", required=True)
     v.add_argument("--top", type=int, default=5)
@@ -1338,6 +1449,12 @@ def build_parser() -> argparse.ArgumentParser:
     rp.add_argument("run_dir")
     rp.add_argument("--out")
     rp.add_argument("--top", type=int, default=5)
+    pp = sub.add_parser("pin-plan", parents=[common],
+                        help="recommend knobs to pin from a run's CMA covariance (+ Spearman)")
+    pp.add_argument("--run", required=True, metavar="DIR|ID",
+                    help="run directory or id under --runs-dir")
+    pp.add_argument("--write-config", metavar="PATH",
+                    help="optional: write a patched YAML with recommended pins applied")
     ds = sub.add_parser("dataset", parents=[common])
     ds.add_argument("action", choices=("stats", "verify", "export"))
     ds.add_argument("--out", default="train.npz")
@@ -1404,7 +1521,27 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _ensure_utf8_stdio() -> None:
+    """Windows consoles default to cp1252; human-facing output uses sigma/arrow/rho glyphs.
+
+    Without this, `pin-plan` (and anything else printing the plan) raises UnicodeEncodeError on a
+    plain Windows cmd/PowerShell. Streams without ``reconfigure`` (pytest's capsys) are skipped.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        enc = (getattr(stream, "encoding", "") or "").lower().replace("-", "").replace("_", "")
+        if enc.startswith("utf"):
+            continue
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _ensure_utf8_stdio()
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
     if not argv:
@@ -1430,6 +1567,8 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_verify(args, argv)
         if args.cmd == "report":
             return _cmd_report(args)
+        if args.cmd == "pin-plan":
+            return _cmd_pin_plan(args)
         if args.cmd == "dataset":
             return _cmd_dataset(args)
         if args.cmd == "surrogate":

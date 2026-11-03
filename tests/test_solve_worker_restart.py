@@ -10,7 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 
-import hornlab_beat_bem as beatlib
+# Optional dependency (CI does not install it): skip the file rather than error at collection.
+beatlib = pytest.importorskip("hornlab_beat_bem",
+                              reason="optional dependency hornlab_beat_bem is not installed")
 
 from hornlab_search.solve import beat as beatmod
 from hornlab_search.solve.beat import BeatBackend

@@ -7,10 +7,22 @@ five-name seam pin. No GPU, no meshing, no writes.
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 
 import pytest
+
+# CI installs the package with --no-deps (the offline suite needs only numpy/scipy/pyyaml/cma),
+# so the optional mesher is simply absent there. Absent = nothing to check; a PRESENT mesher whose
+# pinned preview API changed must still fail loudly (that is what the seam pin below is for).
+try:
+    _have_mesher = importlib.util.find_spec("hornlab_mesher") is not None
+except (ImportError, ValueError):  # a broken/absent parent package is the same "not installed"
+    _have_mesher = False
+if not _have_mesher:
+    pytest.skip("optional dependency hornlab_mesher is not installed in this environment",
+                allow_module_level=True)
 
 from hornlab_search.gui import data as D
 from hornlab_search.gui import preview as seam

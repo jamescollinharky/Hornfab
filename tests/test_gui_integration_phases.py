@@ -611,19 +611,22 @@ def test_cma_files_lists_every_served_pycma_log(repo):
     run = _write_run(repo / "runs", CMA_RID, with_step=False)
     (run / "cma" / "restart_0").mkdir(parents=True)
     (run / "cma" / "restart_1").mkdir()
-    (run / "cma" / "version.txt").write_text("3.3\n")
-    (run / "cma" / "outcmaes_progress.txt").write_text("progress\n")
-    (run / "cma" / "restart_0" / "outcmaes_fit.dat").write_text("1 2\n")
-    (run / "cma" / "restart_0" / "parameters.json2").write_text("{}")
-    (run / "cma" / "restart_1" / "x0.q").write_text("q")
+    (run / "cma" / "version.txt").write_bytes(b"3.3\n")
+    (run / "cma" / "outcmaes_progress.txt").write_bytes(b"progress\n")
+    (run / "cma" / "restart_0" / "outcmaes_fit.dat").write_bytes(b"1 2\n")
+    (run / "cma" / "restart_0" / "parameters.json2").write_bytes(b"{}")
+    (run / "cma" / "restart_1" / "x0.q").write_bytes(b"q")
 
     files = D.run_detail(repo / "runs", CMA_RID)["cma_files"]
     assert files == [
-        {"path": "cma/outcmaes_progress.txt", "name": "outcmaes_progress.txt", "size": 10},
-        {"path": "cma/restart_0/outcmaes_fit.dat", "name": "outcmaes_fit.dat", "size": 5},
-        {"path": "cma/restart_0/parameters.json2", "name": "parameters.json2", "size": 2},
-        {"path": "cma/restart_1/x0.q", "name": "x0.q", "size": 1},
-        {"path": "cma/version.txt", "name": "version.txt", "size": 5},
+        {"path": "cma/outcmaes_progress.txt", "name": "outcmaes_progress.txt",
+         "size": len(b"progress\n")},
+        {"path": "cma/restart_0/outcmaes_fit.dat", "name": "outcmaes_fit.dat",
+         "size": len(b"1 2\n")},
+        {"path": "cma/restart_0/parameters.json2", "name": "parameters.json2",
+         "size": len(b"{}")},
+        {"path": "cma/restart_1/x0.q", "name": "x0.q", "size": len(b"q")},
+        {"path": "cma/version.txt", "name": "version.txt", "size": len(b"3.3\n")},
     ]
     assert [f["path"] for f in files] == sorted(f["path"] for f in files)
     json.dumps(D.run_detail(repo / "runs", CMA_RID), allow_nan=False)

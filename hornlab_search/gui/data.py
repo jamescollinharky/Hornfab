@@ -557,6 +557,25 @@ def run_detail(runs: Path, run_id: str) -> dict:
         out["restarts"] = clean(run_json["restarts"])
     if isinstance(run_json.get("qd"), dict):
         out["qd"] = clean(run_json["qd"])
+    # CMA covariance snapshot (search/cma.py::covariance_summary) — additive; absent on old runs.
+    if isinstance(run_json.get("cma_covariance"), dict):
+        out["cma_covariance"] = clean(run_json["cma_covariance"])
+        # Live pin recommendations from the same pure rules as ``hornlab-search pin-plan``.
+        try:
+            from hornlab_search.search.pin_from_cma import recommend_pins
+            best = _read_json(d / "best.json") or {}
+            best_params = best.get("params") if isinstance(best.get("params"), dict) else {}
+            plan = recommend_pins(
+                run_json["cma_covariance"],
+                best_params=best_params,
+                sens=out.get("sens") or [],
+                bounds=cfg.get("bounds") if isinstance(cfg.get("bounds"), dict) else {},
+            )
+            out["pin_plan"] = clean(plan)
+        except Exception:  # noqa: BLE001 - never fail run_detail on a diagnostic
+            pass
+    if isinstance(run_json.get("pin_plan"), dict) and "pin_plan" not in out:
+        out["pin_plan"] = clean(run_json["pin_plan"])
     # G1 badge strip: the same solve-group fingerprint /api/compare exposes, always present for a
     # run (backend + solved-grid identity; every other key only when non-default).
     out["solve_group"] = _solve_group_fingerprint(d)

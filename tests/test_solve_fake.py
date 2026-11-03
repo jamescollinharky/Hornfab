@@ -77,10 +77,16 @@ def test_fake_backend_solve_returns_a_valid_response(cfg):
 def test_real_adapters_satisfy_the_protocol():
     assert isinstance(beat_mod.BeatBackend("cuda"), Backend)
     assert isinstance(beat_mod.BeatBackend("cpu"), Backend)
+    assert isinstance(beat_mod.BeatBackend("metal"), Backend)
     from hornlab_search.solve.bempp import BemppBackend
     assert isinstance(BemppBackend(), Backend)
     assert beat_mod.BeatBackend("cuda").name == "beat_cuda"
     assert beat_mod.BeatBackend("cpu").name == "beat_cpu"
+    assert beat_mod.BeatBackend("metal").name == "beat_metal"
+    assert beat_mod.BeatBackend("metal").track_vram is False
+    assert beat_mod.BeatBackend("metal").per_frequency_calls is True
+    with pytest.raises(ValueError, match="cuda_fused"):
+        beat_mod.BeatBackend("metal", cuda_fused=True)
 
 
 # ------------------------------------------------------------------ a fake hornlab_beat_bem

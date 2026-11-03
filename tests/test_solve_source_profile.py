@@ -23,7 +23,7 @@ import sys
 import pytest
 import yaml
 
-from conftest import EXAMPLES
+from conftest import EXAMPLES, requires_beat
 from hornlab_search.config import ConfigError, load_config, solve_spec
 from hornlab_search.solve.beat import BeatBackend
 from hornlab_search.types import MeshResult, SolveSpec
@@ -178,6 +178,7 @@ def test_make_config_forwards_the_library_field_name_when_set(monkeypatch):
     assert _FakeBeat.SolveConfig.seen[ALPHA_KEY] == -0.4
 
 
+@requires_beat
 def test_fused_path_reaches_the_real_library_config(monkeypatch):
     """Construct the REAL library SolveConfig on the fused CUDA path (no GPU, no solve): the
     library's validation only needs the backend string and the inherited env var."""

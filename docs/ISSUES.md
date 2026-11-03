@@ -18,6 +18,72 @@ Updated in the same commit as `docs/CONTINUITY.md` on every push. Last synced 20
 | #11 | [Q] Collin: OK with the hornlab-search name? | closed (keep until objection) | user | `docs/plan/README.md` |
 | #13 | hardening-review: Stage A surrogate gate-integrity and real-data traps | **open — fixes MERGED to main** (FF to 6d1d5c7 on 2026-10-22 carries e0b9b61 + 11304f6 + cloud reconciliation 152a829 verbatim; oracle pre-merge sign-off; full offline suite 533 PASS at the merged tree; awaiting owner close) | phase-2 (cloud) | `docs/plan/11_PHASE2_SURROGATE.md` §4 |
 
+Local-only, added 2026-11-01 (**PR #17 merged to main + the hardware-neutrality rule; no GitHub issue state changed**):
+- **Merged (squash):** Metal backend + Mac path, Hansen budget hint, staged A/B harness, CMA
+  covariance dump, CMA pin plan, restart controls (jamescollinharky's PR #17). Two merge defects
+  fixed before landing: spawn-free `auto_backend()` (Apple Silicon -> Metal, else `None`, never a
+  silent CPU swap) and `--backend` applied before config validation (drops `cuda_fused` off CUDA,
+  so `config_sha` / snapshot / `run.json.backend` agree).
+- **Rule (owner):** results and data must not depend on the solver backend. No silent backend
+  swaps; the backend is explicit, hashed into `SolveSpec`, and recorded in `run.json.backend` and
+  dataset provenance; cross-backend pooling only after a measured parity check.
+- **Owed:** (a) GPU-box staged A/B (`tools/run_staged_search.py --out runs/staged_ab_2026-10-31 --both`,
+  paste COMPARE.md); (b) Mac<->4060 Metal parity <=0.2 dB before Metal enters campaign/compare;
+  (c) a cross-backend parity test (one design, CPU vs CUDA vs Metal) behind a marker, plus a
+  comparison view that surfaces the backend; (d) move `gui.data.sensitivity` out of the GUI layer
+  (`pin-plan` imports it).
+- **CI:** unblocked main's red Actions run (a collection error from `tests/test_gui_preview_shape.py`
+  when the optional mesher is absent under `--no-deps`). The suite now skips in that environment
+  instead of aborting the whole run; a changed mesher pin still fails.
+- **CI (part 2):** the remaining ~24 red tests were un-gated optional-dep users (`hornlab_mesher`,
+  `hornlab_beat_bem`, `ribs`) plus 3 Windows-only assertions. All gated/fixed; a missing dep now
+  skips instead of failing. Re-enable real coverage for those areas by installing the pins in CI
+  (or a second job) when that is worth the runner cost.
+
+Local-only, added 2026-10-31 (**staged search A/B protocol + chaining harness; no GitHub issue state changed**):
+- **Landed:** `examples/typologies/staged_ab_2026-10-31/` (joint 60 vs A/B/C 20+20+20 on crease__core_law),
+  `tools/run_staged_search.py`, `tests/test_tools_staged_search.py`, evidence
+  `docs/evidence/STAGED_SEARCH_AB_2026-10-31.md`.
+- **Synthetic coupled A/B:** staged+polish wins (J 0.100 vs joint 0.302) — keep the tools/ harness;
+  do **not** change the default `search` path until the GPU acoustic A/B runs on the CUDA box.
+- **Owed (GPU box):** `python tools/run_staged_search.py --out runs/staged_ab_2026-10-31 --both`
+  (one job at a time); paste COMPARE.md numbers into the evidence doc.
+- **Still higher leverage than staging:** objective term normalisation (smoke night); diagonal
+  balloon scoring for crease knobs.
+
+Local-only, added 2026-10-31 evening (**CMA pin-plan; no GitHub issue state changed**):
+- **Landed:** `pin_from_cma` + `hornlab-search pin-plan` + run-detail Pin plan table
+  (recommend-only; optional `--write-config`).
+
+Local-only, added 2026-10-31 evening (**CMA covariance dump; no GitHub issue state changed**):
+- **Landed:** `cma_covariance` on `run.json` + run-detail GUI table (σ√Cᵢᵢ shares + eigen loadings).
+  Complements Spearman sensitivity; not a Sobol acoustic decomposition.
+
+Local-only, added 2026-10-31 evening (**staged knob schedule in COMPARE/plan; no GitHub issue state changed**):
+- **Landed:** `plan.json` / `COMPARE.md` list active vs fixed knobs per staged arm.
+
+Local-only, added 2026-10-31 evening (**Mac .venv + Metal; no GitHub issue state changed**):
+- **Landed:** project `.venv` + `[dev,crosscheck]`; Metal ready; dry-runs + budget-5 Metal
+  smokes (tractrix / freeform_hv / conical); GUI auto `--backend beat_metal` when CUDA absent.
+- **Still owed:** Mac↔4060 A/B (<0.2 dB) before mixing Metal into CUDA datasets; doctor still
+  FAILs the CUDA checks on Mac (expected).
+
+Local-only, added 2026-10-31 evening (**Hansen budget heuristic; no GitHub issue state changed**):
+- **Landed:** `search/budget_heuristic.py` + `GET /api/budget-hint`; Launch/Compose suggest
+  `max(150, 100·N)` (Hansen) with IPOP/BIPOP restart inflation; GUI cap 5000.
+
+Local-only, added 2026-10-31 evening (**Launch IPOP/BIPOP controls; no GitHub issue state changed**):
+- **Landed:** Launch + Compose search forms — CMA restarts mode (config default / off / IPOP / BIPOP)
+  + max; CLI `--restarts-mode` / `--restarts-max`; `jobs.py` allow-list. Run detail still shows
+  the schedule read-only after the fact.
+
+Local-only, added 2026-10-31 later (**beat_metal + Mac staged path; no GitHub issue state changed**):
+- **Landed:** `beat_metal` in `BACKEND_NAMES` / `BeatBackend` / CLI; staged harness `--backend auto`
+  → Metal on Darwin (clears `cuda_fused`). See staged README + evidence doc Mac section.
+- **Owed on this Mac:** create `.venv` with Python 3.12/3.13, `pip install -e ".[dev,crosscheck]"`,
+  `doctor`, then the staged A/B; Mac↔4060 A/B (<0.2 dB) before mixing Metal into CUDA datasets
+  (P3 remainder).
+
 Local-only items (no GitHub issue): band edges capped by the measured dof cap (confirmed, user "keep lowered edges"); task 07 test-17 disk-latency flake risk (do not loosen); residual CP-7 risks (epw=6 above 2.5 kHz unmeasured; f11 unexercised; DI-vs-beamwidth not a regression test) — see `NOTES_FOR_SENIOR.md` task-09 block and CONTINUITY 06:20.
 
 Local-only, 2026-11-01 (**hardware decision study; no GitHub issue state changed**):
@@ -55,6 +121,14 @@ Local-only, not pushed 2026-10-31 (**MEH wave 1 merging into `meh/integration`; 
   8,296-8,485 dofs, over any cap that keeps VRAM safe. `cuda_fused` refuses multi-channel by design. Resolving the band
   needs a >= 12 GB card. Stopped by owner direction.
 - **DONE (docs accuracy):** the M8 evidence doc and its INDEX line now state the full result set (links 1/2/5/6 PASS, link 4 FAIL, link 3 PARTIAL, screens verified, blocks); no number changed.
+- **CI FIXED (PR #18):** `tests/test_solve_worker_restart.py` now gates `hornlab_beat_bem` with
+  `pytest.importorskip`, so CI (which does not install the solver) skips it instead of failing at collection.
+- **MERGED main (2026-11-01):** `origin/main` merged into `meh/integration`; 16 MEH-touched files normalized to
+  LF (main is LF), logs unioned so no entry from either side was dropped, and main's Metal/backend-override work
+  coexists with the MEH config changes. PR conflicts resolved.
+- **PACKAGED (handoff, PR #18):** `docs/meh/MEH_QUICKSTART.md`, `tools/meh/run_screen.ps1`, and
+  `docs/evidence/meh_2026-11-01/` (both verified winners + README). No production code changed.
+
 - **PR OPENED (wrap-up):** `meh/integration` -> `main`, carrying the full MEH implementation, the owner-approved
   pin bump, both verified screens, the six-line readiness proof, and the hardware audit/hand-off. Final offline
   suite green at the tip (exit 0). Open items inside the PR body: 8 GB band ceiling, M9 blocked, step 3 blocked,
@@ -596,3 +670,5 @@ Local-only, added 2026-10-27 (no GitHub issue state changed): objective v4 imple
 Local-only, added 2026-10-27 (evening; no GitHub issue state changed): resume night done; ripple/ridge night running (10 jobs); P12 sim-vs-real investigation opened (loading weight 0 on most briefs, ideal source, generous cov) with the SIM_VS_REAL research report; pushed to main.
 
 Local-only, added 2026-11-02 (no GitHub issue state changed): GUI frequency-axis band + scoring-floor f0 marker landed with offline pins (37 tests pass across the three GUI test files); MEH CPU-vs-CUDA benchmark scripts committed under tools/bench/.
+Local-only, added 2026-11-02 (no GitHub issue state changed): **P11 HF data sync DONE** - public dataset repo <https://huggingface.co/datasets/chingadalleva/hornlab-search-data> (7 tar shards, 10.77 GB packed: text/solve/dataset; meshes not uploaded), `tools/hf_sync.py` corrected to `hf upload`. Owner-machine finding: Xet uploads stall here; upload with `HF_HUB_DISABLE_XET=1`. Still open in P11: merge to `main` (which branches) and the two v4 re-runs.
+

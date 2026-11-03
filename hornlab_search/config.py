@@ -768,7 +768,7 @@ def _validate_source_motion(value, backend: str, where: str) -> str:
     if value != "normal" and not str(backend).startswith("beat_"):
         raise ConfigError(
             f"{where}: source_motion={value!r} is only implemented for the beat backends "
-            f"(beat_cuda/beat_cpu), got backend {backend!r}")
+            f"(beat_cuda/beat_metal/beat_cpu), got backend {backend!r}")
     return value
 
 
@@ -870,16 +870,30 @@ def _build(cls, section: dict, where: str, optional: tuple[str, ...] = ()):
     return cls(**kwargs)
 
 
-def load_config(path, *, brief=None, cma_seed: int | None = None) -> Config:
+def load_config(path, *, brief=None, cma_seed: int | None = None,
+                backend: str | None = None) -> Config:
     """YAML -> Config. ``brief`` (a path; or the config's own ``brief:`` key) replaces the target
     and weights with the brief's and records the brief in ``raw`` so ``config_sha`` covers it.
     ``cma_seed`` overrides ``search.seed``. A ``generator:`` block makes this a typology config
-    (family must be FREEFORM; ``seed_params``/``bounds`` then hold generator knobs)."""
+    (family must be FREEFORM; ``seed_params``/``bounds`` then hold generator knobs).
+
+    ``backend`` applies a CLI ``--backend`` override BEFORE validation and records it in ``raw`` so
+    ``config_sha`` and the run snapshot match what actually ran. ``cuda_fused`` is CUDA-only and is
+    dropped from ``raw`` when the effective backend is not ``beat_cuda`` (it must not survive an
+    override and then trip ``solve.beat._assert_cuda_fused_path`` at the first solve)."""
     path = Path(path)
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ConfigError(f"{path}: top level must be a mapping")
     where = path.name
+
+    if backend is not None:
+        solve_raw = raw.get("solve")
+        if not isinstance(solve_raw, dict):
+            raise ConfigError(f"{where}: solve block must be a mapping to apply the backend override")
+        solve_raw["backend"] = str(backend)
+        if str(solve_raw["backend"]) != "beat_cuda":
+            solve_raw.pop("cuda_fused", None)
 
     brief_path = brief if brief is not None else raw.get("brief_file")
     brief_d = None

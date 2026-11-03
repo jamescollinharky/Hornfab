@@ -139,21 +139,50 @@ def test_user_brief_saved_validated_and_shipped_protected(repo):
 # ------------------------------------------------------------------ launcher
 
 
-def test_argv_allow_list(repo):
+def test_argv_allow_list(repo, monkeypatch):
+    monkeypatch.setattr(J, "auto_backend", lambda: None)  # pin CUDA-host behaviour in CI
     jm = J.JobManager(repo, repo / "runs")
     argv, gpu = jm.build_argv("campaign", {"brief": "examples/briefs/axi_90x90_1in.yaml",
                                            "families": "conical, exponential", "tier": "dry-run"})
     assert argv == ["campaign", "--brief", "examples/briefs/axi_90x90_1in.yaml", "--families",
                     "conical,exponential", "--tier", "dry-run"] and gpu is False
     assert jm.build_argv("search", {"config": "examples/cfg.yaml", "budget": 40})[1] is True
+    argv, _ = jm.build_argv("search", {"config": "examples/cfg.yaml", "budget": 40})
+    assert "--backend" not in argv
+    argv, _ = jm.build_argv("search", {"config": "examples/cfg.yaml", "budget": 40,
+                                       "backend": "beat_metal"})
+    assert argv[argv.index("--backend") + 1] == "beat_metal"
+    argv, _ = jm.build_argv("search", {"config": "examples/cfg.yaml", "budget": 40,
+                                       "restarts_mode": "ipop", "restarts_max": 3})
+    assert argv[argv.index("--restarts-mode") + 1] == "ipop"
+    assert argv[argv.index("--restarts-max") + 1] == "3"
+    argv, _ = jm.build_argv("search", {"config": "examples/cfg.yaml", "restarts_mode": "bipop"})
+    assert argv[argv.index("--restarts-max") + 1] == "2"          # UI/CLI default when max blank
+    argv, _ = jm.build_argv("search", {"config": "examples/cfg.yaml", "restarts_mode": "off"})
+    assert "--restarts-mode" in argv and argv[argv.index("--restarts-mode") + 1] == "off"
+    assert "--restarts-max" not in argv
     for kind, a in [("search", {"config": "../outside.yaml"}),
                     ("search", {"config": "examples/cfg.yaml", "budget": 0}),
+                    ("search", {"config": "examples/cfg.yaml", "backend": "cuda"}),
+                    ("search", {"config": "examples/cfg.yaml", "restarts_mode": "ipopx"}),
+                    ("search", {"config": "examples/cfg.yaml", "restarts_mode": "off",
+                                "restarts_max": 2}),
+                    ("search", {"config": "examples/cfg.yaml", "restarts_max": 2}),
                     ("campaign", {"brief": "examples/briefs/axi_90x90_1in.yaml", "families": "a;rm -rf"}),
                     ("campaign", {"brief": "examples/briefs/axi_90x90_1in.yaml", "families": "a", "tier": "x"}),
                     ("export-step", {"run": "nope", "top": 1}),
                     ("shell", {})]:
         with pytest.raises(J.JobError):
             jm.build_argv(kind, a)
+
+
+def test_auto_backend_injected_when_no_cuda(repo, monkeypatch):
+    monkeypatch.setattr(J, "auto_backend", lambda: "beat_metal")
+    jm = J.JobManager(repo, repo / "runs")
+    argv, _ = jm.build_argv("search", {"config": "examples/cfg.yaml", "budget": 40})
+    assert argv[argv.index("--backend") + 1] == "beat_metal"
+    argv, _ = jm.build_argv("run", {"config": "examples/cfg.yaml"})
+    assert argv[argv.index("--backend") + 1] == "beat_metal"
 
 
 def test_gpu_job_refused_while_lock_held(repo):
@@ -239,6 +268,15 @@ def test_api_runs_and_errors(server):
     assert _req(server + f"/api/run/{RID}")[0] == 200
     assert _req(server + "/api/run/bad-id")[0] == 400
     assert _req(server + "/api/nothing")[0] == 404
+
+
+def test_api_budget_hint_hansen(server):
+    code, body = _req(server + "/api/budget-hint?n_knobs=5&restarts_mode=off")
+    assert code == 200 and body["recommended"] == 500 and body["hansen_100n"] == 500
+    code, body = _req(server + "/api/budget-hint?n_knobs=5&restarts_mode=ipop&restarts_max=15")
+    assert code == 200 and body["recommended"] == 800
+    assert _req(server + "/api/budget-hint")[0] == 400
+    assert _req(server + "/api/budget-hint?n_knobs=x")[0] == 400
 
 
 def test_server_rejects_foreign_host_and_non_json_posts(server):
