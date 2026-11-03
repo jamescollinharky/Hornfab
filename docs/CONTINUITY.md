@@ -2,6 +2,12 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-03 - UMAP HTML: full param table + safer embed
+
+- **Fix:** `UMAP_SOLANA_OSSE_MEH_SF_CMA1000.html` now embeds data as `window.UMAP_DATA`,
+  populates all 18 searchable knobs in the dropdown, and shows a side panel with every
+  physical + unit value on point click (not just the active color channel).
+
 ## 2026-11-03 - Interactive UMAP of solana_osse_meh_sf CMA-1000 (GitHub-viewable)
 
 - **Artifact:** `docs/evidence/UMAP_SOLANA_OSSE_MEH_SF_CMA1000.html` (+ `.md`) — standalone

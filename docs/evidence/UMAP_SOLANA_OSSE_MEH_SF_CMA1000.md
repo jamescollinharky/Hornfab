@@ -2,7 +2,8 @@
 
 Interactive UMAP of OK designs from run `20261103T053926Z-screen-8b32a1`
 (`solana_osse_meh_sf` budget 1000). Color by **parameter unit-box quartiles**
-or **total J** thresholds; click a point for values.
+or **total J** thresholds. The parameter dropdown lists all **18 searchable**
+knobs; click a point to show the full physical + unit param table for that design.
 
 ## Open the map
 

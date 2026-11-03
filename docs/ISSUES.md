@@ -18,6 +18,9 @@ Updated in the same commit as `docs/CONTINUITY.md` on every push. Last synced 20
 | #11 | [Q] Collin: OK with the hornlab-search name? | closed (keep until objection) | user | `docs/plan/README.md` |
 | #13 | hardening-review: Stage A surrogate gate-integrity and real-data traps | **open — fixes MERGED to main** (FF to 6d1d5c7 on 2026-10-22 carries e0b9b61 + 11304f6 + cloud reconciliation 152a829 verbatim; oracle pre-merge sign-off; full offline suite 533 PASS at the merged tree; awaiting owner close) | phase-2 (cloud) | `docs/plan/11_PHASE2_SURROGATE.md` §4 |
 
+Local-only, updated 2026-11-03 (**UMAP HTML param panel fix; no GitHub issue state changed**):
+- **Fix:** UMAP evidence HTML embeds `window.UMAP_DATA`, 18-knob dropdown, full param table on click.
+
 Local-only, updated 2026-11-03 (**UMAP evidence HTML for CMA-1000; no GitHub issue state changed**):
 - **Landed:** `docs/evidence/UMAP_SOLANA_OSSE_MEH_SF_CMA1000.{html,md}` — interactive param/J-colored UMAP of run `20261103T053926Z-screen-8b32a1` (htmlpreview link in the md).
 
