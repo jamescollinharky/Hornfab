@@ -1,0 +1,149 @@
+# budget 1000 CMA of solana_osse_meh_sf (2026-11-03).
+# solana_osse_meh_sf: Ath OSSE + SF/gcurve + morph WITH MEH midports (tag 10).
+#
+# PURPOSE: Solana waveguide estimate in MEH context — native Ath surface (SF +
+# morph) plus L1 flush mid-port patches from the mesher fork mid_ports, scored
+# under the solana_meh brief (CD tag 2 + mid tag 10, multi-source + network).
+#
+# Seed = Advanced/athscript.cfg (same as solana_osse_sf_search) + mid_ports
+# tblr recipe aligned with solana_meh CAD (4 x 6NDL38). Flat CAD MEH remains
+# the fallback (solana_meh*); this is the Ath+SF+MEH path.
+#
+# Mesher pin: jamescollinharky/hornlab-waveguide-mesher @ 55da4f4 (osse-midports).
+# Dossier: docs/research/typologies/SOLANA_WAVEGUIDE_2026-11-01.md
+# Research: ATH_SUPERFORMULA_AND_GSA; MEH contracts C3/C9 (flush exits only).
+name: solana_osse_meh_sf_cma1000
+family: OSSE
+brief_file: ../briefs/solana_meh_1in_90x90.yaml
+
+seed_params:
+  r0_mm: 12.7
+  a0_deg: 0.0
+  L_mm: 140.0
+  a_deg: 45.0
+  n: 4.948341464
+  s: 1.165551339
+  q: 0.8006927592
+  k: 2.326215907
+  exponent: 2.0
+  aspect_ratio: 1.0
+  s1: 0.0
+  s2: 0.0
+  gcurve_type: 2
+  gcurve_width_mm: 64.69512195
+  gcurve_aspect_ratio: 1.0
+  gcurve_dist: 0.2776715106
+  gcurve_rot_deg: 0.0
+  gcurve_sf_a: 1.375827392
+  gcurve_sf_b: 1.437994835
+  gcurve_sf_m1: 8.0
+  gcurve_sf_m2: 8.0
+  gcurve_sf_n1: 2.152737774
+  gcurve_sf_n2: 5.245161223
+  gcurve_sf_n3: 3.01531782
+  morph_target: 1
+  morph_width_mm: 353.0
+  morph_height_mm: 353.0
+  morph_corner_mm: 14.0
+  morph_exponent: 4.0
+  morph_rate: 3.693701077
+  morph_fixed: 0.3455704293
+  morph_allow_shrinkage: 1
+  mid_ports:
+    walls: tblr
+    z_frac: 0.35
+    across_frac: 0.4
+    port_along_mm: 25.0
+    slide_mm: 30.0
+
+bounds:
+  r0_mm: {lo: 12.7, hi: 12.7, search: false}
+  a0_deg: {lo: 0.0, hi: 0.0, search: false}
+  exponent: {lo: 2.0, hi: 2.0, search: false}
+  aspect_ratio: {lo: 1.0, hi: 1.0, search: false}
+  s1: {lo: 0.0, hi: 0.0, search: false}
+  s2: {lo: 0.0, hi: 0.0, search: false}
+  gcurve_type: {lo: 2, hi: 2, search: false}
+  gcurve_aspect_ratio: {lo: 1.0, hi: 1.0, search: false}
+  gcurve_rot_deg: {lo: 0.0, hi: 0.0, search: false}
+  gcurve_sf_m1: {lo: 8.0, hi: 8.0, search: false}
+  gcurve_sf_m2: {lo: 8.0, hi: 8.0, search: false}
+  morph_target: {lo: 1, hi: 1, search: false}
+  morph_exponent: {lo: 4.0, hi: 4.0, search: false}
+  morph_allow_shrinkage: {lo: 1, hi: 1, search: false}
+  # mid_ports stays in seed_params only (dict; not a CMA scalar). Fixed tblr recipe.
+
+  L_mm: {lo: 120.0, hi: 180.0}
+  a_deg: {lo: 35.0, hi: 55.0}
+  n: {lo: 3.5, hi: 7.0}
+  s: {lo: 0.6, hi: 1.4}
+  q: {lo: 0.7, hi: 0.95}
+  k: {lo: 1.5, hi: 3.0}
+
+  gcurve_width_mm: {lo: 40.0, hi: 90.0}
+  gcurve_dist: {lo: 0.15, hi: 0.45}
+  gcurve_sf_a: {lo: 0.9, hi: 1.8}
+  gcurve_sf_b: {lo: 0.9, hi: 1.8}
+  gcurve_sf_n1: {lo: 1.2, hi: 4.0}
+  gcurve_sf_n2: {lo: 2.0, hi: 10.0}
+  gcurve_sf_n3: {lo: 1.5, hi: 6.0}
+
+  morph_width_mm: {lo: 300.0, hi: 420.0}
+  morph_height_mm: {lo: 300.0, hi: 420.0}
+  morph_corner_mm: {lo: 6.0, hi: 30.0}
+  morph_rate: {lo: 2.0, hi: 6.0}
+  morph_fixed: {lo: 0.0, hi: 0.5}
+
+target:
+  coverage_h_deg: 90.0
+  coverage_v_deg: 90.0
+  band_lo_hz: 100.0
+  band_hi_hz: 12000.0
+  di_target_db: null
+  di_slope_target: 0.0
+  z_min: 0.0
+  f0_hz: 700.0
+weights:
+  cov: 1.0
+  rip: 0.5
+  di: 0.0
+  dislope: 0.3
+  flat: 0.0
+  load: 0.0
+  distd: 0.5
+  diag: 0.0
+  lw_resid: 0.5
+  notch: 1.0
+  xo_lob: 1.0
+  headroom: 1.0
+objective:
+  version: 5
+  cov_narrow_ratio: 2.0
+  cov_below_f0: one_sided
+mesh:
+  epw: 3.8
+  quadrants: "1"
+  dof_cap_screen: 14000
+  dof_cap_verify: 16000
+  dof_cap_final: 16000
+  dof_per_triangle: 0.51
+solve:
+  backend: beat_cuda
+  # cuda_fused refuses multi-channel MEH solves
+  distance_m: 2.0
+  angle_count: 73
+  balloon: true
+  balloon_points_screen: 512
+  balloon_points_verify: 1024
+  gmres_tol: 1.0e-05
+  timeout_s: 1800
+  worker_restart_every: 10
+search:
+  algorithm: cma
+  sigma0: 0.2
+  seed: 1234
+  budget: 1000
+  popsize: null
+  tolfun: 0.001
+description: >
+  Same as solana_osse_meh_sf but search.budget 1000. Brief solana_meh_1in_90x90.

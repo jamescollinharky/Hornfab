@@ -9,6 +9,7 @@ import { init3d } from "./view3d.js";
 import { viewEvolution } from "./evolution.js";
 import { viewBalloon } from "./balloon.js";
 import { viewTypologySandbox } from "./sandbox.js";
+import { viewUmap } from "./umap.js";
 
 // ── XSS helper ─────────────────────────────────────────────────────
 function esc(s) {
@@ -79,6 +80,7 @@ const ROUTES = [
   { re: /^#\/run\/(.+)\/3d$/,           fn: m => viewRun3D(m[1]) },
   { re: /^#\/run\/(.+)\/balloon$/,      fn: m => viewBalloon(ROOT, m[1]) },     // W6: BL-style balloon
   { re: /^#\/run\/(.+)\/evolution$/,    fn: m => viewEvolution(ROOT, m[1]) },
+  { re: /^#\/run\/(.+)\/umap$/,         fn: m => viewUmap(ROOT, m[1]) },
   { re: /^#\/run\/(.+)\/archive$/,      fn: m => viewRunArchive(m[1]) },
   { re: /^#\/run\/(.+)$/,               fn: m => viewRunDetail(m[1]) },
   { re: /^#\/compare$/,                 fn: () => viewCompare() },
@@ -1943,6 +1945,7 @@ async function viewRunDetail(id) {
       <!-- Actions -->
       <div class="btn-row">
         <a class="btn primary" href="#/run/${esc(id)}/evolution">▶ Evolution time-lapse</a>
+        <a class="btn" href="#/run/${esc(id)}/umap" title="2-D cloud of OK designs in the searchable unit box (UMAP if installed, else PCA); color by param quartiles or total J">◎ Design cloud</a>
         <a class="btn" href="#/run/${esc(id)}/archive" title="Quality-diversity atlas: objective per descriptor bin (CMA-ME runs only)">QD atlas</a>
         <a class="btn" href="#/run/${esc(id)}/balloon" title="W6 Balloon: the stored directivity balloon in 3D — shape + colour = SPL, white isobar rings, radar slicer, freq × angle slice">◉ Balloon 3D</a>
         <a class="btn" href="#/run/${esc(id)}/3d">3D view</a>

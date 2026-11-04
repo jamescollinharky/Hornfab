@@ -60,6 +60,9 @@ class App:
             return D.evolution(self.runs, parts[1])
         if head == "evolution" and len(parts) == 3 and parts[2] == "frames3d":
             return D.evolution_frames3d(self.runs, parts[1])
+        if head == "umap" and len(parts) == 2:
+            method = (q.get("method") or ["auto"])[0]
+            return D.run_umap_cloud(self.runs, parts[1], method=method)
         if head == "archive" and len(parts) == 2:
             return D.run_archive(self.runs, parts[1])
         if head == "typologies":

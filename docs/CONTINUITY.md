@@ -2,6 +2,20 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-03 - PR: feat/solana-sawmod-wg-bench → main
+
+- Opening PR for Solana/SAWMOD bench path, mid_ports mesher pin, RunPod cloud tooling,
+  UMAP evidence HTML, and GUI **Design cloud** (`/api/umap`, `#/run/<id>/umap`).
+- Keele CMA-100 synced locally (`20261104T021231Z-screen-4347f5`, best J=13.17); sample
+  PCA on 34 OK designs (not shipped as a code change).
+
+## 2026-11-03 - Design cloud (UMAP/PCA) in the local GUI
+
+- **Landed:** `GET /api/umap/<run>?method=auto|umap|pca` (`data.run_umap_cloud`), run page
+  button **Design cloud** → `#/run/<id>/umap` (`static/umap.js`). PCA always (numpy); UMAP when
+  `umap-learn` is installed. Color by param unit quartiles or total J; click for full param table.
+  Cached in `runs/.gui_cache/`. Offline `tests/test_gui_umap.py`.
+
 ## 2026-11-03 - UMAP HTML: full param table + safer embed
 
 - **Fix:** `UMAP_SOLANA_OSSE_MEH_SF_CMA1000.html` now embeds data as `window.UMAP_DATA`,

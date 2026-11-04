@@ -1808,6 +1808,206 @@ def evolution_frames3d(runs: Path, run_id: str, max_tris_per_frame: int = M3D_DE
     return data
 
 
+#: Bump when the UMAP/PCA cloud payload shape or subsample rule changes.
+UMAP_VERSION = 1
+UMAP_MAX_PLOT = 500
+UMAP_UNIT_EDGES = (0.0, 0.25, 0.5, 0.75, 1.0001)
+UMAP_BAND_LABELS = ("u < 0.25", "0.25–0.5", "0.5–0.75", "u ≥ 0.75")
+
+
+def _pca_2d(U: np.ndarray) -> np.ndarray:
+    """Unit-box designs → 2-D PCA scores (numpy only; no sklearn)."""
+    Uc = U - U.mean(axis=0, keepdims=True)
+    # economy SVD; columns of Vh are principal axes
+    _, _, vh = np.linalg.svd(Uc, full_matrices=False)
+    k = min(2, vh.shape[0])
+    Z = Uc @ vh[:k].T
+    if k == 1:
+        Z = np.column_stack([Z[:, 0], np.zeros(len(Z))])
+    return Z
+
+
+def _umap_2d(U: np.ndarray) -> np.ndarray | None:
+    """Optional UMAP embed; ``None`` when umap-learn is not installed."""
+    try:
+        import umap  # type: ignore
+    except ImportError:
+        return None
+    n = int(U.shape[0])
+    if n < 5:
+        return None
+    n_neighbors = int(min(15, max(2, n - 1)))
+    reducer = umap.UMAP(
+        n_neighbors=n_neighbors,
+        min_dist=0.1,
+        n_components=2,
+        metric="euclidean",
+        random_state=42,
+        n_jobs=1,
+    )
+    return np.asarray(reducer.fit_transform(U), dtype=float)
+
+
+def run_umap_cloud(runs: Path, run_id: str, method: str = "auto") -> dict:
+    """2-D embedding of OK designs in the searchable unit box for the run explorer.
+
+    Coordinates are **not** acoustic loadings: PCA (always) or UMAP when ``umap-learn`` is
+    installed and ``method`` is ``auto``/``umap``. Cached under ``runs/.gui_cache/`` on the
+    ``search.ndjson`` stamp + resolved method, same discipline as ``evolution()``.
+    """
+    want = str(method or "auto").strip().lower()
+    if want not in ("auto", "umap", "pca"):
+        raise ValueError(f"method must be auto|umap|pca, got {method!r}")
+    d = _resolve_run(runs, run_id)
+    nd = d / "search.ndjson"
+    st = nd.stat()
+    rows = read_ndjson(nd)
+    cfg = _config(d)
+    bounds = {
+        k: b for k, b in (cfg.get("bounds") or {}).items()
+        if isinstance(b, dict) and "lo" in b and "hi" in b and b.get("search", True)
+    }
+    keys = list(bounds.keys())
+    if not keys:
+        return clean({
+            "run_id": run_id,
+            "name": cfg.get("name"),
+            "method": "pca",
+            "method_requested": want,
+            "keys": [],
+            "bounds": {},
+            "n_ok": 0,
+            "n_plot": 0,
+            "points": [],
+            "note": "no searchable bounds on this run",
+            "unit_edges": list(UMAP_UNIT_EDGES),
+            "band_labels": list(UMAP_BAND_LABELS),
+        })
+
+    U_list: list[np.ndarray] = []
+    J_list: list[float] = []
+    hash_list: list[str | None] = []
+    phys_list: list[dict[str, float]] = []
+    lo = np.array([float(bounds[k]["lo"]) for k in keys], dtype=float)
+    hi = np.array([float(bounds[k]["hi"]) for k in keys], dtype=float)
+    span = np.where(hi > lo, hi - lo, 1.0)
+    for r in rows:
+        if not r.get("ok") or r.get("objective") is None:
+            continue
+        kv = _knob_values(r)
+        if not all(k in kv for k in keys):
+            continue
+        x = np.array([float(kv[k]) for k in keys], dtype=float)
+        u = np.clip((x - lo) / span, 0.0, 1.0)
+        U_list.append(u)
+        J_list.append(float(r["objective"]))
+        hash_list.append(r.get("design_hash"))
+        phys_list.append({k: float(kv[k]) for k in keys})
+
+    n_ok = len(U_list)
+    if n_ok == 0:
+        return clean({
+            "run_id": run_id,
+            "name": cfg.get("name"),
+            "method": "pca",
+            "method_requested": want,
+            "keys": keys,
+            "bounds": {k: {"lo": float(bounds[k]["lo"]), "hi": float(bounds[k]["hi"])} for k in keys},
+            "n_ok": 0,
+            "n_plot": 0,
+            "points": [],
+            "note": "no OK evaluations with searchable params yet",
+            "unit_edges": list(UMAP_UNIT_EDGES),
+            "band_labels": list(UMAP_BAND_LABELS),
+        })
+
+    # Resolve method before cache so a machine without umap does not miss a PCA cache hit.
+    umap_available = False
+    try:
+        import umap as _umap_probe  # noqa: F401
+        umap_available = True
+    except ImportError:
+        umap_available = False
+    note = None
+    if want == "pca" or not umap_available:
+        resolved = "pca"
+        if want == "umap" and not umap_available:
+            note = "umap-learn not installed; using PCA"
+        elif want == "auto" and not umap_available:
+            note = "PCA (install umap-learn for UMAP)"
+    else:
+        resolved = "umap"
+
+    cache = runs / ".gui_cache" / f"umap_{run_id}_{resolved}.json"
+    old = _read_json(cache) if cache.exists() else None
+    key = [UMAP_VERSION, st.st_size, int(st.st_mtime), resolved, want]
+    if old and old.get("key") == key and isinstance(old.get("data"), dict):
+        return old["data"]
+
+    U = np.asarray(U_list, dtype=float)
+    J = np.asarray(J_list, dtype=float)
+    if resolved == "umap":
+        Z = _umap_2d(U)
+        if Z is None:
+            note = "UMAP failed (too few points?); fell back to PCA"
+            resolved = "pca"
+            Z = _pca_2d(U)
+        elif want == "auto":
+            note = "UMAP (umap-learn)"
+    else:
+        Z = _pca_2d(U)
+    order = np.argsort(J)
+    keep: set[int] = set(int(i) for i in order[:40])
+    stride = max(1, len(order) // max(1, UMAP_MAX_PLOT - 50))
+    for i in range(0, len(order), stride):
+        keep.add(int(order[i]))
+    keep.update(int(i) for i in order[-10:])
+    idx = sorted(keep)
+    best_i = int(order[0])
+    points = []
+    for i in idx:
+        u = {keys[j]: round(float(U[i, j]), 4) for j in range(len(keys))}
+        params = {k: round(float(phys_list[i][k]), 6) for k in keys}
+        points.append({
+            "x": round(float(Z[i, 0]), 4),
+            "y": round(float(Z[i, 1]), 4),
+            "J": round(float(J[i]), 4),
+            "b": int(i == best_i),
+            "hash": hash_list[i],
+            "u": u,
+            "params": params,
+        })
+
+    data = clean({
+        "run_id": run_id,
+        "name": cfg.get("name"),
+        "method": resolved,
+        "method_requested": want,
+        "keys": keys,
+        "bounds": {k: {"lo": float(bounds[k]["lo"]), "hi": float(bounds[k]["hi"])} for k in keys},
+        "n_ok": n_ok,
+        "n_plot": len(points),
+        "j_min": float(J.min()),
+        "j_max": float(J.max()),
+        "default_key": keys[0],
+        "points": points,
+        "unit_edges": list(UMAP_UNIT_EDGES),
+        "band_labels": list(UMAP_BAND_LABELS),
+        "note": note,
+    })
+    # Re-key cache on the method that actually ran (auto→pca fallback shares pca cache).
+    cache = runs / ".gui_cache" / f"umap_{run_id}_{resolved}.json"
+    key = [UMAP_VERSION, st.st_size, int(st.st_mtime), resolved, want]
+    try:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        tmp = cache.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"key": key, "data": data}), encoding="utf-8")
+        tmp.replace(cache)
+    except OSError:
+        pass
+    return data
+
+
 # ---------------------------------------------------------------------------- sandbox preview
 
 #: Coarse density the 2026-10-25 sandbox spike measured for the formula/native preview route
