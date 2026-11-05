@@ -233,18 +233,19 @@ def _require(section: dict, key: str, where: str):
 # ------------------------------------------------------------------ WP1/WP4 blocks (senior pass)
 
 def _validate_objective_block(block, where: str) -> dict:
-    """Brief/config ``objective: {version: 2|3|4|5}`` (WP1; v3 = the 2026-10-25 owner-approved
+    """Brief/config ``objective: {version: 2|3|4|5|6}`` (WP1; v3 = the 2026-10-25 owner-approved
     K-law-masked coverage scoring - see objective/scalar_v2.py objective_v3; v4 = the 2026-10-27
     tolerance-normalised objective, whose block also carries ``tolerances`` and the optional
     ``cov_narrow_ratio`` / ``cov_below_f0`` / ``diag_reference`` - see objective/scalar_v4.py;
     v5 = the MEH system objective, whose block is v4's shape with the C11 defaults when
-    ``tolerances`` is omitted - see objective/scalar_meh.py). Default 1. Unknown keys are refused
-    so a YAML typo is never silent."""
+    ``tolerances`` is omitted - see objective/scalar_meh.py;
+    v6 = loading_smooth for Le Cléac'h / rollback - see objective/scalar_v6.py). Default 1.
+    Unknown keys are refused so a YAML typo is never silent."""
     if not isinstance(block, dict):
         raise ConfigError(f"{where}: objective must be a mapping")
     v = block.get("version", 1)
-    if isinstance(v, bool) or not isinstance(v, int) or v not in (1, 2, 3, 4, 5):
-        raise ConfigError(f"{where}: objective.version must be 1, 2, 3, 4 or 5, got {v!r}")
+    if isinstance(v, bool) or not isinstance(v, int) or v not in (1, 2, 3, 4, 5, 6):
+        raise ConfigError(f"{where}: objective.version must be 1, 2, 3, 4, 5 or 6, got {v!r}")
     if v == 4:
         from .objective.scalar_v4 import V4Params
         try:
@@ -255,6 +256,12 @@ def _validate_objective_block(block, where: str) -> dict:
         from .objective.scalar_meh import MehParams
         try:
             return MehParams.from_block(block).to_block()
+        except ValueError as e:
+            raise ConfigError(f"{where}: {e}") from None
+    if v == 6:
+        from .objective.scalar_v6 import V6Params
+        try:
+            return V6Params.from_block(block).to_block()
         except ValueError as e:
             raise ConfigError(f"{where}: {e}") from None
     unknown = set(block) - {"version"}
@@ -1042,6 +1049,16 @@ def load_config(path, *, brief=None, cma_seed: int | None = None,
         if worst > 0.5 * PENALTY_INVALID:
             raise ConfigError(
                 f"{where}: objective v5 tolerances/weights let an all-unmeasurable valid design score "
+                f"J = {worst:.0f}, above half the refusal penalty ({PENALTY_INVALID:g}); raise the "
+                f"tolerances or lower the weights so refused designs always rank below valid ones")
+    elif objective_version == 6:
+        from .objective.scalar_v6 import V6Params, worst_valid_v6_j
+        from .objective.terms import PENALTY_INVALID
+        objective_params = _validate_objective_block(raw["objective"], where)
+        worst = worst_valid_v6_j(V6Params.from_block(objective_params), raw.get("weights"))
+        if worst > 0.5 * PENALTY_INVALID:
+            raise ConfigError(
+                f"{where}: objective v6 tolerances/weights let an all-unmeasurable valid design score "
                 f"J = {worst:.0f}, above half the refusal penalty ({PENALTY_INVALID:g}); raise the "
                 f"tolerances or lower the weights so refused designs always rank below valid ones")
 

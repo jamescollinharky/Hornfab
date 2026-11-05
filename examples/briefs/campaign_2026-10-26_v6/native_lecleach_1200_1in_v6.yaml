@@ -1,0 +1,53 @@
+# OBJECTIVE v6 (2026-11-05): loading_smooth for the native Le Cleac'h control cell.
+# Dossier: docs/research/typologies/LECLEACH_OBJECTIVE_V6_2026-11-05.md
+# The v4 brief (native_lecleach_1200_1in_v4) is untouched — J is NOT comparable across versions.
+#
+# CLASS B: fc = loading corner (here f0 1200 Hz); pattern scored only above pattern_beta*fc;
+# di_slope_target +5 dB/decade (natural rise); load_near + z_smooth dominate.
+name: native_lecleach_1200_1in_v6
+description: (objective v6 loading_smooth) Native Le Cleac'h control 90x90, f0 1200 Hz, 1-inch
+driver:
+  exit_radius_mm: 12.7
+  exit_angle_deg: 4.0
+envelope:
+  max_mouth_w_mm: 400.0
+  max_mouth_h_mm: 400.0
+  max_depth_mm: 260.0
+symmetry: hv
+source:
+  cap: auto
+target:
+  coverage_h_deg: 90.0
+  coverage_v_deg: 90.0
+  band_lo_hz: 300.0
+  band_hi_hz: 8000.0
+  di_target_db: null
+  di_slope_target: 5.0          # natural rise (~+4..+6); NOT a CD flat-DI target
+  z_min: 0.7
+  f0_hz: 1200.0                 # loading corner for this family
+weights:
+  load_near: 1.0
+  z_smooth: 0.8
+  flat: 0.5
+  rip: 0.8
+  cov_pat: 0.3
+  di_rise: 0.4
+  distd: 0.3
+  diag: 0.0
+grid:
+  verify_points_per_octave: 6
+objective:
+  version: 6
+  load_alpha: 1.0
+  pattern_beta: 1.6
+  cov_narrow_ratio: 1.0
+  cov_below_f0: one_sided
+  tolerances:
+    load_near: 0.25
+    z_smooth: 0.15
+    flat: 1.5
+    rip: 2.0
+    cov_pat: 15.0
+    di_rise: 4.0
+    distd: 2.0
+    diag: 4.5

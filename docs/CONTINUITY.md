@@ -2,6 +2,25 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-05 - Objective v6 (loading_smooth) for Le Cléac'h / rollback
+
+- **Why:** CD-shaped v4 remapping (`dislope:0`, `load:0.5`) kept the wrong math — band-mean
+  `load` was ~2 % of J; coverage still punished natural narrowing. JMLC fc is a loading corner;
+  pattern control starts ~1.5–1.8×fc; DI rises smoothly (ETF 2010 / LANE_A).
+- **Landed:** `objective.version: 6` — `load_near`, `z_smooth`, `cov_pat`, `di_rise`, plus
+  `flat`/`rip`/`distd`/`diag`. Module `hornlab_search/objective/scalar_v6.py`; dispatch in
+  `versions.py` / `evaluate.py` / `config.py`. Design `g_fc_hz` stamped into metrics for
+  `f_pattern`. Dossier `docs/research/typologies/LECLEACH_OBJECTIVE_V6_2026-11-05.md`.
+- **Briefs:** `examples/briefs/campaign_2026-10-26_v6/native_lecleach_1200_1in_v6.yaml`,
+  `examples/briefs/lecleach_rollback_1in_v6.yaml` (v4 briefs untouched; J not comparable).
+- **Tests:** `tests/test_objective_v6.py` — 14 offline pins green (constant-Z load_near≈0,
+  sinusoidal z_smooth↑, DI+5 dB/dec → di_rise≈0, cov errors below f_pattern ignored).
+- **Re-score [measured]:** campaign `docs/data/campaign_v4_2026-10-27/evals.csv` lecleach cells
+  (no `z_throat` in export → `load_near`/`z_smooth` take NAN fill). On available pattern terms,
+  seed shares are live — e.g. `native__lecleach_rollback` n=209: di_rise raw≈9.1 (slope ~8 vs
+  target +5), cov_pat raw≈7.0; `b1t__lecleach_iwata_ar` n=198: di_rise 36 % / cov_pat 6 % of
+  pattern-term J. Full load-dominance check needs records with throat impedance.
+
 ## 2026-11-03 - PR: feat/solana-sawmod-wg-bench → main
 
 - Opening PR for Solana/SAWMOD bench path, mid_ports mesher pin, RunPod cloud tooling,

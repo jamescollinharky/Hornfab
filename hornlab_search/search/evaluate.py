@@ -47,6 +47,7 @@ from ..objective import PENALTY_FAILED, PENALTY_INVALID, objective, penalty_resu
 from ..objective.scalar_meh import MehParams, objective_meh
 from ..objective.scalar_v2 import objective_v2, objective_v3
 from ..objective.scalar_v4 import V4Params, objective_v4
+from ..objective.scalar_v6 import V6Params, objective_v6
 from ..objective.versions import SUPPORTED_OBJECTIVE_VERSIONS
 from ..solve import cache as solve_cache
 from ..solve.base import stack_responses, theta_deg_from_dirs
@@ -220,6 +221,8 @@ def make_context(cfg, store=None, *, cache_dir=None, lib_shas=None,
         # M6 bridge (M7 owns the MEH context): the v5 block carries the four C11 tolerances that
         # V4Params does not know, so it is validated with its own params class.
         ctx.objective_params = MehParams.from_block(block)
+    elif ctx.objective_version == 6:
+        ctx.objective_params = V6Params.from_block(block)
     else:
         ctx.objective_params = V4Params.from_block(block)
     ctx.provenance = record_provenance(cfg)
@@ -863,17 +866,54 @@ def _score_v5(metrics, resp, target, weights, params, meh_ctx=None):
     return objective_meh(metrics, resp, True, target, weights, params, meh_ctx)
 
 
+def _score_v6(metrics, resp, target, weights, params):
+    if params is None:
+        raise ValueError("objective_version 6 needs the brief's objective block (tolerances); the "
+                         "evaluation context carries none")
+    if not isinstance(params, V6Params):
+        params = V6Params.from_block(params)
+    return objective_v6(metrics, resp, True, target, weights, params)
+
+
 _OBJECTIVE_SCORERS = {
     1: lambda metrics, resp, target, weights, params: objective(metrics, True, target, weights),
     2: lambda metrics, resp, target, weights, params: objective_v2(metrics, resp, True, target, weights),
     3: lambda metrics, resp, target, weights, params: objective_v3(metrics, resp, True, target, weights),
     4: _score_v4,
     5: _score_v5,
+    6: _score_v6,
 }
 if tuple(sorted(_OBJECTIVE_SCORERS)) != SUPPORTED_OBJECTIVE_VERSIONS:
     raise RuntimeError(
         "objective dispatch table and objective.versions.SUPPORTED_OBJECTIVE_VERSIONS "
         f"disagree: {tuple(sorted(_OBJECTIVE_SCORERS))} vs {SUPPORTED_OBJECTIVE_VERSIONS}")
+
+
+def _stamp_design_fc_hz(metrics: MetricSet, design: Design | None) -> None:
+    """Copy the design's area-law cutoff into ``metrics.scalars['fc_hz']`` for objective v6.
+
+    Looks at common knob names used by Le Cléac'h / rows generators. Absent = leave scalars alone
+    so ``resolve_fc_hz`` falls back to the brief's ``f0_hz``.
+    """
+    if metrics is None or design is None:
+        return
+    params = getattr(design, "params", None) or {}
+    for key in ("g_fc_hz", "fc_hz", "h_fc_hz"):
+        v = params.get(key)
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and float(v) > 0.0:
+            metrics.scalars["fc_hz"] = float(v)
+            return
+        # Nested plane blocks (FREEFORM typology knobs).
+        if isinstance(v, dict):
+            continue
+    for plane in ("profileH", "profileV", "h", "v"):
+        block = params.get(plane)
+        if isinstance(block, dict):
+            for key in ("fc_hz", "g_fc_hz"):
+                v = block.get(key)
+                if isinstance(v, (int, float)) and not isinstance(v, bool) and float(v) > 0.0:
+                    metrics.scalars["fc_hz"] = float(v)
+                    return
 
 
 def _score(metrics, resp, ctx, meh_ctx=None) -> tuple[float, dict]:
@@ -883,10 +923,11 @@ def _score(metrics, resp, ctx, meh_ctx=None) -> tuple[float, dict]:
     owner-approved): freq-weighted cov + the below-f0 (K-law design frequency) mask on
     cov/dislope - see ``objective_v3`` in scalar_v2.py. Version 4 (2026-10-27): tolerance-normalised
     terms plus asymmetric coverage, DI std and the diagonal term - ``objective/scalar_v4.py``.
+    Version 6 (2026-11-05): loading_smooth for Le Cléac'h / rollback - ``objective/scalar_v6.py``.
 
     The allowed versions are the single source of truth in ``objective/versions.py``, shared with
     the dataset record validator. An unsupported version fails loudly instead of silently scoring
-    v1, so a future v4 cannot half-land."""
+    v1, so a future version cannot half-land."""
     scorer = _OBJECTIVE_SCORERS.get(int(ctx.objective_version))
     if scorer is None:
         raise ValueError(f"objective_version {ctx.objective_version!r} is not one of "
@@ -1001,6 +1042,7 @@ def _compute_band_split(design, cfg, mode, mspec, sspec, design_dir, backend, ct
     mismatch = _throat_angle_mismatch_deg(design, getattr(cfg, "brief", None))
     if mismatch is not None:
         st["metrics"].scalars["throat_angle_mismatch_deg"] = mismatch
+    _stamp_design_fc_hz(st["metrics"], design)
     st["J"], st["terms"] = _score(st["metrics"], st["resp"], ctx)
 
 
@@ -1316,6 +1358,7 @@ def _compute(design, cfg, mode, mspec, sspec, key, design_dir, backend, ctx, st)
     if mismatch is not None:
         # WP2 report-only scalar (senior pass 2026-10-24): never weighted, never fails a solve.
         st["metrics"].scalars["throat_angle_mismatch_deg"] = mismatch
+    _stamp_design_fc_hz(st["metrics"], design)
     st["J"], st["terms"] = _score(st["metrics"], st["resp"], ctx)
     if root is not None and not st["from_disk"]:
         try:

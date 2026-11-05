@@ -1,0 +1,48 @@
+# Objective v6 (loading_smooth) twin of lecleach_rollback_1in.
+# Dossier: docs/research/typologies/LECLEACH_OBJECTIVE_V6_2026-11-05.md
+# f0 is the loading corner; pattern scored above ~1.6*fc; di_slope_target +5 dB/decade.
+name: lecleach_rollback_1in_v6
+description: Le Cleac'h rollback 90x60, 1-inch, scored with objective v6 loading_smooth
+driver:
+  exit_radius_mm: 12.7
+  exit_angle_deg: 5.0
+envelope:
+  max_mouth_w_mm: 520.0
+  max_mouth_h_mm: 420.0
+  max_depth_mm: 260.0
+symmetry: hv
+source:
+  cap: auto
+target:
+  coverage_h_deg: 90.0
+  coverage_v_deg: 60.0
+  band_lo_hz: 700.0
+  band_hi_hz: 5500.0
+  di_target_db: null
+  di_slope_target: 5.0
+  z_min: 0.7
+  f0_hz: 1200.0
+weights:
+  load_near: 1.0
+  z_smooth: 0.8
+  flat: 0.5
+  rip: 0.8
+  cov_pat: 0.3
+  di_rise: 0.4
+  distd: 0.3
+  diag: 0.0
+objective:
+  version: 6
+  load_alpha: 1.0
+  pattern_beta: 1.6
+  cov_narrow_ratio: 1.0
+  cov_below_f0: one_sided
+  tolerances:
+    load_near: 0.25
+    z_smooth: 0.15
+    flat: 1.5
+    rip: 2.0
+    cov_pat: 15.0
+    di_rise: 4.0
+    distd: 2.0
+    diag: 4.5

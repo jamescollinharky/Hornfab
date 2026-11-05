@@ -12,7 +12,9 @@ from __future__ import annotations
 #: coverage, DI standard deviation and the diagonal term (2026-10-27, ``objective/scalar_v4.py``).
 #: 5 = the MEH system objective: v4's pattern terms on the synthesised response plus lw_resid,
 #: notch, xo_lob and headroom (2026-10-30, ``objective/scalar_meh.py``).
-SUPPORTED_OBJECTIVE_VERSIONS: tuple[int, ...] = (1, 2, 3, 4, 5)
+#: 6 = loading_smooth (Le Cléac'h / rollback class): load_near, z_smooth, cov_pat, di_rise
+#: (2026-11-05, ``objective/scalar_v6.py``).
+SUPPORTED_OBJECTIVE_VERSIONS: tuple[int, ...] = (1, 2, 3, 4, 5, 6)
 
 
 def is_supported_objective_version(value: object) -> bool:
