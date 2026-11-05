@@ -2,6 +2,14 @@
 
 Newest entry first. Every push updates this file and `docs/ISSUES.md` in the same commit.
 
+## 2026-11-05 - CI fix: native param catalog for mid_ports + Solana/SAWMOD natives
+
+- PR #22 CI failed `tests/test_param_catalog.py` (4): `OSSE.mid_ports` missing from
+  `NATIVE_KNOBS`; hard-coded "10 natives" broke after Solana/SAWMOD YAMLs; CAD-only
+  `sawmod_meh_lr2` / `solana_meh*` empty-knob gate; stale `param-catalog.v1.json`.
+- **Fix:** document `mid_ports` (not_a_knob); core-native floor + CAD-only set in the
+  test; regenerate catalog / PARAMETERS / TYPOLOGIES.
+
 ## 2026-11-05 - Objective v6 (loading_smooth) for Le Cléac'h / rollback
 
 - **Why:** CD-shaped v4 remapping (`dislope:0`, `load:0.5`) kept the wrong math — band-mean

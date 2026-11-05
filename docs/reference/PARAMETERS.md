@@ -5893,3 +5893,3196 @@ Domains covered: `generators`, `rows`, `native`
 - **Code:** `hornlab_search.design.generators.profiles.perturb_increments`
 - **Doc:** `docs/research/senior_pass_2026-10-24/04_IMPLEMENTATION_PLAN.md` § ## WP3. Shape-only perturbations and graded infeasibility
 - **Flags:** —
+
+### sawmod_control_osse — OSSE / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/sawmod_control_osse.yaml`
+- **Brief:** `examples/briefs/sawmod_control_1in_100x70.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `L_mm` — OSSE main-section length (mm)
+
+- **Summary:** Length of the main OSSE section; extension and slot may add to the total.
+- **Detail:** The mesher requires it positive. In the total-length mode the section is carved differently, so the same value can mean a different total span.
+- **Formula:** `z_main in [0, L]`
+- **Physical effect:** Sets the depth of the flared OSSE body.
+- **Context:** `native:osse`
+- **Default:** 115.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.L_mm`)
+- **Search bounds:** 115.0 .. 115.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.L_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.L_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `a0_deg` — Throat half-angle (deg)
+
+- **Summary:** Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian.
+- **Detail:** OSSE carries it in the 2 k r0 z tan(a0) term of the base radius, and R-OSSE carries the same term in its throat-radius curve. ICW uses it as the initial tangent angle theta0 of the curvature integral. It should match the driver exit angle when the wall is meant to continue the driver.
+- **Formula:** `OSSE/R-OSSE: c2 = 2 k r0 tan(a0); ICW: theta(0) = theta0`
+- **Physical effect:** Sets the initial expansion slope at the driver exit.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.a0_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.a0_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a0_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `a_deg` — Native coverage half-angle (deg)
+
+- **Summary:** OSSE/R-OSSE coverage half-angle in the mesher's own convention.
+- **Detail:** The mesher measures the angle as a half-angle from the axis. The target block in a config measures the total included angle, which is the value the objective scores. Read the block before comparing the two.
+- **Formula:** `OSSE: base(z) carries tan(a); R-OSSE: c3 = tan(a)^2`
+- **Physical effect:** Sets how wide the wall opens relative to the axis.
+- **Context:** `native`
+- **Default:** 50.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.a_deg`)
+- **Search bounds:** 50.0 .. 50.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.a_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `aspect_ratio` — Cross-section aspect ratio
+
+- **Summary:** Width-to-height scaling of the cross-section relative to the meridian radius.
+- **Detail:** The mesher scales the horizontal and vertical half-widths of the outline by this ratio. A value of one gives a circular section; larger values widen it. It does not change either meridian and is not a coverage angle.
+- **Formula:** `b = a * aspect_ratio in the ellipse/superellipse station`
+- **Physical effect:** Widens or narrows the cross-section without changing the wall profiles.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.aspect_ratio`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ## 7. Geometric / cross-section model (all formulas)
+- **Flags:** —
+
+#### `exponent` — Native cross-section exponent
+
+- **Summary:** Superellipse exponent of the outline; the documented default is disputed.
+- **Detail:** The research basis states a default of 2.0 (a plain ellipse); the shipped generator default for the same idea is 4.0 (registry.DEFAULT_KNOBS). This entry records both claims and does not choose between them. It is not the generator's mouth_exponent key, although the two describe the same idea.
+- **Formula:** `( |cos(phi)/a|^e + |sin(phi)/b|^e )^(-1/e)`
+- **Physical effect:** Squares off or rounds the cross-section outline.
+- **Context:** `native`
+- **Default:** 2.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.exponent`)
+- **Search bounds:** 2.0 .. 2.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.exponent`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.exponent`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/plan/12_RESEARCH_BASIS.md` § ## 4. The geometry we would have written already exists
+- **Flags:** doc_mismatch, overloaded
+
+#### `k` — OS-SE shape factor
+
+- **Summary:** Blends the OS-SE base radius between its radius term and its tangent term.
+- **Detail:** The base radius carries (k r0) and r0(1-k) terms plus the tangent-driven z term, so k reshapes the wall between the throat and the far-field angle. R-OSSE reuses it in its throat-radius curve. It is dimensionless and is not a termination control.
+- **Formula:** `base(z) = sqrt((k r0)^2 + 2 k r0 z tan(a0) + z^2 tan(a)^2) + r0(1-k)`
+- **Physical effect:** Reshapes the wall between the throat and the far-field angle.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.k`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.k`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.k`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `morph_allow_shrinkage` — Allow morph shrinkage
+
+- **Summary:** 0/1 flag that lets a morph target be smaller than the current mouth extent.
+- **Detail:** Without the flag the mesher refuses a target that would shrink the outline. With it the morph may pull the section inward. Ath calls the same control Morph.AllowShrinkage.
+- **Formula:** not stated
+- **Physical effect:** Allows or refuses a mouth outline that narrows toward the target.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_allow_shrinkage`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_allow_shrinkage`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_allow_shrinkage`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_corner_mm` — Morph corner radius (mm)
+
+- **Summary:** Corner radius of a rounded-rectangle morph target.
+- **Detail:** The radius is clamped against the target half-dimensions at run time. It is used only for a rounded-rectangle target. Ath calls the same control Morph.CornerRadius.
+- **Formula:** not stated
+- **Physical effect:** Rounds the corners of a rectangular morphed mouth.
+- **Context:** `native`
+- **Default:** 12.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_corner_mm`)
+- **Search bounds:** 12.0 .. 12.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_corner_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_corner_mm`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_exponent` — Morph superellipse exponent
+
+- **Summary:** Superellipse exponent of a morph target 3 outline.
+- **Detail:** The mesher reads this only when morph_target is 3, then clamps it into the superellipse range before building the target outline. Ath's guide documents only targets 0-2; target 3 is a mesher extension.
+- **Formula:** not stated
+- **Physical effect:** Squares off or rounds a superellipse morphed mouth.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_exponent`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_exponent`)
+- **Hard limits:** lo=2.0, hi=16.0, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_exponent`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_radius_at_angle`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_fixed` — Morph fixed part
+
+- **Summary:** Axial fraction where the morph begins; zero starts at the throat.
+- **Detail:** The fixed part holds the base section before the morph factor becomes nonzero. The remaining axial fraction is remapped before the rate power is applied. Ath calls the same control Morph.FixedPart.
+- **Formula:** `factor = 0 for t <= morph_fixed`
+- **Physical effect:** Delays the start of the outline change along the horn.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_fixed`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_fixed`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_fixed`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_height_mm` — Morph target height (mm)
+
+- **Summary:** Full target height of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero height lets the mesher infer the target height from the mouth extent. The value is a full height, not a half-height. Ath calls the same control Morph.TargetHeight.
+- **Formula:** not stated
+- **Physical effect:** Sets how tall the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 196.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_height_mm`)
+- **Search bounds:** 196.0 .. 196.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_height_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_height_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_rate` — Morph rate
+
+- **Summary:** Power-law rate of the morph blend from the fixed part to the mouth.
+- **Detail:** The factor is the remapped axial fraction raised to this power, so larger values delay the morph until nearer the mouth. It only matters when a morph target is active. Ath calls the same control Morph.Rate.
+- **Formula:** `factor = clamp((t - morph_fixed)/(1 - morph_fixed), 0, 1)^morph_rate`
+- **Physical effect:** Moves how quickly the outline changes along the horn.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_rate`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_rate`)
+- **Hard limits:** lo=0.0, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_rate`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_target` — Morph target shape
+
+- **Summary:** Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse.
+- **Detail:** families.py names the off, rectangle, circle and superellipse codes; the superellipse target reads morph_exponent. The morph factor begins at morph_fixed and follows the rate power toward the mouth. Ath's own vocabulary calls this control Morph.TargetShape.
+- **Formula:** `r(t, phi) = r_base(t, phi) + factor * (r_target(phi) - r_mouth_base(phi))`
+- **Physical effect:** Blends the round section into a target outline toward the mouth.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_target`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_target`)
+- **Hard limits:** lo=0, hi=3, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_target`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_shape`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_width_mm` — Morph target width (mm)
+
+- **Summary:** Full target width of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero width lets the mesher infer the target width from the mouth extent. The value is a full width, not a half-width. Ath calls the same control Morph.TargetWidth.
+- **Formula:** not stated
+- **Physical effect:** Sets how wide the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 280.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.morph_width_mm`)
+- **Search bounds:** 280.0 .. 280.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.morph_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `n` — OSSE termination exponent
+
+- **Summary:** Superellipse exponent of the OSSE termination term.
+- **Detail:** It is read only while the termination amplitude is nonzero. The biradial generator meaning of n is not asserted in this context.
+- **Formula:** `term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Sharpens or softens the OSSE mouth roll.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.n`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.n`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.n`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `q` — OSSE termination saturation
+
+- **Summary:** Superellipse saturation of the OSSE termination; positive while s is nonzero.
+- **Detail:** It sets how quickly the termination term saturates with axial station. The mesher requires it positive whenever the termination amplitude s is nonzero.
+- **Formula:** `z_norm = q z/L; term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Changes how abruptly the terminated outline reaches its corner.
+- **Context:** `native:osse`
+- **Default:** 0.996 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.q`)
+- **Search bounds:** 0.996 .. 0.996 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.q`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.q`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `r0_mm` — Throat radius (mm)
+
+- **Summary:** Throat radius every native family starts its meridian from.
+- **Detail:** OSSE and R-OSSE use it as the base radius of the wall law, ICW uses it as the throat integration constant, and a FREEFORM meridian starts at its own first anchor radius. It is shared by the H and V planes unless a per-azimuth expression is used. The mesher rejects a non-positive value.
+- **Formula:** `OSSE: base(z) starts at k r0 + r0(1-k); ICW: r(s) = r0 + S integral sin(theta)`
+- **Physical effect:** Sets the throat area and the driver exit the wall must match.
+- **Context:** `native`
+- **Default:** 12.7 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.r0_mm`)
+- **Search bounds:** 12.7 .. 12.7 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.r0_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.r0_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s` — Termination amplitude
+
+- **Summary:** OSSE superellipse termination amplitude; zero leaves the plain OS wall.
+- **Detail:** A nonzero amplitude turns on the superellipse termination and makes n and q active. A zero value leaves the plain OS wall. R-OSSE has no s; its rollback comes from the blended curves and tmax, not from this key.
+- **Formula:** `term is added to base only while s != 0`
+- **Physical effect:** Rolls the OSSE mouth toward a superellipse outline.
+- **Context:** `native`
+- **Default:** 0.8 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.s`)
+- **Search bounds:** 0.8 .. 0.8 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.s`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s1` — Throat stretch coefficient 1 (mm/deg)
+
+- **Summary:** Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping.
+- **Detail:** The mesher maps the main-section axial coordinate through x + s1 * degrees(atan(s2 x)), so s1 multiplies an angle and is not dimensionless. It is active only with a nonzero s2. The coefficients must be plain finite numbers, and various rotation/slot combinations are refused.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Redistributes axial stations toward or away from the throat.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.s1`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.s1`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s1`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+#### `s2` — Throat stretch coefficient 2 (1/mm)
+
+- **Summary:** Inverse-length scale inside the throat-stretch arctangent.
+- **Detail:** s2 sets how quickly the arctangent saturates with axial distance, so its unit is inverse length. It is active only together with a nonzero s1. The mesher refuses a slot combined with throat stretch and refuses per-azimuth forms of either coefficient.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Moves where the stretched region becomes nearly linear again.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_control_osse.yaml` `seed_params.s2`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_control_osse.yaml` `bounds.s2`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s2`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+### sawmod_knuckle_osse — OSSE / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/sawmod_knuckle_osse.yaml`
+- **Brief:** `examples/briefs/sawmod_control_1in_100x70.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `L_mm` — OSSE main-section length (mm)
+
+- **Summary:** Length of the main OSSE section; extension and slot may add to the total.
+- **Detail:** The mesher requires it positive. In the total-length mode the section is carved differently, so the same value can mean a different total span.
+- **Formula:** `z_main in [0, L]`
+- **Physical effect:** Sets the depth of the flared OSSE body.
+- **Context:** `native:osse`
+- **Default:** 115.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.L_mm`)
+- **Search bounds:** 115.0 .. 115.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.L_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.L_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `a0_deg` — Throat half-angle (deg)
+
+- **Summary:** Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian.
+- **Detail:** OSSE carries it in the 2 k r0 z tan(a0) term of the base radius, and R-OSSE carries the same term in its throat-radius curve. ICW uses it as the initial tangent angle theta0 of the curvature integral. It should match the driver exit angle when the wall is meant to continue the driver.
+- **Formula:** `OSSE/R-OSSE: c2 = 2 k r0 tan(a0); ICW: theta(0) = theta0`
+- **Physical effect:** Sets the initial expansion slope at the driver exit.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.a0_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.a0_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a0_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `a_deg` — Native coverage half-angle (deg)
+
+- **Summary:** OSSE/R-OSSE coverage half-angle in the mesher's own convention.
+- **Detail:** The mesher measures the angle as a half-angle from the axis. The target block in a config measures the total included angle, which is the value the objective scores. Read the block before comparing the two.
+- **Formula:** `OSSE: base(z) carries tan(a); R-OSSE: c3 = tan(a)^2`
+- **Physical effect:** Sets how wide the wall opens relative to the axis.
+- **Context:** `native`
+- **Default:** 50.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.a_deg`)
+- **Search bounds:** 50.0 .. 50.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.a_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `aspect_ratio` — Cross-section aspect ratio
+
+- **Summary:** Width-to-height scaling of the cross-section relative to the meridian radius.
+- **Detail:** The mesher scales the horizontal and vertical half-widths of the outline by this ratio. A value of one gives a circular section; larger values widen it. It does not change either meridian and is not a coverage angle.
+- **Formula:** `b = a * aspect_ratio in the ellipse/superellipse station`
+- **Physical effect:** Widens or narrows the cross-section without changing the wall profiles.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.aspect_ratio`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ## 7. Geometric / cross-section model (all formulas)
+- **Flags:** —
+
+#### `exponent` — Native cross-section exponent
+
+- **Summary:** Superellipse exponent of the outline; the documented default is disputed.
+- **Detail:** The research basis states a default of 2.0 (a plain ellipse); the shipped generator default for the same idea is 4.0 (registry.DEFAULT_KNOBS). This entry records both claims and does not choose between them. It is not the generator's mouth_exponent key, although the two describe the same idea.
+- **Formula:** `( |cos(phi)/a|^e + |sin(phi)/b|^e )^(-1/e)`
+- **Physical effect:** Squares off or rounds the cross-section outline.
+- **Context:** `native`
+- **Default:** 2.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.exponent`)
+- **Search bounds:** 2.0 .. 2.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.exponent`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.exponent`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/plan/12_RESEARCH_BASIS.md` § ## 4. The geometry we would have written already exists
+- **Flags:** doc_mismatch, overloaded
+
+#### `gcurve_aspect_ratio` — Guiding-curve aspect ratio
+
+- **Summary:** Width-to-height ratio of the guiding-curve target section.
+- **Detail:** The mesher requires the ratio positive. It changes the shape the coverage angle is solved to meet, not the coverage angle directly. A value of one gives a target as tall as it is wide.
+- **Formula:** `b = a * gcurve_aspect_ratio`
+- **Physical effect:** Stretches the target outline vertically or horizontally.
+- **Context:** `native`
+- **Default:** 0.7 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_aspect_ratio`)
+- **Search bounds:** 0.7 .. 0.7 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_aspect_ratio`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_dist` — Guiding-curve distance
+
+- **Summary:** Axial placement of the guiding curve, as a fraction of the main length.
+- **Detail:** The mesher treats a value in the unit interval as a fraction of the main OSSE length and a larger value as an absolute axial station. The achieved radius is therefore a mouth radius only when the target sits at the mouth. The mesher reference notes that its schema default places the target mid-horn.
+- **Formula:** `z_target = gcurve_dist * L_main (when in the unit interval)`
+- **Physical effect:** Moves the axial station where the target outline is matched.
+- **Context:** `native`
+- **Default:** 0.465 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_dist`)
+- **Search bounds:** 0.465 .. 0.465 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_dist`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_dist`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_rot_deg` — Guiding-curve rotation (deg)
+
+- **Summary:** In-plane rotation of the guiding-curve target outline.
+- **Detail:** The mesher subtracts the rotation from the azimuth before evaluating the target, so the target axes can differ from the H/V axes. It does not rotate the horn itself. It is used only with an active guiding curve.
+- **Formula:** `phi_target = phi - radians(gcurve_rot_deg)`
+- **Physical effect:** Rotates the target outline around the horn axis.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_rot_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_rot_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_rot_deg`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_a` — Superformula scale a
+
+- **Summary:** First Gielis superformula scale, dividing the cosine term.
+- **Detail:** It is the a in the cosine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Sets the horizontal scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_sf_a`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_sf_a`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_a`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_b` — Superformula scale b
+
+- **Summary:** Second Gielis superformula scale, dividing the sine term.
+- **Detail:** It is the b in the sine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Sets the vertical scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.2 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_sf_b`)
+- **Search bounds:** 1.2 .. 1.2 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_sf_b`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_b`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m1` — Superformula frequency m1
+
+- **Summary:** Angular frequency of the cosine term in the superformula target.
+- **Detail:** It sets the rotational symmetry of the cosine term. The mesher divides it by four inside the angle, following the Gielis form. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `cos(m1 phi/4)`
+- **Physical effect:** Sets the target outline's azimuthal symmetry.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_sf_m1`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_sf_m1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m2` — Superformula frequency m2
+
+- **Summary:** Angular frequency of the sine term; the mesher falls back to m1 when absent.
+- **Detail:** It allows the sine term's symmetry to differ from the cosine term's. When the field is absent the mesher uses m1 for both. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `sin(m2 phi/4)`
+- **Physical effect:** Sets a second azimuthal symmetry for the target outline.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_sf_m2`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_sf_m2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n1` — Superformula exponent n1
+
+- **Summary:** Overall superformula exponent applied to the summed terms.
+- **Detail:** It is the n1 in the reciprocal power of the Gielis formula. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `r_norm = (t1 + t2)^(-1/n1)`
+- **Physical effect:** Changes how the two superformula terms combine.
+- **Context:** `native`
+- **Default:** 1.5 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_sf_n1`)
+- **Search bounds:** 1.5 .. 1.5 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_sf_n1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n2` — Superformula exponent n2
+
+- **Summary:** Exponent on the cosine term of the superformula target.
+- **Detail:** It controls how quickly the cosine term contributes away from its axis. It is not the superellipse exponent of the cross-section. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Shapes the target outline near the horizontal axis.
+- **Context:** `native`
+- **Default:** 14.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_sf_n2`)
+- **Search bounds:** 14.0 .. 14.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_sf_n2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n3` — Superformula exponent n3
+
+- **Summary:** Exponent on the sine term of the superformula target.
+- **Detail:** It controls how quickly the sine term contributes away from its axis. It works together with n2 and the two frequencies. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Shapes the target outline near the vertical axis.
+- **Context:** `native`
+- **Default:** 2.5 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_sf_n3`)
+- **Search bounds:** 2.5 .. 2.5 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_sf_n3`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n3`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_type` — Guiding-curve type
+
+- **Summary:** Guiding-curve target: off, superellipse, or superformula.
+- **Detail:** When active, the mesher solves the OSSE coverage angle so the wall meets the target outline at the guiding-curve distance. Type one is a superellipse and type two a superformula; zero disables the solve. It is an OSSE-only mechanism in families.py.
+- **Formula:** `solve a such that r_OSSE(z_g, phi) = r_target(phi)`
+- **Physical effect:** Makes the coverage angle follow a target cross-section instead of one value.
+- **Context:** `native`
+- **Default:** 2 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_type`)
+- **Search bounds:** 2 .. 2 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_type`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_type`)
+- **Code:** `hornlab_mesher.profile_morph._solve_coverage_from_guiding_curve`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_width_mm` — Guiding-curve width (mm)
+
+- **Summary:** Full width of the guiding-curve target section.
+- **Detail:** A non-positive width disables the guiding curve even when a type is set. It is a target width, not the horn's own mouth width. It works with the target aspect ratio and rotation.
+- **Formula:** `a = gcurve_width_mm / 2`
+- **Physical effect:** Scales the outline the coverage angle is solved to meet.
+- **Context:** `native`
+- **Default:** 120.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.gcurve_width_mm`)
+- **Search bounds:** 120.0 .. 120.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.gcurve_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `k` — OS-SE shape factor
+
+- **Summary:** Blends the OS-SE base radius between its radius term and its tangent term.
+- **Detail:** The base radius carries (k r0) and r0(1-k) terms plus the tangent-driven z term, so k reshapes the wall between the throat and the far-field angle. R-OSSE reuses it in its throat-radius curve. It is dimensionless and is not a termination control.
+- **Formula:** `base(z) = sqrt((k r0)^2 + 2 k r0 z tan(a0) + z^2 tan(a)^2) + r0(1-k)`
+- **Physical effect:** Reshapes the wall between the throat and the far-field angle.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.k`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.k`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.k`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `morph_allow_shrinkage` — Allow morph shrinkage
+
+- **Summary:** 0/1 flag that lets a morph target be smaller than the current mouth extent.
+- **Detail:** Without the flag the mesher refuses a target that would shrink the outline. With it the morph may pull the section inward. Ath calls the same control Morph.AllowShrinkage.
+- **Formula:** not stated
+- **Physical effect:** Allows or refuses a mouth outline that narrows toward the target.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_allow_shrinkage`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_allow_shrinkage`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_allow_shrinkage`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_corner_mm` — Morph corner radius (mm)
+
+- **Summary:** Corner radius of a rounded-rectangle morph target.
+- **Detail:** The radius is clamped against the target half-dimensions at run time. It is used only for a rounded-rectangle target. Ath calls the same control Morph.CornerRadius.
+- **Formula:** not stated
+- **Physical effect:** Rounds the corners of a rectangular morphed mouth.
+- **Context:** `native`
+- **Default:** 12.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_corner_mm`)
+- **Search bounds:** 12.0 .. 12.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_corner_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_corner_mm`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_exponent` — Morph superellipse exponent
+
+- **Summary:** Superellipse exponent of a morph target 3 outline.
+- **Detail:** The mesher reads this only when morph_target is 3, then clamps it into the superellipse range before building the target outline. Ath's guide documents only targets 0-2; target 3 is a mesher extension.
+- **Formula:** not stated
+- **Physical effect:** Squares off or rounds a superellipse morphed mouth.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_exponent`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_exponent`)
+- **Hard limits:** lo=2.0, hi=16.0, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_exponent`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_radius_at_angle`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_fixed` — Morph fixed part
+
+- **Summary:** Axial fraction where the morph begins; zero starts at the throat.
+- **Detail:** The fixed part holds the base section before the morph factor becomes nonzero. The remaining axial fraction is remapped before the rate power is applied. Ath calls the same control Morph.FixedPart.
+- **Formula:** `factor = 0 for t <= morph_fixed`
+- **Physical effect:** Delays the start of the outline change along the horn.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_fixed`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_fixed`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_fixed`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_height_mm` — Morph target height (mm)
+
+- **Summary:** Full target height of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero height lets the mesher infer the target height from the mouth extent. The value is a full height, not a half-height. Ath calls the same control Morph.TargetHeight.
+- **Formula:** not stated
+- **Physical effect:** Sets how tall the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 196.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_height_mm`)
+- **Search bounds:** 196.0 .. 196.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_height_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_height_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_rate` — Morph rate
+
+- **Summary:** Power-law rate of the morph blend from the fixed part to the mouth.
+- **Detail:** The factor is the remapped axial fraction raised to this power, so larger values delay the morph until nearer the mouth. It only matters when a morph target is active. Ath calls the same control Morph.Rate.
+- **Formula:** `factor = clamp((t - morph_fixed)/(1 - morph_fixed), 0, 1)^morph_rate`
+- **Physical effect:** Moves how quickly the outline changes along the horn.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_rate`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_rate`)
+- **Hard limits:** lo=0.0, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_rate`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_target` — Morph target shape
+
+- **Summary:** Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse.
+- **Detail:** families.py names the off, rectangle, circle and superellipse codes; the superellipse target reads morph_exponent. The morph factor begins at morph_fixed and follows the rate power toward the mouth. Ath's own vocabulary calls this control Morph.TargetShape.
+- **Formula:** `r(t, phi) = r_base(t, phi) + factor * (r_target(phi) - r_mouth_base(phi))`
+- **Physical effect:** Blends the round section into a target outline toward the mouth.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_target`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_target`)
+- **Hard limits:** lo=0, hi=3, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_target`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_shape`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_width_mm` — Morph target width (mm)
+
+- **Summary:** Full target width of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero width lets the mesher infer the target width from the mouth extent. The value is a full width, not a half-width. Ath calls the same control Morph.TargetWidth.
+- **Formula:** not stated
+- **Physical effect:** Sets how wide the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 280.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.morph_width_mm`)
+- **Search bounds:** 280.0 .. 280.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.morph_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `n` — OSSE termination exponent
+
+- **Summary:** Superellipse exponent of the OSSE termination term.
+- **Detail:** It is read only while the termination amplitude is nonzero. The biradial generator meaning of n is not asserted in this context.
+- **Formula:** `term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Sharpens or softens the OSSE mouth roll.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.n`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.n`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.n`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `q` — OSSE termination saturation
+
+- **Summary:** Superellipse saturation of the OSSE termination; positive while s is nonzero.
+- **Detail:** It sets how quickly the termination term saturates with axial station. The mesher requires it positive whenever the termination amplitude s is nonzero.
+- **Formula:** `z_norm = q z/L; term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Changes how abruptly the terminated outline reaches its corner.
+- **Context:** `native:osse`
+- **Default:** 0.996 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.q`)
+- **Search bounds:** 0.996 .. 0.996 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.q`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.q`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `r0_mm` — Throat radius (mm)
+
+- **Summary:** Throat radius every native family starts its meridian from.
+- **Detail:** OSSE and R-OSSE use it as the base radius of the wall law, ICW uses it as the throat integration constant, and a FREEFORM meridian starts at its own first anchor radius. It is shared by the H and V planes unless a per-azimuth expression is used. The mesher rejects a non-positive value.
+- **Formula:** `OSSE: base(z) starts at k r0 + r0(1-k); ICW: r(s) = r0 + S integral sin(theta)`
+- **Physical effect:** Sets the throat area and the driver exit the wall must match.
+- **Context:** `native`
+- **Default:** 12.7 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.r0_mm`)
+- **Search bounds:** 12.7 .. 12.7 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.r0_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.r0_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s` — Termination amplitude
+
+- **Summary:** OSSE superellipse termination amplitude; zero leaves the plain OS wall.
+- **Detail:** A nonzero amplitude turns on the superellipse termination and makes n and q active. A zero value leaves the plain OS wall. R-OSSE has no s; its rollback comes from the blended curves and tmax, not from this key.
+- **Formula:** `term is added to base only while s != 0`
+- **Physical effect:** Rolls the OSSE mouth toward a superellipse outline.
+- **Context:** `native`
+- **Default:** 0.8 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.s`)
+- **Search bounds:** 0.8 .. 0.8 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.s`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s1` — Throat stretch coefficient 1 (mm/deg)
+
+- **Summary:** Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping.
+- **Detail:** The mesher maps the main-section axial coordinate through x + s1 * degrees(atan(s2 x)), so s1 multiplies an angle and is not dimensionless. It is active only with a nonzero s2. The coefficients must be plain finite numbers, and various rotation/slot combinations are refused.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Redistributes axial stations toward or away from the throat.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.s1`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.s1`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s1`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+#### `s2` — Throat stretch coefficient 2 (1/mm)
+
+- **Summary:** Inverse-length scale inside the throat-stretch arctangent.
+- **Detail:** s2 sets how quickly the arctangent saturates with axial distance, so its unit is inverse length. It is active only together with a nonzero s1. The mesher refuses a slot combined with throat stretch and refuses per-azimuth forms of either coefficient.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Moves where the stretched region becomes nearly linear again.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/sawmod_knuckle_osse.yaml` `seed_params.s2`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/sawmod_knuckle_osse.yaml` `bounds.s2`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s2`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+### sawmod_meh_lr2 — FREEFORM / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/sawmod_meh_lr2.yaml`
+- **Brief:** `examples/briefs/sawmod_meh_1in_100x70.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+### solana_meh — FREEFORM / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_meh.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+### solana_meh_search — FREEFORM / generator
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_meh_search.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `across_frac` — across_frac
+
+- **Summary:** No documentation authored for this knob name yet.
+- **Detail:** This name was found in a config but has no authored entry in the current parameter layer. It is reported rather than guessed.
+- **Formula:** not stated
+- **Physical effect:** Not documented in this layer.
+- **Context:** `generators`
+- **Default:** — (source: —)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** none (not a mesher family key)
+- **Code:** `—`
+- **Doc:** —
+- **Flags:** deferred
+
+#### `cov_h_deg` — cov_h_deg
+
+- **Summary:** No documentation authored for this knob name yet.
+- **Detail:** This name was found in a config but has no authored entry in the current parameter layer. It is reported rather than guessed.
+- **Formula:** not stated
+- **Physical effect:** Not documented in this layer.
+- **Context:** `generators`
+- **Default:** — (source: —)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** none (not a mesher family key)
+- **Code:** `—`
+- **Doc:** —
+- **Flags:** deferred
+
+#### `cov_v_deg` — cov_v_deg
+
+- **Summary:** No documentation authored for this knob name yet.
+- **Detail:** This name was found in a config but has no authored entry in the current parameter layer. It is reported rather than guessed.
+- **Formula:** not stated
+- **Physical effect:** Not documented in this layer.
+- **Context:** `generators`
+- **Default:** — (source: —)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** none (not a mesher family key)
+- **Code:** `—`
+- **Doc:** —
+- **Flags:** deferred
+
+#### `port_along_mm` — port_along_mm
+
+- **Summary:** No documentation authored for this knob name yet.
+- **Detail:** This name was found in a config but has no authored entry in the current parameter layer. It is reported rather than guessed.
+- **Formula:** not stated
+- **Physical effect:** Not documented in this layer.
+- **Context:** `generators`
+- **Default:** — (source: —)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** none (not a mesher family key)
+- **Code:** `—`
+- **Doc:** —
+- **Flags:** deferred
+
+#### `slide_mm` — slide_mm
+
+- **Summary:** No documentation authored for this knob name yet.
+- **Detail:** This name was found in a config but has no authored entry in the current parameter layer. It is reported rather than guessed.
+- **Formula:** not stated
+- **Physical effect:** Not documented in this layer.
+- **Context:** `generators`
+- **Default:** — (source: —)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** none (not a mesher family key)
+- **Code:** `—`
+- **Doc:** —
+- **Flags:** deferred
+
+#### `z_frac` — z_frac
+
+- **Summary:** No documentation authored for this knob name yet.
+- **Detail:** This name was found in a config but has no authored entry in the current parameter layer. It is reported rather than guessed.
+- **Formula:** not stated
+- **Physical effect:** Not documented in this layer.
+- **Context:** `generators`
+- **Default:** — (source: —)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** none (not a mesher family key)
+- **Code:** `—`
+- **Doc:** —
+- **Flags:** deferred
+
+### solana_meh_wg — FREEFORM / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_meh_wg.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+### solana_osse — OSSE / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_osse.yaml`
+- **Brief:** `examples/briefs/solana_control_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `L_mm` — OSSE main-section length (mm)
+
+- **Summary:** Length of the main OSSE section; extension and slot may add to the total.
+- **Detail:** The mesher requires it positive. In the total-length mode the section is carved differently, so the same value can mean a different total span.
+- **Formula:** `z_main in [0, L]`
+- **Physical effect:** Sets the depth of the flared OSSE body.
+- **Context:** `native:osse`
+- **Default:** 140.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.L_mm`)
+- **Search bounds:** 140.0 .. 140.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.L_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.L_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `a0_deg` — Throat half-angle (deg)
+
+- **Summary:** Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian.
+- **Detail:** OSSE carries it in the 2 k r0 z tan(a0) term of the base radius, and R-OSSE carries the same term in its throat-radius curve. ICW uses it as the initial tangent angle theta0 of the curvature integral. It should match the driver exit angle when the wall is meant to continue the driver.
+- **Formula:** `OSSE/R-OSSE: c2 = 2 k r0 tan(a0); ICW: theta(0) = theta0`
+- **Physical effect:** Sets the initial expansion slope at the driver exit.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.a0_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.a0_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a0_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `a_deg` — Native coverage half-angle (deg)
+
+- **Summary:** OSSE/R-OSSE coverage half-angle in the mesher's own convention.
+- **Detail:** The mesher measures the angle as a half-angle from the axis. The target block in a config measures the total included angle, which is the value the objective scores. Read the block before comparing the two.
+- **Formula:** `OSSE: base(z) carries tan(a); R-OSSE: c3 = tan(a)^2`
+- **Physical effect:** Sets how wide the wall opens relative to the axis.
+- **Context:** `native`
+- **Default:** 45.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.a_deg`)
+- **Search bounds:** 45.0 .. 45.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.a_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `aspect_ratio` — Cross-section aspect ratio
+
+- **Summary:** Width-to-height scaling of the cross-section relative to the meridian radius.
+- **Detail:** The mesher scales the horizontal and vertical half-widths of the outline by this ratio. A value of one gives a circular section; larger values widen it. It does not change either meridian and is not a coverage angle.
+- **Formula:** `b = a * aspect_ratio in the ellipse/superellipse station`
+- **Physical effect:** Widens or narrows the cross-section without changing the wall profiles.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.aspect_ratio`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ## 7. Geometric / cross-section model (all formulas)
+- **Flags:** —
+
+#### `exponent` — Native cross-section exponent
+
+- **Summary:** Superellipse exponent of the outline; the documented default is disputed.
+- **Detail:** The research basis states a default of 2.0 (a plain ellipse); the shipped generator default for the same idea is 4.0 (registry.DEFAULT_KNOBS). This entry records both claims and does not choose between them. It is not the generator's mouth_exponent key, although the two describe the same idea.
+- **Formula:** `( |cos(phi)/a|^e + |sin(phi)/b|^e )^(-1/e)`
+- **Physical effect:** Squares off or rounds the cross-section outline.
+- **Context:** `native`
+- **Default:** 2.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.exponent`)
+- **Search bounds:** 2.0 .. 2.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.exponent`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.exponent`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/plan/12_RESEARCH_BASIS.md` § ## 4. The geometry we would have written already exists
+- **Flags:** doc_mismatch, overloaded
+
+#### `gcurve_aspect_ratio` — Guiding-curve aspect ratio
+
+- **Summary:** Width-to-height ratio of the guiding-curve target section.
+- **Detail:** The mesher requires the ratio positive. It changes the shape the coverage angle is solved to meet, not the coverage angle directly. A value of one gives a target as tall as it is wide.
+- **Formula:** `b = a * gcurve_aspect_ratio`
+- **Physical effect:** Stretches the target outline vertically or horizontally.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_aspect_ratio`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_dist` — Guiding-curve distance
+
+- **Summary:** Axial placement of the guiding curve, as a fraction of the main length.
+- **Detail:** The mesher treats a value in the unit interval as a fraction of the main OSSE length and a larger value as an absolute axial station. The achieved radius is therefore a mouth radius only when the target sits at the mouth. The mesher reference notes that its schema default places the target mid-horn.
+- **Formula:** `z_target = gcurve_dist * L_main (when in the unit interval)`
+- **Physical effect:** Moves the axial station where the target outline is matched.
+- **Context:** `native`
+- **Default:** 0.2776715106 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_dist`)
+- **Search bounds:** 0.2776715106 .. 0.2776715106 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_dist`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_dist`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_rot_deg` — Guiding-curve rotation (deg)
+
+- **Summary:** In-plane rotation of the guiding-curve target outline.
+- **Detail:** The mesher subtracts the rotation from the azimuth before evaluating the target, so the target axes can differ from the H/V axes. It does not rotate the horn itself. It is used only with an active guiding curve.
+- **Formula:** `phi_target = phi - radians(gcurve_rot_deg)`
+- **Physical effect:** Rotates the target outline around the horn axis.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_rot_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_rot_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_rot_deg`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_a` — Superformula scale a
+
+- **Summary:** First Gielis superformula scale, dividing the cosine term.
+- **Detail:** It is the a in the cosine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Sets the horizontal scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.375827392 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_sf_a`)
+- **Search bounds:** 1.375827392 .. 1.375827392 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_sf_a`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_a`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_b` — Superformula scale b
+
+- **Summary:** Second Gielis superformula scale, dividing the sine term.
+- **Detail:** It is the b in the sine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Sets the vertical scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.437994835 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_sf_b`)
+- **Search bounds:** 1.437994835 .. 1.437994835 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_sf_b`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_b`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m1` — Superformula frequency m1
+
+- **Summary:** Angular frequency of the cosine term in the superformula target.
+- **Detail:** It sets the rotational symmetry of the cosine term. The mesher divides it by four inside the angle, following the Gielis form. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `cos(m1 phi/4)`
+- **Physical effect:** Sets the target outline's azimuthal symmetry.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_sf_m1`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_sf_m1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m2` — Superformula frequency m2
+
+- **Summary:** Angular frequency of the sine term; the mesher falls back to m1 when absent.
+- **Detail:** It allows the sine term's symmetry to differ from the cosine term's. When the field is absent the mesher uses m1 for both. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `sin(m2 phi/4)`
+- **Physical effect:** Sets a second azimuthal symmetry for the target outline.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_sf_m2`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_sf_m2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n1` — Superformula exponent n1
+
+- **Summary:** Overall superformula exponent applied to the summed terms.
+- **Detail:** It is the n1 in the reciprocal power of the Gielis formula. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `r_norm = (t1 + t2)^(-1/n1)`
+- **Physical effect:** Changes how the two superformula terms combine.
+- **Context:** `native`
+- **Default:** 2.152737774 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_sf_n1`)
+- **Search bounds:** 2.152737774 .. 2.152737774 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_sf_n1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n2` — Superformula exponent n2
+
+- **Summary:** Exponent on the cosine term of the superformula target.
+- **Detail:** It controls how quickly the cosine term contributes away from its axis. It is not the superellipse exponent of the cross-section. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Shapes the target outline near the horizontal axis.
+- **Context:** `native`
+- **Default:** 5.245161223 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_sf_n2`)
+- **Search bounds:** 5.245161223 .. 5.245161223 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_sf_n2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n3` — Superformula exponent n3
+
+- **Summary:** Exponent on the sine term of the superformula target.
+- **Detail:** It controls how quickly the sine term contributes away from its axis. It works together with n2 and the two frequencies. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Shapes the target outline near the vertical axis.
+- **Context:** `native`
+- **Default:** 3.01531782 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_sf_n3`)
+- **Search bounds:** 3.01531782 .. 3.01531782 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_sf_n3`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n3`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_type` — Guiding-curve type
+
+- **Summary:** Guiding-curve target: off, superellipse, or superformula.
+- **Detail:** When active, the mesher solves the OSSE coverage angle so the wall meets the target outline at the guiding-curve distance. Type one is a superellipse and type two a superformula; zero disables the solve. It is an OSSE-only mechanism in families.py.
+- **Formula:** `solve a such that r_OSSE(z_g, phi) = r_target(phi)`
+- **Physical effect:** Makes the coverage angle follow a target cross-section instead of one value.
+- **Context:** `native`
+- **Default:** 2 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_type`)
+- **Search bounds:** 2 .. 2 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_type`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_type`)
+- **Code:** `hornlab_mesher.profile_morph._solve_coverage_from_guiding_curve`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_width_mm` — Guiding-curve width (mm)
+
+- **Summary:** Full width of the guiding-curve target section.
+- **Detail:** A non-positive width disables the guiding curve even when a type is set. It is a target width, not the horn's own mouth width. It works with the target aspect ratio and rotation.
+- **Formula:** `a = gcurve_width_mm / 2`
+- **Physical effect:** Scales the outline the coverage angle is solved to meet.
+- **Context:** `native`
+- **Default:** 64.69512195 (source: `examples/typologies/solana_osse.yaml` `seed_params.gcurve_width_mm`)
+- **Search bounds:** 64.69512195 .. 64.69512195 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.gcurve_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `k` — OS-SE shape factor
+
+- **Summary:** Blends the OS-SE base radius between its radius term and its tangent term.
+- **Detail:** The base radius carries (k r0) and r0(1-k) terms plus the tangent-driven z term, so k reshapes the wall between the throat and the far-field angle. R-OSSE reuses it in its throat-radius curve. It is dimensionless and is not a termination control.
+- **Formula:** `base(z) = sqrt((k r0)^2 + 2 k r0 z tan(a0) + z^2 tan(a)^2) + r0(1-k)`
+- **Physical effect:** Reshapes the wall between the throat and the far-field angle.
+- **Context:** `native`
+- **Default:** 2.326215907 (source: `examples/typologies/solana_osse.yaml` `seed_params.k`)
+- **Search bounds:** 2.326215907 .. 2.326215907 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.k`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.k`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `morph_allow_shrinkage` — Allow morph shrinkage
+
+- **Summary:** 0/1 flag that lets a morph target be smaller than the current mouth extent.
+- **Detail:** Without the flag the mesher refuses a target that would shrink the outline. With it the morph may pull the section inward. Ath calls the same control Morph.AllowShrinkage.
+- **Formula:** not stated
+- **Physical effect:** Allows or refuses a mouth outline that narrows toward the target.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_allow_shrinkage`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_allow_shrinkage`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_allow_shrinkage`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_corner_mm` — Morph corner radius (mm)
+
+- **Summary:** Corner radius of a rounded-rectangle morph target.
+- **Detail:** The radius is clamped against the target half-dimensions at run time. It is used only for a rounded-rectangle target. Ath calls the same control Morph.CornerRadius.
+- **Formula:** not stated
+- **Physical effect:** Rounds the corners of a rectangular morphed mouth.
+- **Context:** `native`
+- **Default:** 14.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_corner_mm`)
+- **Search bounds:** 14.0 .. 14.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_corner_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_corner_mm`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_exponent` — Morph superellipse exponent
+
+- **Summary:** Superellipse exponent of a morph target 3 outline.
+- **Detail:** The mesher reads this only when morph_target is 3, then clamps it into the superellipse range before building the target outline. Ath's guide documents only targets 0-2; target 3 is a mesher extension.
+- **Formula:** not stated
+- **Physical effect:** Squares off or rounds a superellipse morphed mouth.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_exponent`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_exponent`)
+- **Hard limits:** lo=2.0, hi=16.0, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_exponent`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_radius_at_angle`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_fixed` — Morph fixed part
+
+- **Summary:** Axial fraction where the morph begins; zero starts at the throat.
+- **Detail:** The fixed part holds the base section before the morph factor becomes nonzero. The remaining axial fraction is remapped before the rate power is applied. Ath calls the same control Morph.FixedPart.
+- **Formula:** `factor = 0 for t <= morph_fixed`
+- **Physical effect:** Delays the start of the outline change along the horn.
+- **Context:** `native`
+- **Default:** 0.3455704293 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_fixed`)
+- **Search bounds:** 0.3455704293 .. 0.3455704293 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_fixed`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_fixed`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_height_mm` — Morph target height (mm)
+
+- **Summary:** Full target height of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero height lets the mesher infer the target height from the mouth extent. The value is a full height, not a half-height. Ath calls the same control Morph.TargetHeight.
+- **Formula:** not stated
+- **Physical effect:** Sets how tall the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_height_mm`)
+- **Search bounds:** 353.0 .. 353.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_height_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_height_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_rate` — Morph rate
+
+- **Summary:** Power-law rate of the morph blend from the fixed part to the mouth.
+- **Detail:** The factor is the remapped axial fraction raised to this power, so larger values delay the morph until nearer the mouth. It only matters when a morph target is active. Ath calls the same control Morph.Rate.
+- **Formula:** `factor = clamp((t - morph_fixed)/(1 - morph_fixed), 0, 1)^morph_rate`
+- **Physical effect:** Moves how quickly the outline changes along the horn.
+- **Context:** `native`
+- **Default:** 3.693701077 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_rate`)
+- **Search bounds:** 3.693701077 .. 3.693701077 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_rate`)
+- **Hard limits:** lo=0.0, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_rate`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_target` — Morph target shape
+
+- **Summary:** Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse.
+- **Detail:** families.py names the off, rectangle, circle and superellipse codes; the superellipse target reads morph_exponent. The morph factor begins at morph_fixed and follows the rate power toward the mouth. Ath's own vocabulary calls this control Morph.TargetShape.
+- **Formula:** `r(t, phi) = r_base(t, phi) + factor * (r_target(phi) - r_mouth_base(phi))`
+- **Physical effect:** Blends the round section into a target outline toward the mouth.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_target`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_target`)
+- **Hard limits:** lo=0, hi=3, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_target`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_shape`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_width_mm` — Morph target width (mm)
+
+- **Summary:** Full target width of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero width lets the mesher infer the target width from the mouth extent. The value is a full width, not a half-width. Ath calls the same control Morph.TargetWidth.
+- **Formula:** not stated
+- **Physical effect:** Sets how wide the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.morph_width_mm`)
+- **Search bounds:** 353.0 .. 353.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.morph_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `n` — OSSE termination exponent
+
+- **Summary:** Superellipse exponent of the OSSE termination term.
+- **Detail:** It is read only while the termination amplitude is nonzero. The biradial generator meaning of n is not asserted in this context.
+- **Formula:** `term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Sharpens or softens the OSSE mouth roll.
+- **Context:** `native`
+- **Default:** 4.948341464 (source: `examples/typologies/solana_osse.yaml` `seed_params.n`)
+- **Search bounds:** 4.948341464 .. 4.948341464 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.n`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.n`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `q` — OSSE termination saturation
+
+- **Summary:** Superellipse saturation of the OSSE termination; positive while s is nonzero.
+- **Detail:** It sets how quickly the termination term saturates with axial station. The mesher requires it positive whenever the termination amplitude s is nonzero.
+- **Formula:** `z_norm = q z/L; term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Changes how abruptly the terminated outline reaches its corner.
+- **Context:** `native:osse`
+- **Default:** 0.8006927592 (source: `examples/typologies/solana_osse.yaml` `seed_params.q`)
+- **Search bounds:** 0.8006927592 .. 0.8006927592 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.q`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.q`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `r0_mm` — Throat radius (mm)
+
+- **Summary:** Throat radius every native family starts its meridian from.
+- **Detail:** OSSE and R-OSSE use it as the base radius of the wall law, ICW uses it as the throat integration constant, and a FREEFORM meridian starts at its own first anchor radius. It is shared by the H and V planes unless a per-azimuth expression is used. The mesher rejects a non-positive value.
+- **Formula:** `OSSE: base(z) starts at k r0 + r0(1-k); ICW: r(s) = r0 + S integral sin(theta)`
+- **Physical effect:** Sets the throat area and the driver exit the wall must match.
+- **Context:** `native`
+- **Default:** 12.7 (source: `examples/typologies/solana_osse.yaml` `seed_params.r0_mm`)
+- **Search bounds:** 12.7 .. 12.7 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.r0_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.r0_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s` — Termination amplitude
+
+- **Summary:** OSSE superellipse termination amplitude; zero leaves the plain OS wall.
+- **Detail:** A nonzero amplitude turns on the superellipse termination and makes n and q active. A zero value leaves the plain OS wall. R-OSSE has no s; its rollback comes from the blended curves and tmax, not from this key.
+- **Formula:** `term is added to base only while s != 0`
+- **Physical effect:** Rolls the OSSE mouth toward a superellipse outline.
+- **Context:** `native`
+- **Default:** 1.165551339 (source: `examples/typologies/solana_osse.yaml` `seed_params.s`)
+- **Search bounds:** 1.165551339 .. 1.165551339 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.s`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s1` — Throat stretch coefficient 1 (mm/deg)
+
+- **Summary:** Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping.
+- **Detail:** The mesher maps the main-section axial coordinate through x + s1 * degrees(atan(s2 x)), so s1 multiplies an angle and is not dimensionless. It is active only with a nonzero s2. The coefficients must be plain finite numbers, and various rotation/slot combinations are refused.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Redistributes axial stations toward or away from the throat.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.s1`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.s1`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s1`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+#### `s2` — Throat stretch coefficient 2 (1/mm)
+
+- **Summary:** Inverse-length scale inside the throat-stretch arctangent.
+- **Detail:** s2 sets how quickly the arctangent saturates with axial distance, so its unit is inverse length. It is active only together with a nonzero s1. The mesher refuses a slot combined with throat stretch and refuses per-azimuth forms of either coefficient.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Moves where the stretched region becomes nearly linear again.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse.yaml` `seed_params.s2`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse.yaml` `bounds.s2`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s2`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+### solana_osse_meh_sf — OSSE / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_osse_meh_sf.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `L_mm` — OSSE main-section length (mm)
+
+- **Summary:** Length of the main OSSE section; extension and slot may add to the total.
+- **Detail:** The mesher requires it positive. In the total-length mode the section is carved differently, so the same value can mean a different total span.
+- **Formula:** `z_main in [0, L]`
+- **Physical effect:** Sets the depth of the flared OSSE body.
+- **Context:** `native:osse`
+- **Default:** 140.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.L_mm`)
+- **Search bounds:** 120.0 .. 180.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.L_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.L_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `a0_deg` — Throat half-angle (deg)
+
+- **Summary:** Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian.
+- **Detail:** OSSE carries it in the 2 k r0 z tan(a0) term of the base radius, and R-OSSE carries the same term in its throat-radius curve. ICW uses it as the initial tangent angle theta0 of the curvature integral. It should match the driver exit angle when the wall is meant to continue the driver.
+- **Formula:** `OSSE/R-OSSE: c2 = 2 k r0 tan(a0); ICW: theta(0) = theta0`
+- **Physical effect:** Sets the initial expansion slope at the driver exit.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.a0_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.a0_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a0_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `a_deg` — Native coverage half-angle (deg)
+
+- **Summary:** OSSE/R-OSSE coverage half-angle in the mesher's own convention.
+- **Detail:** The mesher measures the angle as a half-angle from the axis. The target block in a config measures the total included angle, which is the value the objective scores. Read the block before comparing the two.
+- **Formula:** `OSSE: base(z) carries tan(a); R-OSSE: c3 = tan(a)^2`
+- **Physical effect:** Sets how wide the wall opens relative to the axis.
+- **Context:** `native`
+- **Default:** 45.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.a_deg`)
+- **Search bounds:** 35.0 .. 55.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.a_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `aspect_ratio` — Cross-section aspect ratio
+
+- **Summary:** Width-to-height scaling of the cross-section relative to the meridian radius.
+- **Detail:** The mesher scales the horizontal and vertical half-widths of the outline by this ratio. A value of one gives a circular section; larger values widen it. It does not change either meridian and is not a coverage angle.
+- **Formula:** `b = a * aspect_ratio in the ellipse/superellipse station`
+- **Physical effect:** Widens or narrows the cross-section without changing the wall profiles.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.aspect_ratio`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ## 7. Geometric / cross-section model (all formulas)
+- **Flags:** —
+
+#### `exponent` — Native cross-section exponent
+
+- **Summary:** Superellipse exponent of the outline; the documented default is disputed.
+- **Detail:** The research basis states a default of 2.0 (a plain ellipse); the shipped generator default for the same idea is 4.0 (registry.DEFAULT_KNOBS). This entry records both claims and does not choose between them. It is not the generator's mouth_exponent key, although the two describe the same idea.
+- **Formula:** `( |cos(phi)/a|^e + |sin(phi)/b|^e )^(-1/e)`
+- **Physical effect:** Squares off or rounds the cross-section outline.
+- **Context:** `native`
+- **Default:** 2.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.exponent`)
+- **Search bounds:** 2.0 .. 2.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.exponent`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.exponent`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/plan/12_RESEARCH_BASIS.md` § ## 4. The geometry we would have written already exists
+- **Flags:** doc_mismatch, overloaded
+
+#### `gcurve_aspect_ratio` — Guiding-curve aspect ratio
+
+- **Summary:** Width-to-height ratio of the guiding-curve target section.
+- **Detail:** The mesher requires the ratio positive. It changes the shape the coverage angle is solved to meet, not the coverage angle directly. A value of one gives a target as tall as it is wide.
+- **Formula:** `b = a * gcurve_aspect_ratio`
+- **Physical effect:** Stretches the target outline vertically or horizontally.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_aspect_ratio`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_dist` — Guiding-curve distance
+
+- **Summary:** Axial placement of the guiding curve, as a fraction of the main length.
+- **Detail:** The mesher treats a value in the unit interval as a fraction of the main OSSE length and a larger value as an absolute axial station. The achieved radius is therefore a mouth radius only when the target sits at the mouth. The mesher reference notes that its schema default places the target mid-horn.
+- **Formula:** `z_target = gcurve_dist * L_main (when in the unit interval)`
+- **Physical effect:** Moves the axial station where the target outline is matched.
+- **Context:** `native`
+- **Default:** 0.2776715106 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_dist`)
+- **Search bounds:** 0.15 .. 0.45 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_dist`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_dist`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_rot_deg` — Guiding-curve rotation (deg)
+
+- **Summary:** In-plane rotation of the guiding-curve target outline.
+- **Detail:** The mesher subtracts the rotation from the azimuth before evaluating the target, so the target axes can differ from the H/V axes. It does not rotate the horn itself. It is used only with an active guiding curve.
+- **Formula:** `phi_target = phi - radians(gcurve_rot_deg)`
+- **Physical effect:** Rotates the target outline around the horn axis.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_rot_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_rot_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_rot_deg`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_a` — Superformula scale a
+
+- **Summary:** First Gielis superformula scale, dividing the cosine term.
+- **Detail:** It is the a in the cosine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Sets the horizontal scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.375827392 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_sf_a`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_sf_a`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_a`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_b` — Superformula scale b
+
+- **Summary:** Second Gielis superformula scale, dividing the sine term.
+- **Detail:** It is the b in the sine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Sets the vertical scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.437994835 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_sf_b`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_sf_b`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_b`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m1` — Superformula frequency m1
+
+- **Summary:** Angular frequency of the cosine term in the superformula target.
+- **Detail:** It sets the rotational symmetry of the cosine term. The mesher divides it by four inside the angle, following the Gielis form. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `cos(m1 phi/4)`
+- **Physical effect:** Sets the target outline's azimuthal symmetry.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_sf_m1`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_sf_m1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m2` — Superformula frequency m2
+
+- **Summary:** Angular frequency of the sine term; the mesher falls back to m1 when absent.
+- **Detail:** It allows the sine term's symmetry to differ from the cosine term's. When the field is absent the mesher uses m1 for both. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `sin(m2 phi/4)`
+- **Physical effect:** Sets a second azimuthal symmetry for the target outline.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_sf_m2`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_sf_m2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n1` — Superformula exponent n1
+
+- **Summary:** Overall superformula exponent applied to the summed terms.
+- **Detail:** It is the n1 in the reciprocal power of the Gielis formula. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `r_norm = (t1 + t2)^(-1/n1)`
+- **Physical effect:** Changes how the two superformula terms combine.
+- **Context:** `native`
+- **Default:** 2.152737774 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_sf_n1`)
+- **Search bounds:** 1.2 .. 4.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_sf_n1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n2` — Superformula exponent n2
+
+- **Summary:** Exponent on the cosine term of the superformula target.
+- **Detail:** It controls how quickly the cosine term contributes away from its axis. It is not the superellipse exponent of the cross-section. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Shapes the target outline near the horizontal axis.
+- **Context:** `native`
+- **Default:** 5.245161223 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_sf_n2`)
+- **Search bounds:** 2.0 .. 10.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_sf_n2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n3` — Superformula exponent n3
+
+- **Summary:** Exponent on the sine term of the superformula target.
+- **Detail:** It controls how quickly the sine term contributes away from its axis. It works together with n2 and the two frequencies. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Shapes the target outline near the vertical axis.
+- **Context:** `native`
+- **Default:** 3.01531782 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_sf_n3`)
+- **Search bounds:** 1.5 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_sf_n3`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n3`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_type` — Guiding-curve type
+
+- **Summary:** Guiding-curve target: off, superellipse, or superformula.
+- **Detail:** When active, the mesher solves the OSSE coverage angle so the wall meets the target outline at the guiding-curve distance. Type one is a superellipse and type two a superformula; zero disables the solve. It is an OSSE-only mechanism in families.py.
+- **Formula:** `solve a such that r_OSSE(z_g, phi) = r_target(phi)`
+- **Physical effect:** Makes the coverage angle follow a target cross-section instead of one value.
+- **Context:** `native`
+- **Default:** 2 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_type`)
+- **Search bounds:** 2 .. 2 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_type`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_type`)
+- **Code:** `hornlab_mesher.profile_morph._solve_coverage_from_guiding_curve`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_width_mm` — Guiding-curve width (mm)
+
+- **Summary:** Full width of the guiding-curve target section.
+- **Detail:** A non-positive width disables the guiding curve even when a type is set. It is a target width, not the horn's own mouth width. It works with the target aspect ratio and rotation.
+- **Formula:** `a = gcurve_width_mm / 2`
+- **Physical effect:** Scales the outline the coverage angle is solved to meet.
+- **Context:** `native`
+- **Default:** 64.69512195 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.gcurve_width_mm`)
+- **Search bounds:** 40.0 .. 90.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.gcurve_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `k` — OS-SE shape factor
+
+- **Summary:** Blends the OS-SE base radius between its radius term and its tangent term.
+- **Detail:** The base radius carries (k r0) and r0(1-k) terms plus the tangent-driven z term, so k reshapes the wall between the throat and the far-field angle. R-OSSE reuses it in its throat-radius curve. It is dimensionless and is not a termination control.
+- **Formula:** `base(z) = sqrt((k r0)^2 + 2 k r0 z tan(a0) + z^2 tan(a)^2) + r0(1-k)`
+- **Physical effect:** Reshapes the wall between the throat and the far-field angle.
+- **Context:** `native`
+- **Default:** 2.326215907 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.k`)
+- **Search bounds:** 1.5 .. 3.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.k`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.k`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `mid_ports` — OSSE mid-port patches
+
+- **Summary:** Opt-in L1 MEH mid-port recipe: walls, z_frac, across_frac, port_along_mm, slide_mm — re-tags flush exits as tag 10.
+- **Detail:** Absent = byte-identical mesher config and mesh. When present the pinned mesher fork `hornlab-search/osse-midports` cuts flush rectangles on the named walls and tags them 10 for multi-source MEH solves. It is a mapping recipe, not a searchable scalar.
+- **Formula:** not stated
+- **Physical effect:** Opens flush mid-range exits on the OSSE walls for MEH multi-source drive.
+- **Context:** `native`
+- **Default:** {'walls': 'tblr', 'z_frac': 0.35, 'across_frac': 0.4, 'port_along_mm': 25.0, 'slide_mm': 30.0} (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.mid_ports`)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** lo=—, hi=—, kind=dict, section=top (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.mid_ports`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** not_a_knob
+
+#### `morph_allow_shrinkage` — Allow morph shrinkage
+
+- **Summary:** 0/1 flag that lets a morph target be smaller than the current mouth extent.
+- **Detail:** Without the flag the mesher refuses a target that would shrink the outline. With it the morph may pull the section inward. Ath calls the same control Morph.AllowShrinkage.
+- **Formula:** not stated
+- **Physical effect:** Allows or refuses a mouth outline that narrows toward the target.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_allow_shrinkage`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_allow_shrinkage`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_allow_shrinkage`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_corner_mm` — Morph corner radius (mm)
+
+- **Summary:** Corner radius of a rounded-rectangle morph target.
+- **Detail:** The radius is clamped against the target half-dimensions at run time. It is used only for a rounded-rectangle target. Ath calls the same control Morph.CornerRadius.
+- **Formula:** not stated
+- **Physical effect:** Rounds the corners of a rectangular morphed mouth.
+- **Context:** `native`
+- **Default:** 14.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_corner_mm`)
+- **Search bounds:** 6.0 .. 30.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_corner_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_corner_mm`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_exponent` — Morph superellipse exponent
+
+- **Summary:** Superellipse exponent of a morph target 3 outline.
+- **Detail:** The mesher reads this only when morph_target is 3, then clamps it into the superellipse range before building the target outline. Ath's guide documents only targets 0-2; target 3 is a mesher extension.
+- **Formula:** not stated
+- **Physical effect:** Squares off or rounds a superellipse morphed mouth.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_exponent`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_exponent`)
+- **Hard limits:** lo=2.0, hi=16.0, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_exponent`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_radius_at_angle`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_fixed` — Morph fixed part
+
+- **Summary:** Axial fraction where the morph begins; zero starts at the throat.
+- **Detail:** The fixed part holds the base section before the morph factor becomes nonzero. The remaining axial fraction is remapped before the rate power is applied. Ath calls the same control Morph.FixedPart.
+- **Formula:** `factor = 0 for t <= morph_fixed`
+- **Physical effect:** Delays the start of the outline change along the horn.
+- **Context:** `native`
+- **Default:** 0.3455704293 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_fixed`)
+- **Search bounds:** 0.0 .. 0.5 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_fixed`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_fixed`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_height_mm` — Morph target height (mm)
+
+- **Summary:** Full target height of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero height lets the mesher infer the target height from the mouth extent. The value is a full height, not a half-height. Ath calls the same control Morph.TargetHeight.
+- **Formula:** not stated
+- **Physical effect:** Sets how tall the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_height_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_height_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_height_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_rate` — Morph rate
+
+- **Summary:** Power-law rate of the morph blend from the fixed part to the mouth.
+- **Detail:** The factor is the remapped axial fraction raised to this power, so larger values delay the morph until nearer the mouth. It only matters when a morph target is active. Ath calls the same control Morph.Rate.
+- **Formula:** `factor = clamp((t - morph_fixed)/(1 - morph_fixed), 0, 1)^morph_rate`
+- **Physical effect:** Moves how quickly the outline changes along the horn.
+- **Context:** `native`
+- **Default:** 3.693701077 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_rate`)
+- **Search bounds:** 2.0 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_rate`)
+- **Hard limits:** lo=0.0, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_rate`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_target` — Morph target shape
+
+- **Summary:** Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse.
+- **Detail:** families.py names the off, rectangle, circle and superellipse codes; the superellipse target reads morph_exponent. The morph factor begins at morph_fixed and follows the rate power toward the mouth. Ath's own vocabulary calls this control Morph.TargetShape.
+- **Formula:** `r(t, phi) = r_base(t, phi) + factor * (r_target(phi) - r_mouth_base(phi))`
+- **Physical effect:** Blends the round section into a target outline toward the mouth.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_target`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_target`)
+- **Hard limits:** lo=0, hi=3, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_target`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_shape`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_width_mm` — Morph target width (mm)
+
+- **Summary:** Full target width of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero width lets the mesher infer the target width from the mouth extent. The value is a full width, not a half-width. Ath calls the same control Morph.TargetWidth.
+- **Formula:** not stated
+- **Physical effect:** Sets how wide the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.morph_width_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.morph_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `n` — OSSE termination exponent
+
+- **Summary:** Superellipse exponent of the OSSE termination term.
+- **Detail:** It is read only while the termination amplitude is nonzero. The biradial generator meaning of n is not asserted in this context.
+- **Formula:** `term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Sharpens or softens the OSSE mouth roll.
+- **Context:** `native`
+- **Default:** 4.948341464 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.n`)
+- **Search bounds:** 3.5 .. 7.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.n`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.n`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `q` — OSSE termination saturation
+
+- **Summary:** Superellipse saturation of the OSSE termination; positive while s is nonzero.
+- **Detail:** It sets how quickly the termination term saturates with axial station. The mesher requires it positive whenever the termination amplitude s is nonzero.
+- **Formula:** `z_norm = q z/L; term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Changes how abruptly the terminated outline reaches its corner.
+- **Context:** `native:osse`
+- **Default:** 0.8006927592 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.q`)
+- **Search bounds:** 0.7 .. 0.95 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.q`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.q`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `r0_mm` — Throat radius (mm)
+
+- **Summary:** Throat radius every native family starts its meridian from.
+- **Detail:** OSSE and R-OSSE use it as the base radius of the wall law, ICW uses it as the throat integration constant, and a FREEFORM meridian starts at its own first anchor radius. It is shared by the H and V planes unless a per-azimuth expression is used. The mesher rejects a non-positive value.
+- **Formula:** `OSSE: base(z) starts at k r0 + r0(1-k); ICW: r(s) = r0 + S integral sin(theta)`
+- **Physical effect:** Sets the throat area and the driver exit the wall must match.
+- **Context:** `native`
+- **Default:** 12.7 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.r0_mm`)
+- **Search bounds:** 12.7 .. 12.7 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.r0_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.r0_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s` — Termination amplitude
+
+- **Summary:** OSSE superellipse termination amplitude; zero leaves the plain OS wall.
+- **Detail:** A nonzero amplitude turns on the superellipse termination and makes n and q active. A zero value leaves the plain OS wall. R-OSSE has no s; its rollback comes from the blended curves and tmax, not from this key.
+- **Formula:** `term is added to base only while s != 0`
+- **Physical effect:** Rolls the OSSE mouth toward a superellipse outline.
+- **Context:** `native`
+- **Default:** 1.165551339 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.s`)
+- **Search bounds:** 0.6 .. 1.4 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.s`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s1` — Throat stretch coefficient 1 (mm/deg)
+
+- **Summary:** Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping.
+- **Detail:** The mesher maps the main-section axial coordinate through x + s1 * degrees(atan(s2 x)), so s1 multiplies an angle and is not dimensionless. It is active only with a nonzero s2. The coefficients must be plain finite numbers, and various rotation/slot combinations are refused.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Redistributes axial stations toward or away from the throat.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.s1`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.s1`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s1`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+#### `s2` — Throat stretch coefficient 2 (1/mm)
+
+- **Summary:** Inverse-length scale inside the throat-stretch arctangent.
+- **Detail:** s2 sets how quickly the arctangent saturates with axial distance, so its unit is inverse length. It is active only together with a nonzero s1. The mesher refuses a slot combined with throat stretch and refuses per-azimuth forms of either coefficient.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Moves where the stretched region becomes nearly linear again.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf.yaml` `seed_params.s2`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf.yaml` `bounds.s2`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s2`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+### solana_osse_meh_sf_cma1000 — OSSE / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_osse_meh_sf_cma1000.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `L_mm` — OSSE main-section length (mm)
+
+- **Summary:** Length of the main OSSE section; extension and slot may add to the total.
+- **Detail:** The mesher requires it positive. In the total-length mode the section is carved differently, so the same value can mean a different total span.
+- **Formula:** `z_main in [0, L]`
+- **Physical effect:** Sets the depth of the flared OSSE body.
+- **Context:** `native:osse`
+- **Default:** 140.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.L_mm`)
+- **Search bounds:** 120.0 .. 180.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.L_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.L_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `a0_deg` — Throat half-angle (deg)
+
+- **Summary:** Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian.
+- **Detail:** OSSE carries it in the 2 k r0 z tan(a0) term of the base radius, and R-OSSE carries the same term in its throat-radius curve. ICW uses it as the initial tangent angle theta0 of the curvature integral. It should match the driver exit angle when the wall is meant to continue the driver.
+- **Formula:** `OSSE/R-OSSE: c2 = 2 k r0 tan(a0); ICW: theta(0) = theta0`
+- **Physical effect:** Sets the initial expansion slope at the driver exit.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.a0_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.a0_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a0_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `a_deg` — Native coverage half-angle (deg)
+
+- **Summary:** OSSE/R-OSSE coverage half-angle in the mesher's own convention.
+- **Detail:** The mesher measures the angle as a half-angle from the axis. The target block in a config measures the total included angle, which is the value the objective scores. Read the block before comparing the two.
+- **Formula:** `OSSE: base(z) carries tan(a); R-OSSE: c3 = tan(a)^2`
+- **Physical effect:** Sets how wide the wall opens relative to the axis.
+- **Context:** `native`
+- **Default:** 45.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.a_deg`)
+- **Search bounds:** 35.0 .. 55.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.a_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `aspect_ratio` — Cross-section aspect ratio
+
+- **Summary:** Width-to-height scaling of the cross-section relative to the meridian radius.
+- **Detail:** The mesher scales the horizontal and vertical half-widths of the outline by this ratio. A value of one gives a circular section; larger values widen it. It does not change either meridian and is not a coverage angle.
+- **Formula:** `b = a * aspect_ratio in the ellipse/superellipse station`
+- **Physical effect:** Widens or narrows the cross-section without changing the wall profiles.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.aspect_ratio`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ## 7. Geometric / cross-section model (all formulas)
+- **Flags:** —
+
+#### `exponent` — Native cross-section exponent
+
+- **Summary:** Superellipse exponent of the outline; the documented default is disputed.
+- **Detail:** The research basis states a default of 2.0 (a plain ellipse); the shipped generator default for the same idea is 4.0 (registry.DEFAULT_KNOBS). This entry records both claims and does not choose between them. It is not the generator's mouth_exponent key, although the two describe the same idea.
+- **Formula:** `( |cos(phi)/a|^e + |sin(phi)/b|^e )^(-1/e)`
+- **Physical effect:** Squares off or rounds the cross-section outline.
+- **Context:** `native`
+- **Default:** 2.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.exponent`)
+- **Search bounds:** 2.0 .. 2.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.exponent`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.exponent`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/plan/12_RESEARCH_BASIS.md` § ## 4. The geometry we would have written already exists
+- **Flags:** doc_mismatch, overloaded
+
+#### `gcurve_aspect_ratio` — Guiding-curve aspect ratio
+
+- **Summary:** Width-to-height ratio of the guiding-curve target section.
+- **Detail:** The mesher requires the ratio positive. It changes the shape the coverage angle is solved to meet, not the coverage angle directly. A value of one gives a target as tall as it is wide.
+- **Formula:** `b = a * gcurve_aspect_ratio`
+- **Physical effect:** Stretches the target outline vertically or horizontally.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_aspect_ratio`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_dist` — Guiding-curve distance
+
+- **Summary:** Axial placement of the guiding curve, as a fraction of the main length.
+- **Detail:** The mesher treats a value in the unit interval as a fraction of the main OSSE length and a larger value as an absolute axial station. The achieved radius is therefore a mouth radius only when the target sits at the mouth. The mesher reference notes that its schema default places the target mid-horn.
+- **Formula:** `z_target = gcurve_dist * L_main (when in the unit interval)`
+- **Physical effect:** Moves the axial station where the target outline is matched.
+- **Context:** `native`
+- **Default:** 0.2776715106 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_dist`)
+- **Search bounds:** 0.15 .. 0.45 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_dist`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_dist`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_rot_deg` — Guiding-curve rotation (deg)
+
+- **Summary:** In-plane rotation of the guiding-curve target outline.
+- **Detail:** The mesher subtracts the rotation from the azimuth before evaluating the target, so the target axes can differ from the H/V axes. It does not rotate the horn itself. It is used only with an active guiding curve.
+- **Formula:** `phi_target = phi - radians(gcurve_rot_deg)`
+- **Physical effect:** Rotates the target outline around the horn axis.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_rot_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_rot_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_rot_deg`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_a` — Superformula scale a
+
+- **Summary:** First Gielis superformula scale, dividing the cosine term.
+- **Detail:** It is the a in the cosine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Sets the horizontal scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.375827392 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_sf_a`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_sf_a`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_a`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_b` — Superformula scale b
+
+- **Summary:** Second Gielis superformula scale, dividing the sine term.
+- **Detail:** It is the b in the sine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Sets the vertical scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.437994835 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_sf_b`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_sf_b`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_b`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m1` — Superformula frequency m1
+
+- **Summary:** Angular frequency of the cosine term in the superformula target.
+- **Detail:** It sets the rotational symmetry of the cosine term. The mesher divides it by four inside the angle, following the Gielis form. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `cos(m1 phi/4)`
+- **Physical effect:** Sets the target outline's azimuthal symmetry.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_sf_m1`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_sf_m1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m2` — Superformula frequency m2
+
+- **Summary:** Angular frequency of the sine term; the mesher falls back to m1 when absent.
+- **Detail:** It allows the sine term's symmetry to differ from the cosine term's. When the field is absent the mesher uses m1 for both. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `sin(m2 phi/4)`
+- **Physical effect:** Sets a second azimuthal symmetry for the target outline.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_sf_m2`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_sf_m2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n1` — Superformula exponent n1
+
+- **Summary:** Overall superformula exponent applied to the summed terms.
+- **Detail:** It is the n1 in the reciprocal power of the Gielis formula. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `r_norm = (t1 + t2)^(-1/n1)`
+- **Physical effect:** Changes how the two superformula terms combine.
+- **Context:** `native`
+- **Default:** 2.152737774 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_sf_n1`)
+- **Search bounds:** 1.2 .. 4.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_sf_n1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n2` — Superformula exponent n2
+
+- **Summary:** Exponent on the cosine term of the superformula target.
+- **Detail:** It controls how quickly the cosine term contributes away from its axis. It is not the superellipse exponent of the cross-section. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Shapes the target outline near the horizontal axis.
+- **Context:** `native`
+- **Default:** 5.245161223 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_sf_n2`)
+- **Search bounds:** 2.0 .. 10.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_sf_n2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n3` — Superformula exponent n3
+
+- **Summary:** Exponent on the sine term of the superformula target.
+- **Detail:** It controls how quickly the sine term contributes away from its axis. It works together with n2 and the two frequencies. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Shapes the target outline near the vertical axis.
+- **Context:** `native`
+- **Default:** 3.01531782 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_sf_n3`)
+- **Search bounds:** 1.5 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_sf_n3`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n3`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_type` — Guiding-curve type
+
+- **Summary:** Guiding-curve target: off, superellipse, or superformula.
+- **Detail:** When active, the mesher solves the OSSE coverage angle so the wall meets the target outline at the guiding-curve distance. Type one is a superellipse and type two a superformula; zero disables the solve. It is an OSSE-only mechanism in families.py.
+- **Formula:** `solve a such that r_OSSE(z_g, phi) = r_target(phi)`
+- **Physical effect:** Makes the coverage angle follow a target cross-section instead of one value.
+- **Context:** `native`
+- **Default:** 2 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_type`)
+- **Search bounds:** 2 .. 2 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_type`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_type`)
+- **Code:** `hornlab_mesher.profile_morph._solve_coverage_from_guiding_curve`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_width_mm` — Guiding-curve width (mm)
+
+- **Summary:** Full width of the guiding-curve target section.
+- **Detail:** A non-positive width disables the guiding curve even when a type is set. It is a target width, not the horn's own mouth width. It works with the target aspect ratio and rotation.
+- **Formula:** `a = gcurve_width_mm / 2`
+- **Physical effect:** Scales the outline the coverage angle is solved to meet.
+- **Context:** `native`
+- **Default:** 64.69512195 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.gcurve_width_mm`)
+- **Search bounds:** 40.0 .. 90.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.gcurve_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `k` — OS-SE shape factor
+
+- **Summary:** Blends the OS-SE base radius between its radius term and its tangent term.
+- **Detail:** The base radius carries (k r0) and r0(1-k) terms plus the tangent-driven z term, so k reshapes the wall between the throat and the far-field angle. R-OSSE reuses it in its throat-radius curve. It is dimensionless and is not a termination control.
+- **Formula:** `base(z) = sqrt((k r0)^2 + 2 k r0 z tan(a0) + z^2 tan(a)^2) + r0(1-k)`
+- **Physical effect:** Reshapes the wall between the throat and the far-field angle.
+- **Context:** `native`
+- **Default:** 2.326215907 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.k`)
+- **Search bounds:** 1.5 .. 3.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.k`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.k`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `mid_ports` — OSSE mid-port patches
+
+- **Summary:** Opt-in L1 MEH mid-port recipe: walls, z_frac, across_frac, port_along_mm, slide_mm — re-tags flush exits as tag 10.
+- **Detail:** Absent = byte-identical mesher config and mesh. When present the pinned mesher fork `hornlab-search/osse-midports` cuts flush rectangles on the named walls and tags them 10 for multi-source MEH solves. It is a mapping recipe, not a searchable scalar.
+- **Formula:** not stated
+- **Physical effect:** Opens flush mid-range exits on the OSSE walls for MEH multi-source drive.
+- **Context:** `native`
+- **Default:** {'walls': 'tblr', 'z_frac': 0.35, 'across_frac': 0.4, 'port_along_mm': 25.0, 'slide_mm': 30.0} (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.mid_ports`)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** lo=—, hi=—, kind=dict, section=top (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.mid_ports`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** not_a_knob
+
+#### `morph_allow_shrinkage` — Allow morph shrinkage
+
+- **Summary:** 0/1 flag that lets a morph target be smaller than the current mouth extent.
+- **Detail:** Without the flag the mesher refuses a target that would shrink the outline. With it the morph may pull the section inward. Ath calls the same control Morph.AllowShrinkage.
+- **Formula:** not stated
+- **Physical effect:** Allows or refuses a mouth outline that narrows toward the target.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_allow_shrinkage`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_allow_shrinkage`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_allow_shrinkage`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_corner_mm` — Morph corner radius (mm)
+
+- **Summary:** Corner radius of a rounded-rectangle morph target.
+- **Detail:** The radius is clamped against the target half-dimensions at run time. It is used only for a rounded-rectangle target. Ath calls the same control Morph.CornerRadius.
+- **Formula:** not stated
+- **Physical effect:** Rounds the corners of a rectangular morphed mouth.
+- **Context:** `native`
+- **Default:** 14.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_corner_mm`)
+- **Search bounds:** 6.0 .. 30.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_corner_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_corner_mm`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_exponent` — Morph superellipse exponent
+
+- **Summary:** Superellipse exponent of a morph target 3 outline.
+- **Detail:** The mesher reads this only when morph_target is 3, then clamps it into the superellipse range before building the target outline. Ath's guide documents only targets 0-2; target 3 is a mesher extension.
+- **Formula:** not stated
+- **Physical effect:** Squares off or rounds a superellipse morphed mouth.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_exponent`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_exponent`)
+- **Hard limits:** lo=2.0, hi=16.0, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_exponent`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_radius_at_angle`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_fixed` — Morph fixed part
+
+- **Summary:** Axial fraction where the morph begins; zero starts at the throat.
+- **Detail:** The fixed part holds the base section before the morph factor becomes nonzero. The remaining axial fraction is remapped before the rate power is applied. Ath calls the same control Morph.FixedPart.
+- **Formula:** `factor = 0 for t <= morph_fixed`
+- **Physical effect:** Delays the start of the outline change along the horn.
+- **Context:** `native`
+- **Default:** 0.3455704293 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_fixed`)
+- **Search bounds:** 0.0 .. 0.5 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_fixed`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_fixed`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_height_mm` — Morph target height (mm)
+
+- **Summary:** Full target height of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero height lets the mesher infer the target height from the mouth extent. The value is a full height, not a half-height. Ath calls the same control Morph.TargetHeight.
+- **Formula:** not stated
+- **Physical effect:** Sets how tall the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_height_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_height_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_height_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_rate` — Morph rate
+
+- **Summary:** Power-law rate of the morph blend from the fixed part to the mouth.
+- **Detail:** The factor is the remapped axial fraction raised to this power, so larger values delay the morph until nearer the mouth. It only matters when a morph target is active. Ath calls the same control Morph.Rate.
+- **Formula:** `factor = clamp((t - morph_fixed)/(1 - morph_fixed), 0, 1)^morph_rate`
+- **Physical effect:** Moves how quickly the outline changes along the horn.
+- **Context:** `native`
+- **Default:** 3.693701077 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_rate`)
+- **Search bounds:** 2.0 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_rate`)
+- **Hard limits:** lo=0.0, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_rate`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_target` — Morph target shape
+
+- **Summary:** Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse.
+- **Detail:** families.py names the off, rectangle, circle and superellipse codes; the superellipse target reads morph_exponent. The morph factor begins at morph_fixed and follows the rate power toward the mouth. Ath's own vocabulary calls this control Morph.TargetShape.
+- **Formula:** `r(t, phi) = r_base(t, phi) + factor * (r_target(phi) - r_mouth_base(phi))`
+- **Physical effect:** Blends the round section into a target outline toward the mouth.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_target`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_target`)
+- **Hard limits:** lo=0, hi=3, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_target`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_shape`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_width_mm` — Morph target width (mm)
+
+- **Summary:** Full target width of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero width lets the mesher infer the target width from the mouth extent. The value is a full width, not a half-width. Ath calls the same control Morph.TargetWidth.
+- **Formula:** not stated
+- **Physical effect:** Sets how wide the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.morph_width_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.morph_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `n` — OSSE termination exponent
+
+- **Summary:** Superellipse exponent of the OSSE termination term.
+- **Detail:** It is read only while the termination amplitude is nonzero. The biradial generator meaning of n is not asserted in this context.
+- **Formula:** `term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Sharpens or softens the OSSE mouth roll.
+- **Context:** `native`
+- **Default:** 4.948341464 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.n`)
+- **Search bounds:** 3.5 .. 7.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.n`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.n`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `q` — OSSE termination saturation
+
+- **Summary:** Superellipse saturation of the OSSE termination; positive while s is nonzero.
+- **Detail:** It sets how quickly the termination term saturates with axial station. The mesher requires it positive whenever the termination amplitude s is nonzero.
+- **Formula:** `z_norm = q z/L; term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Changes how abruptly the terminated outline reaches its corner.
+- **Context:** `native:osse`
+- **Default:** 0.8006927592 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.q`)
+- **Search bounds:** 0.7 .. 0.95 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.q`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.q`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `r0_mm` — Throat radius (mm)
+
+- **Summary:** Throat radius every native family starts its meridian from.
+- **Detail:** OSSE and R-OSSE use it as the base radius of the wall law, ICW uses it as the throat integration constant, and a FREEFORM meridian starts at its own first anchor radius. It is shared by the H and V planes unless a per-azimuth expression is used. The mesher rejects a non-positive value.
+- **Formula:** `OSSE: base(z) starts at k r0 + r0(1-k); ICW: r(s) = r0 + S integral sin(theta)`
+- **Physical effect:** Sets the throat area and the driver exit the wall must match.
+- **Context:** `native`
+- **Default:** 12.7 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.r0_mm`)
+- **Search bounds:** 12.7 .. 12.7 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.r0_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.r0_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s` — Termination amplitude
+
+- **Summary:** OSSE superellipse termination amplitude; zero leaves the plain OS wall.
+- **Detail:** A nonzero amplitude turns on the superellipse termination and makes n and q active. A zero value leaves the plain OS wall. R-OSSE has no s; its rollback comes from the blended curves and tmax, not from this key.
+- **Formula:** `term is added to base only while s != 0`
+- **Physical effect:** Rolls the OSSE mouth toward a superellipse outline.
+- **Context:** `native`
+- **Default:** 1.165551339 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.s`)
+- **Search bounds:** 0.6 .. 1.4 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.s`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s1` — Throat stretch coefficient 1 (mm/deg)
+
+- **Summary:** Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping.
+- **Detail:** The mesher maps the main-section axial coordinate through x + s1 * degrees(atan(s2 x)), so s1 multiplies an angle and is not dimensionless. It is active only with a nonzero s2. The coefficients must be plain finite numbers, and various rotation/slot combinations are refused.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Redistributes axial stations toward or away from the throat.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.s1`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.s1`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s1`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+#### `s2` — Throat stretch coefficient 2 (1/mm)
+
+- **Summary:** Inverse-length scale inside the throat-stretch arctangent.
+- **Detail:** s2 sets how quickly the arctangent saturates with axial distance, so its unit is inverse length. It is active only together with a nonzero s1. The mesher refuses a slot combined with throat stretch and refuses per-azimuth forms of either coefficient.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Moves where the stretched region becomes nearly linear again.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `seed_params.s2`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma1000.yaml` `bounds.s2`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s2`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+### solana_osse_meh_sf_cma300 — OSSE / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_osse_meh_sf_cma300.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `L_mm` — OSSE main-section length (mm)
+
+- **Summary:** Length of the main OSSE section; extension and slot may add to the total.
+- **Detail:** The mesher requires it positive. In the total-length mode the section is carved differently, so the same value can mean a different total span.
+- **Formula:** `z_main in [0, L]`
+- **Physical effect:** Sets the depth of the flared OSSE body.
+- **Context:** `native:osse`
+- **Default:** 140.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.L_mm`)
+- **Search bounds:** 120.0 .. 180.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.L_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.L_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `a0_deg` — Throat half-angle (deg)
+
+- **Summary:** Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian.
+- **Detail:** OSSE carries it in the 2 k r0 z tan(a0) term of the base radius, and R-OSSE carries the same term in its throat-radius curve. ICW uses it as the initial tangent angle theta0 of the curvature integral. It should match the driver exit angle when the wall is meant to continue the driver.
+- **Formula:** `OSSE/R-OSSE: c2 = 2 k r0 tan(a0); ICW: theta(0) = theta0`
+- **Physical effect:** Sets the initial expansion slope at the driver exit.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.a0_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.a0_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a0_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `a_deg` — Native coverage half-angle (deg)
+
+- **Summary:** OSSE/R-OSSE coverage half-angle in the mesher's own convention.
+- **Detail:** The mesher measures the angle as a half-angle from the axis. The target block in a config measures the total included angle, which is the value the objective scores. Read the block before comparing the two.
+- **Formula:** `OSSE: base(z) carries tan(a); R-OSSE: c3 = tan(a)^2`
+- **Physical effect:** Sets how wide the wall opens relative to the axis.
+- **Context:** `native`
+- **Default:** 45.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.a_deg`)
+- **Search bounds:** 35.0 .. 55.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.a_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `aspect_ratio` — Cross-section aspect ratio
+
+- **Summary:** Width-to-height scaling of the cross-section relative to the meridian radius.
+- **Detail:** The mesher scales the horizontal and vertical half-widths of the outline by this ratio. A value of one gives a circular section; larger values widen it. It does not change either meridian and is not a coverage angle.
+- **Formula:** `b = a * aspect_ratio in the ellipse/superellipse station`
+- **Physical effect:** Widens or narrows the cross-section without changing the wall profiles.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.aspect_ratio`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ## 7. Geometric / cross-section model (all formulas)
+- **Flags:** —
+
+#### `exponent` — Native cross-section exponent
+
+- **Summary:** Superellipse exponent of the outline; the documented default is disputed.
+- **Detail:** The research basis states a default of 2.0 (a plain ellipse); the shipped generator default for the same idea is 4.0 (registry.DEFAULT_KNOBS). This entry records both claims and does not choose between them. It is not the generator's mouth_exponent key, although the two describe the same idea.
+- **Formula:** `( |cos(phi)/a|^e + |sin(phi)/b|^e )^(-1/e)`
+- **Physical effect:** Squares off or rounds the cross-section outline.
+- **Context:** `native`
+- **Default:** 2.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.exponent`)
+- **Search bounds:** 2.0 .. 2.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.exponent`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.exponent`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/plan/12_RESEARCH_BASIS.md` § ## 4. The geometry we would have written already exists
+- **Flags:** doc_mismatch, overloaded
+
+#### `gcurve_aspect_ratio` — Guiding-curve aspect ratio
+
+- **Summary:** Width-to-height ratio of the guiding-curve target section.
+- **Detail:** The mesher requires the ratio positive. It changes the shape the coverage angle is solved to meet, not the coverage angle directly. A value of one gives a target as tall as it is wide.
+- **Formula:** `b = a * gcurve_aspect_ratio`
+- **Physical effect:** Stretches the target outline vertically or horizontally.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_aspect_ratio`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_dist` — Guiding-curve distance
+
+- **Summary:** Axial placement of the guiding curve, as a fraction of the main length.
+- **Detail:** The mesher treats a value in the unit interval as a fraction of the main OSSE length and a larger value as an absolute axial station. The achieved radius is therefore a mouth radius only when the target sits at the mouth. The mesher reference notes that its schema default places the target mid-horn.
+- **Formula:** `z_target = gcurve_dist * L_main (when in the unit interval)`
+- **Physical effect:** Moves the axial station where the target outline is matched.
+- **Context:** `native`
+- **Default:** 0.2776715106 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_dist`)
+- **Search bounds:** 0.15 .. 0.45 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_dist`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_dist`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_rot_deg` — Guiding-curve rotation (deg)
+
+- **Summary:** In-plane rotation of the guiding-curve target outline.
+- **Detail:** The mesher subtracts the rotation from the azimuth before evaluating the target, so the target axes can differ from the H/V axes. It does not rotate the horn itself. It is used only with an active guiding curve.
+- **Formula:** `phi_target = phi - radians(gcurve_rot_deg)`
+- **Physical effect:** Rotates the target outline around the horn axis.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_rot_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_rot_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_rot_deg`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_a` — Superformula scale a
+
+- **Summary:** First Gielis superformula scale, dividing the cosine term.
+- **Detail:** It is the a in the cosine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Sets the horizontal scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.375827392 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_sf_a`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_sf_a`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_a`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_b` — Superformula scale b
+
+- **Summary:** Second Gielis superformula scale, dividing the sine term.
+- **Detail:** It is the b in the sine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Sets the vertical scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.437994835 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_sf_b`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_sf_b`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_b`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m1` — Superformula frequency m1
+
+- **Summary:** Angular frequency of the cosine term in the superformula target.
+- **Detail:** It sets the rotational symmetry of the cosine term. The mesher divides it by four inside the angle, following the Gielis form. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `cos(m1 phi/4)`
+- **Physical effect:** Sets the target outline's azimuthal symmetry.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_sf_m1`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_sf_m1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m2` — Superformula frequency m2
+
+- **Summary:** Angular frequency of the sine term; the mesher falls back to m1 when absent.
+- **Detail:** It allows the sine term's symmetry to differ from the cosine term's. When the field is absent the mesher uses m1 for both. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `sin(m2 phi/4)`
+- **Physical effect:** Sets a second azimuthal symmetry for the target outline.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_sf_m2`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_sf_m2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n1` — Superformula exponent n1
+
+- **Summary:** Overall superformula exponent applied to the summed terms.
+- **Detail:** It is the n1 in the reciprocal power of the Gielis formula. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `r_norm = (t1 + t2)^(-1/n1)`
+- **Physical effect:** Changes how the two superformula terms combine.
+- **Context:** `native`
+- **Default:** 2.152737774 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_sf_n1`)
+- **Search bounds:** 1.2 .. 4.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_sf_n1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n2` — Superformula exponent n2
+
+- **Summary:** Exponent on the cosine term of the superformula target.
+- **Detail:** It controls how quickly the cosine term contributes away from its axis. It is not the superellipse exponent of the cross-section. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Shapes the target outline near the horizontal axis.
+- **Context:** `native`
+- **Default:** 5.245161223 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_sf_n2`)
+- **Search bounds:** 2.0 .. 10.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_sf_n2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n3` — Superformula exponent n3
+
+- **Summary:** Exponent on the sine term of the superformula target.
+- **Detail:** It controls how quickly the sine term contributes away from its axis. It works together with n2 and the two frequencies. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Shapes the target outline near the vertical axis.
+- **Context:** `native`
+- **Default:** 3.01531782 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_sf_n3`)
+- **Search bounds:** 1.5 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_sf_n3`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n3`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_type` — Guiding-curve type
+
+- **Summary:** Guiding-curve target: off, superellipse, or superformula.
+- **Detail:** When active, the mesher solves the OSSE coverage angle so the wall meets the target outline at the guiding-curve distance. Type one is a superellipse and type two a superformula; zero disables the solve. It is an OSSE-only mechanism in families.py.
+- **Formula:** `solve a such that r_OSSE(z_g, phi) = r_target(phi)`
+- **Physical effect:** Makes the coverage angle follow a target cross-section instead of one value.
+- **Context:** `native`
+- **Default:** 2 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_type`)
+- **Search bounds:** 2 .. 2 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_type`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_type`)
+- **Code:** `hornlab_mesher.profile_morph._solve_coverage_from_guiding_curve`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_width_mm` — Guiding-curve width (mm)
+
+- **Summary:** Full width of the guiding-curve target section.
+- **Detail:** A non-positive width disables the guiding curve even when a type is set. It is a target width, not the horn's own mouth width. It works with the target aspect ratio and rotation.
+- **Formula:** `a = gcurve_width_mm / 2`
+- **Physical effect:** Scales the outline the coverage angle is solved to meet.
+- **Context:** `native`
+- **Default:** 64.69512195 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.gcurve_width_mm`)
+- **Search bounds:** 40.0 .. 90.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.gcurve_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `k` — OS-SE shape factor
+
+- **Summary:** Blends the OS-SE base radius between its radius term and its tangent term.
+- **Detail:** The base radius carries (k r0) and r0(1-k) terms plus the tangent-driven z term, so k reshapes the wall between the throat and the far-field angle. R-OSSE reuses it in its throat-radius curve. It is dimensionless and is not a termination control.
+- **Formula:** `base(z) = sqrt((k r0)^2 + 2 k r0 z tan(a0) + z^2 tan(a)^2) + r0(1-k)`
+- **Physical effect:** Reshapes the wall between the throat and the far-field angle.
+- **Context:** `native`
+- **Default:** 2.326215907 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.k`)
+- **Search bounds:** 1.5 .. 3.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.k`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.k`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `mid_ports` — OSSE mid-port patches
+
+- **Summary:** Opt-in L1 MEH mid-port recipe: walls, z_frac, across_frac, port_along_mm, slide_mm — re-tags flush exits as tag 10.
+- **Detail:** Absent = byte-identical mesher config and mesh. When present the pinned mesher fork `hornlab-search/osse-midports` cuts flush rectangles on the named walls and tags them 10 for multi-source MEH solves. It is a mapping recipe, not a searchable scalar.
+- **Formula:** not stated
+- **Physical effect:** Opens flush mid-range exits on the OSSE walls for MEH multi-source drive.
+- **Context:** `native`
+- **Default:** {'walls': 'tblr', 'z_frac': 0.35, 'across_frac': 0.4, 'port_along_mm': 25.0, 'slide_mm': 30.0} (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.mid_ports`)
+- **Search bounds:** none (this is a block value, not a searched knob)
+- **Hard limits:** lo=—, hi=—, kind=dict, section=top (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.mid_ports`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** not_a_knob
+
+#### `morph_allow_shrinkage` — Allow morph shrinkage
+
+- **Summary:** 0/1 flag that lets a morph target be smaller than the current mouth extent.
+- **Detail:** Without the flag the mesher refuses a target that would shrink the outline. With it the morph may pull the section inward. Ath calls the same control Morph.AllowShrinkage.
+- **Formula:** not stated
+- **Physical effect:** Allows or refuses a mouth outline that narrows toward the target.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_allow_shrinkage`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_allow_shrinkage`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_allow_shrinkage`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_corner_mm` — Morph corner radius (mm)
+
+- **Summary:** Corner radius of a rounded-rectangle morph target.
+- **Detail:** The radius is clamped against the target half-dimensions at run time. It is used only for a rounded-rectangle target. Ath calls the same control Morph.CornerRadius.
+- **Formula:** not stated
+- **Physical effect:** Rounds the corners of a rectangular morphed mouth.
+- **Context:** `native`
+- **Default:** 14.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_corner_mm`)
+- **Search bounds:** 6.0 .. 30.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_corner_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_corner_mm`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_exponent` — Morph superellipse exponent
+
+- **Summary:** Superellipse exponent of a morph target 3 outline.
+- **Detail:** The mesher reads this only when morph_target is 3, then clamps it into the superellipse range before building the target outline. Ath's guide documents only targets 0-2; target 3 is a mesher extension.
+- **Formula:** not stated
+- **Physical effect:** Squares off or rounds a superellipse morphed mouth.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_exponent`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_exponent`)
+- **Hard limits:** lo=2.0, hi=16.0, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_exponent`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_radius_at_angle`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_fixed` — Morph fixed part
+
+- **Summary:** Axial fraction where the morph begins; zero starts at the throat.
+- **Detail:** The fixed part holds the base section before the morph factor becomes nonzero. The remaining axial fraction is remapped before the rate power is applied. Ath calls the same control Morph.FixedPart.
+- **Formula:** `factor = 0 for t <= morph_fixed`
+- **Physical effect:** Delays the start of the outline change along the horn.
+- **Context:** `native`
+- **Default:** 0.3455704293 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_fixed`)
+- **Search bounds:** 0.0 .. 0.5 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_fixed`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_fixed`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_height_mm` — Morph target height (mm)
+
+- **Summary:** Full target height of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero height lets the mesher infer the target height from the mouth extent. The value is a full height, not a half-height. Ath calls the same control Morph.TargetHeight.
+- **Formula:** not stated
+- **Physical effect:** Sets how tall the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_height_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_height_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_height_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_rate` — Morph rate
+
+- **Summary:** Power-law rate of the morph blend from the fixed part to the mouth.
+- **Detail:** The factor is the remapped axial fraction raised to this power, so larger values delay the morph until nearer the mouth. It only matters when a morph target is active. Ath calls the same control Morph.Rate.
+- **Formula:** `factor = clamp((t - morph_fixed)/(1 - morph_fixed), 0, 1)^morph_rate`
+- **Physical effect:** Moves how quickly the outline changes along the horn.
+- **Context:** `native`
+- **Default:** 3.693701077 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_rate`)
+- **Search bounds:** 2.0 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_rate`)
+- **Hard limits:** lo=0.0, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_rate`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_target` — Morph target shape
+
+- **Summary:** Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse.
+- **Detail:** families.py names the off, rectangle, circle and superellipse codes; the superellipse target reads morph_exponent. The morph factor begins at morph_fixed and follows the rate power toward the mouth. Ath's own vocabulary calls this control Morph.TargetShape.
+- **Formula:** `r(t, phi) = r_base(t, phi) + factor * (r_target(phi) - r_mouth_base(phi))`
+- **Physical effect:** Blends the round section into a target outline toward the mouth.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_target`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_target`)
+- **Hard limits:** lo=0, hi=3, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_target`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_shape`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_width_mm` — Morph target width (mm)
+
+- **Summary:** Full target width of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero width lets the mesher infer the target width from the mouth extent. The value is a full width, not a half-width. Ath calls the same control Morph.TargetWidth.
+- **Formula:** not stated
+- **Physical effect:** Sets how wide the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.morph_width_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.morph_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `n` — OSSE termination exponent
+
+- **Summary:** Superellipse exponent of the OSSE termination term.
+- **Detail:** It is read only while the termination amplitude is nonzero. The biradial generator meaning of n is not asserted in this context.
+- **Formula:** `term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Sharpens or softens the OSSE mouth roll.
+- **Context:** `native`
+- **Default:** 4.948341464 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.n`)
+- **Search bounds:** 3.5 .. 7.0 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.n`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.n`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `q` — OSSE termination saturation
+
+- **Summary:** Superellipse saturation of the OSSE termination; positive while s is nonzero.
+- **Detail:** It sets how quickly the termination term saturates with axial station. The mesher requires it positive whenever the termination amplitude s is nonzero.
+- **Formula:** `z_norm = q z/L; term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Changes how abruptly the terminated outline reaches its corner.
+- **Context:** `native:osse`
+- **Default:** 0.8006927592 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.q`)
+- **Search bounds:** 0.7 .. 0.95 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.q`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.q`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `r0_mm` — Throat radius (mm)
+
+- **Summary:** Throat radius every native family starts its meridian from.
+- **Detail:** OSSE and R-OSSE use it as the base radius of the wall law, ICW uses it as the throat integration constant, and a FREEFORM meridian starts at its own first anchor radius. It is shared by the H and V planes unless a per-azimuth expression is used. The mesher rejects a non-positive value.
+- **Formula:** `OSSE: base(z) starts at k r0 + r0(1-k); ICW: r(s) = r0 + S integral sin(theta)`
+- **Physical effect:** Sets the throat area and the driver exit the wall must match.
+- **Context:** `native`
+- **Default:** 12.7 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.r0_mm`)
+- **Search bounds:** 12.7 .. 12.7 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.r0_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.r0_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s` — Termination amplitude
+
+- **Summary:** OSSE superellipse termination amplitude; zero leaves the plain OS wall.
+- **Detail:** A nonzero amplitude turns on the superellipse termination and makes n and q active. A zero value leaves the plain OS wall. R-OSSE has no s; its rollback comes from the blended curves and tmax, not from this key.
+- **Formula:** `term is added to base only while s != 0`
+- **Physical effect:** Rolls the OSSE mouth toward a superellipse outline.
+- **Context:** `native`
+- **Default:** 1.165551339 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.s`)
+- **Search bounds:** 0.6 .. 1.4 (search=true, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.s`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s1` — Throat stretch coefficient 1 (mm/deg)
+
+- **Summary:** Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping.
+- **Detail:** The mesher maps the main-section axial coordinate through x + s1 * degrees(atan(s2 x)), so s1 multiplies an angle and is not dimensionless. It is active only with a nonzero s2. The coefficients must be plain finite numbers, and various rotation/slot combinations are refused.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Redistributes axial stations toward or away from the throat.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.s1`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.s1`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s1`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+#### `s2` — Throat stretch coefficient 2 (1/mm)
+
+- **Summary:** Inverse-length scale inside the throat-stretch arctangent.
+- **Detail:** s2 sets how quickly the arctangent saturates with axial distance, so its unit is inverse length. It is active only together with a nonzero s1. The mesher refuses a slot combined with throat stretch and refuses per-azimuth forms of either coefficient.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Moves where the stretched region becomes nearly linear again.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `seed_params.s2`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_meh_sf_cma300.yaml` `bounds.s2`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s2`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+### solana_osse_sf_search — OSSE / native
+
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Config:** `examples/typologies/solana_osse_sf_search.yaml`
+- **Brief:** `examples/briefs/solana_control_1in_90x90.yaml`
+- **Source status:** uncatalogued
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+
+#### `L_mm` — OSSE main-section length (mm)
+
+- **Summary:** Length of the main OSSE section; extension and slot may add to the total.
+- **Detail:** The mesher requires it positive. In the total-length mode the section is carved differently, so the same value can mean a different total span.
+- **Formula:** `z_main in [0, L]`
+- **Physical effect:** Sets the depth of the flared OSSE body.
+- **Context:** `native:osse`
+- **Default:** 140.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.L_mm`)
+- **Search bounds:** 120.0 .. 180.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.L_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.L_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `a0_deg` — Throat half-angle (deg)
+
+- **Summary:** Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian.
+- **Detail:** OSSE carries it in the 2 k r0 z tan(a0) term of the base radius, and R-OSSE carries the same term in its throat-radius curve. ICW uses it as the initial tangent angle theta0 of the curvature integral. It should match the driver exit angle when the wall is meant to continue the driver.
+- **Formula:** `OSSE/R-OSSE: c2 = 2 k r0 tan(a0); ICW: theta(0) = theta0`
+- **Physical effect:** Sets the initial expansion slope at the driver exit.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.a0_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.a0_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a0_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `a_deg` — Native coverage half-angle (deg)
+
+- **Summary:** OSSE/R-OSSE coverage half-angle in the mesher's own convention.
+- **Detail:** The mesher measures the angle as a half-angle from the axis. The target block in a config measures the total included angle, which is the value the objective scores. Read the block before comparing the two.
+- **Formula:** `OSSE: base(z) carries tan(a); R-OSSE: c3 = tan(a)^2`
+- **Physical effect:** Sets how wide the wall opens relative to the axis.
+- **Context:** `native`
+- **Default:** 45.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.a_deg`)
+- **Search bounds:** 35.0 .. 55.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.a_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.a_deg`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `aspect_ratio` — Cross-section aspect ratio
+
+- **Summary:** Width-to-height scaling of the cross-section relative to the meridian radius.
+- **Detail:** The mesher scales the horizontal and vertical half-widths of the outline by this ratio. A value of one gives a circular section; larger values widen it. It does not change either meridian and is not a coverage angle.
+- **Formula:** `b = a * aspect_ratio in the ellipse/superellipse station`
+- **Physical effect:** Widens or narrows the cross-section without changing the wall profiles.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.aspect_ratio`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ## 7. Geometric / cross-section model (all formulas)
+- **Flags:** —
+
+#### `exponent` — Native cross-section exponent
+
+- **Summary:** Superellipse exponent of the outline; the documented default is disputed.
+- **Detail:** The research basis states a default of 2.0 (a plain ellipse); the shipped generator default for the same idea is 4.0 (registry.DEFAULT_KNOBS). This entry records both claims and does not choose between them. It is not the generator's mouth_exponent key, although the two describe the same idea.
+- **Formula:** `( |cos(phi)/a|^e + |sin(phi)/b|^e )^(-1/e)`
+- **Physical effect:** Squares off or rounds the cross-section outline.
+- **Context:** `native`
+- **Default:** 2.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.exponent`)
+- **Search bounds:** 2.0 .. 2.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.exponent`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=cross_section (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.exponent`)
+- **Code:** `hornlab_search.design.families.FAMILY_KEYS`
+- **Doc:** `docs/plan/12_RESEARCH_BASIS.md` § ## 4. The geometry we would have written already exists
+- **Flags:** doc_mismatch, overloaded
+
+#### `gcurve_aspect_ratio` — Guiding-curve aspect ratio
+
+- **Summary:** Width-to-height ratio of the guiding-curve target section.
+- **Detail:** The mesher requires the ratio positive. It changes the shape the coverage angle is solved to meet, not the coverage angle directly. A value of one gives a target as tall as it is wide.
+- **Formula:** `b = a * gcurve_aspect_ratio`
+- **Physical effect:** Stretches the target outline vertically or horizontally.
+- **Context:** `native`
+- **Default:** 1.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_aspect_ratio`)
+- **Search bounds:** 1.0 .. 1.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_aspect_ratio`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_aspect_ratio`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_dist` — Guiding-curve distance
+
+- **Summary:** Axial placement of the guiding curve, as a fraction of the main length.
+- **Detail:** The mesher treats a value in the unit interval as a fraction of the main OSSE length and a larger value as an absolute axial station. The achieved radius is therefore a mouth radius only when the target sits at the mouth. The mesher reference notes that its schema default places the target mid-horn.
+- **Formula:** `z_target = gcurve_dist * L_main (when in the unit interval)`
+- **Physical effect:** Moves the axial station where the target outline is matched.
+- **Context:** `native`
+- **Default:** 0.2776715106 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_dist`)
+- **Search bounds:** 0.15 .. 0.45 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_dist`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_dist`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_rot_deg` — Guiding-curve rotation (deg)
+
+- **Summary:** In-plane rotation of the guiding-curve target outline.
+- **Detail:** The mesher subtracts the rotation from the azimuth before evaluating the target, so the target axes can differ from the H/V axes. It does not rotate the horn itself. It is used only with an active guiding curve.
+- **Formula:** `phi_target = phi - radians(gcurve_rot_deg)`
+- **Physical effect:** Rotates the target outline around the horn axis.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_rot_deg`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_rot_deg`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_rot_deg`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_a` — Superformula scale a
+
+- **Summary:** First Gielis superformula scale, dividing the cosine term.
+- **Detail:** It is the a in the cosine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Sets the horizontal scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.375827392 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_sf_a`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_sf_a`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_a`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_b` — Superformula scale b
+
+- **Summary:** Second Gielis superformula scale, dividing the sine term.
+- **Detail:** It is the b in the sine term of the superformula target. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula and gcurve_sf is not supplying a value list.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Sets the vertical scale of the target outline.
+- **Context:** `native`
+- **Default:** 1.437994835 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_sf_b`)
+- **Search bounds:** 0.9 .. 1.8 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_sf_b`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_b`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m1` — Superformula frequency m1
+
+- **Summary:** Angular frequency of the cosine term in the superformula target.
+- **Detail:** It sets the rotational symmetry of the cosine term. The mesher divides it by four inside the angle, following the Gielis form. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `cos(m1 phi/4)`
+- **Physical effect:** Sets the target outline's azimuthal symmetry.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_sf_m1`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_sf_m1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_m2` — Superformula frequency m2
+
+- **Summary:** Angular frequency of the sine term; the mesher falls back to m1 when absent.
+- **Detail:** It allows the sine term's symmetry to differ from the cosine term's. When the field is absent the mesher uses m1 for both. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `sin(m2 phi/4)`
+- **Physical effect:** Sets a second azimuthal symmetry for the target outline.
+- **Context:** `native`
+- **Default:** 8.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_sf_m2`)
+- **Search bounds:** 8.0 .. 8.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_sf_m2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_m2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n1` — Superformula exponent n1
+
+- **Summary:** Overall superformula exponent applied to the summed terms.
+- **Detail:** It is the n1 in the reciprocal power of the Gielis formula. The mesher clamps its magnitude away from zero. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `r_norm = (t1 + t2)^(-1/n1)`
+- **Physical effect:** Changes how the two superformula terms combine.
+- **Context:** `native`
+- **Default:** 2.152737774 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_sf_n1`)
+- **Search bounds:** 1.2 .. 4.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_sf_n1`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n1`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n2` — Superformula exponent n2
+
+- **Summary:** Exponent on the cosine term of the superformula target.
+- **Detail:** It controls how quickly the cosine term contributes away from its axis. It is not the superellipse exponent of the cross-section. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t1 = |cos(m1 phi/4) / a|^n2`
+- **Physical effect:** Shapes the target outline near the horizontal axis.
+- **Context:** `native`
+- **Default:** 5.245161223 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_sf_n2`)
+- **Search bounds:** 2.0 .. 10.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_sf_n2`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n2`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_sf_n3` — Superformula exponent n3
+
+- **Summary:** Exponent on the sine term of the superformula target.
+- **Detail:** It controls how quickly the sine term contributes away from its axis. It works together with n2 and the two frequencies. It is used only when the guiding-curve type is the superformula.
+- **Formula:** `t2 = |sin(m2 phi/4) / b|^n3`
+- **Physical effect:** Shapes the target outline near the vertical axis.
+- **Context:** `native`
+- **Default:** 3.01531782 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_sf_n3`)
+- **Search bounds:** 1.5 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_sf_n3`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_sf_n3`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_type` — Guiding-curve type
+
+- **Summary:** Guiding-curve target: off, superellipse, or superformula.
+- **Detail:** When active, the mesher solves the OSSE coverage angle so the wall meets the target outline at the guiding-curve distance. Type one is a superellipse and type two a superformula; zero disables the solve. It is an OSSE-only mechanism in families.py.
+- **Formula:** `solve a such that r_OSSE(z_g, phi) = r_target(phi)`
+- **Physical effect:** Makes the coverage angle follow a target cross-section instead of one value.
+- **Context:** `native`
+- **Default:** 2 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_type`)
+- **Search bounds:** 2 .. 2 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_type`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_type`)
+- **Code:** `hornlab_mesher.profile_morph._solve_coverage_from_guiding_curve`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `gcurve_width_mm` — Guiding-curve width (mm)
+
+- **Summary:** Full width of the guiding-curve target section.
+- **Detail:** A non-positive width disables the guiding curve even when a type is set. It is a target width, not the horn's own mouth width. It works with the target aspect ratio and rotation.
+- **Formula:** `a = gcurve_width_mm / 2`
+- **Physical effect:** Scales the outline the coverage angle is solved to meet.
+- **Context:** `native`
+- **Default:** 64.69512195 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.gcurve_width_mm`)
+- **Search bounds:** 40.0 .. 90.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.gcurve_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=gcurve (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.gcurve_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._guiding_curve_target_radius`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6g. Guiding curve (OSSE)
+- **Flags:** —
+
+#### `k` — OS-SE shape factor
+
+- **Summary:** Blends the OS-SE base radius between its radius term and its tangent term.
+- **Detail:** The base radius carries (k r0) and r0(1-k) terms plus the tangent-driven z term, so k reshapes the wall between the throat and the far-field angle. R-OSSE reuses it in its throat-radius curve. It is dimensionless and is not a termination control.
+- **Formula:** `base(z) = sqrt((k r0)^2 + 2 k r0 z tan(a0) + z^2 tan(a)^2) + r0(1-k)`
+- **Physical effect:** Reshapes the wall between the throat and the far-field angle.
+- **Context:** `native`
+- **Default:** 2.326215907 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.k`)
+- **Search bounds:** 1.5 .. 3.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.k`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.k`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `morph_allow_shrinkage` — Allow morph shrinkage
+
+- **Summary:** 0/1 flag that lets a morph target be smaller than the current mouth extent.
+- **Detail:** Without the flag the mesher refuses a target that would shrink the outline. With it the morph may pull the section inward. Ath calls the same control Morph.AllowShrinkage.
+- **Formula:** not stated
+- **Physical effect:** Allows or refuses a mouth outline that narrows toward the target.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_allow_shrinkage`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_allow_shrinkage`)
+- **Hard limits:** lo=—, hi=—, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_allow_shrinkage`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_corner_mm` — Morph corner radius (mm)
+
+- **Summary:** Corner radius of a rounded-rectangle morph target.
+- **Detail:** The radius is clamped against the target half-dimensions at run time. It is used only for a rounded-rectangle target. Ath calls the same control Morph.CornerRadius.
+- **Formula:** not stated
+- **Physical effect:** Rounds the corners of a rectangular morphed mouth.
+- **Context:** `native`
+- **Default:** 14.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_corner_mm`)
+- **Search bounds:** 6.0 .. 30.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_corner_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_corner_mm`)
+- **Code:** `hornlab_mesher.profile_morph._resolve_morph_half_dimensions`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_exponent` — Morph superellipse exponent
+
+- **Summary:** Superellipse exponent of a morph target 3 outline.
+- **Detail:** The mesher reads this only when morph_target is 3, then clamps it into the superellipse range before building the target outline. Ath's guide documents only targets 0-2; target 3 is a mesher extension.
+- **Formula:** not stated
+- **Physical effect:** Squares off or rounds a superellipse morphed mouth.
+- **Context:** `native`
+- **Default:** 4.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_exponent`)
+- **Search bounds:** 4.0 .. 4.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_exponent`)
+- **Hard limits:** lo=2.0, hi=16.0, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_exponent`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_radius_at_angle`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_fixed` — Morph fixed part
+
+- **Summary:** Axial fraction where the morph begins; zero starts at the throat.
+- **Detail:** The fixed part holds the base section before the morph factor becomes nonzero. The remaining axial fraction is remapped before the rate power is applied. Ath calls the same control Morph.FixedPart.
+- **Formula:** `factor = 0 for t <= morph_fixed`
+- **Physical effect:** Delays the start of the outline change along the horn.
+- **Context:** `native`
+- **Default:** 0.3455704293 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_fixed`)
+- **Search bounds:** 0.0 .. 0.5 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_fixed`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_fixed`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_height_mm` — Morph target height (mm)
+
+- **Summary:** Full target height of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero height lets the mesher infer the target height from the mouth extent. The value is a full height, not a half-height. Ath calls the same control Morph.TargetHeight.
+- **Formula:** not stated
+- **Physical effect:** Sets how tall the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_height_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_height_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_height_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_rate` — Morph rate
+
+- **Summary:** Power-law rate of the morph blend from the fixed part to the mouth.
+- **Detail:** The factor is the remapped axial fraction raised to this power, so larger values delay the morph until nearer the mouth. It only matters when a morph target is active. Ath calls the same control Morph.Rate.
+- **Formula:** `factor = clamp((t - morph_fixed)/(1 - morph_fixed), 0, 1)^morph_rate`
+- **Physical effect:** Moves how quickly the outline changes along the horn.
+- **Context:** `native`
+- **Default:** 3.693701077 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_rate`)
+- **Search bounds:** 2.0 .. 6.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_rate`)
+- **Hard limits:** lo=0.0, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_rate`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_target` — Morph target shape
+
+- **Summary:** Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse.
+- **Detail:** families.py names the off, rectangle, circle and superellipse codes; the superellipse target reads morph_exponent. The morph factor begins at morph_fixed and follows the rate power toward the mouth. Ath's own vocabulary calls this control Morph.TargetShape.
+- **Formula:** `r(t, phi) = r_base(t, phi) + factor * (r_target(phi) - r_mouth_base(phi))`
+- **Physical effect:** Blends the round section into a target outline toward the mouth.
+- **Context:** `native`
+- **Default:** 1 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_target`)
+- **Search bounds:** 1 .. 1 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_target`)
+- **Hard limits:** lo=0, hi=3, kind=int, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_target`)
+- **Code:** `hornlab_mesher.profile_morph._morph_target_shape`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `morph_width_mm` — Morph target width (mm)
+
+- **Summary:** Full target width of a rectangular or superellipse morph at the mouth.
+- **Detail:** A zero width lets the mesher infer the target width from the mouth extent. The value is a full width, not a half-width. Ath calls the same control Morph.TargetWidth.
+- **Formula:** not stated
+- **Physical effect:** Sets how wide the morphed mouth outline becomes.
+- **Context:** `native`
+- **Default:** 353.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.morph_width_mm`)
+- **Search bounds:** 300.0 .. 420.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.morph_width_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=morph (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.morph_width_mm`)
+- **Code:** `hornlab_mesher.profile_morph._morph_factor`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6a. Cross-section morphing (ALL formula families)
+- **Flags:** —
+
+#### `n` — OSSE termination exponent
+
+- **Summary:** Superellipse exponent of the OSSE termination term.
+- **Detail:** It is read only while the termination amplitude is nonzero. The biradial generator meaning of n is not asserted in this context.
+- **Formula:** `term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Sharpens or softens the OSSE mouth roll.
+- **Context:** `native`
+- **Default:** 4.948341464 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.n`)
+- **Search bounds:** 3.5 .. 7.0 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.n`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.n`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `q` — OSSE termination saturation
+
+- **Summary:** Superellipse saturation of the OSSE termination; positive while s is nonzero.
+- **Detail:** It sets how quickly the termination term saturates with axial station. The mesher requires it positive whenever the termination amplitude s is nonzero.
+- **Formula:** `z_norm = q z/L; term = (s L/q)(1 - (1 - z_norm^n)^(1/n))`
+- **Physical effect:** Changes how abruptly the terminated outline reaches its corner.
+- **Context:** `native:osse`
+- **Default:** 0.8006927592 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.q`)
+- **Search bounds:** 0.7 .. 0.95 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.q`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.q`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** overloaded
+
+#### `r0_mm` — Throat radius (mm)
+
+- **Summary:** Throat radius every native family starts its meridian from.
+- **Detail:** OSSE and R-OSSE use it as the base radius of the wall law, ICW uses it as the throat integration constant, and a FREEFORM meridian starts at its own first anchor radius. It is shared by the H and V planes unless a per-azimuth expression is used. The mesher rejects a non-positive value.
+- **Formula:** `OSSE: base(z) starts at k r0 + r0(1-k); ICW: r(s) = r0 + S integral sin(theta)`
+- **Physical effect:** Sets the throat area and the driver exit the wall must match.
+- **Context:** `native`
+- **Default:** 12.7 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.r0_mm`)
+- **Search bounds:** 12.7 .. 12.7 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.r0_mm`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.r0_mm`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s` — Termination amplitude
+
+- **Summary:** OSSE superellipse termination amplitude; zero leaves the plain OS wall.
+- **Detail:** A nonzero amplitude turns on the superellipse termination and makes n and q active. A zero value leaves the plain OS wall. R-OSSE has no s; its rollback comes from the blended curves and tmax, not from this key.
+- **Formula:** `term is added to base only while s != 0`
+- **Physical effect:** Rolls the OSSE mouth toward a superellipse outline.
+- **Context:** `native`
+- **Default:** 1.165551339 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.s`)
+- **Search bounds:** 0.6 .. 1.4 (search=true, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.s`)
+- **Hard limits:** lo=—, hi=—, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s`)
+- **Code:** `hornlab_mesher.profile_formulas.calculate_osse`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 1b. OSSE parameters
+- **Flags:** —
+
+#### `s1` — Throat stretch coefficient 1 (mm/deg)
+
+- **Summary:** Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping.
+- **Detail:** The mesher maps the main-section axial coordinate through x + s1 * degrees(atan(s2 x)), so s1 multiplies an angle and is not dimensionless. It is active only with a nonzero s2. The coefficients must be plain finite numbers, and various rotation/slot combinations are refused.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Redistributes axial stations toward or away from the throat.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.s1`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.s1`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s1`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —
+
+#### `s2` — Throat stretch coefficient 2 (1/mm)
+
+- **Summary:** Inverse-length scale inside the throat-stretch arctangent.
+- **Detail:** s2 sets how quickly the arctangent saturates with axial distance, so its unit is inverse length. It is active only together with a nonzero s1. The mesher refuses a slot combined with throat stretch and refuses per-azimuth forms of either coefficient.
+- **Formula:** `x_stretched = x + s1 * degrees(atan(s2 * x))`
+- **Physical effect:** Moves where the stretched region becomes nearly linear again.
+- **Context:** `native`
+- **Default:** 0.0 (source: `examples/typologies/solana_osse_sf_search.yaml` `seed_params.s2`)
+- **Search bounds:** 0.0 .. 0.0 (search=false, log=false; source: `examples/typologies/solana_osse_sf_search.yaml` `bounds.s2`)
+- **Hard limits:** lo=0.0, hi=10.0, kind=float, section=profile (`hornlab_search/design/families.py` `FAMILY_KEYS.OSSE.s2`)
+- **Code:** `hornlab_mesher.throat_stretch.stretch_coefficients`
+- **Doc:** `docs/research/typologies/MESHER_TYPOLOGIES.md` § ### 6f. Throat stretch (OSSE, R-OSSE)
+- **Flags:** —

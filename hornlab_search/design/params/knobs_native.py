@@ -28,8 +28,8 @@ UNIT RULE
       * ``n_coeff`` is an integer count, not a length;
       * ``morph_allow_shrinkage`` is a 0/1 flag;
       * ``mode``, ``termination``, ``pin_mouth_radius``, ``icw_seed``, ``gcurve_sf``,
-        ``profileH``, ``profileV`` and ``crossSections`` are categorical / boolean /
-        container keys and carry no unit.
+        ``profileH``, ``profileV``, ``crossSections`` and ``mid_ports`` are categorical /
+        boolean / container keys and carry no unit.
 
 CONTEXTS
     Context ids are domain-scoped. The base fields and the ``"native"`` context carry the
@@ -1228,6 +1228,23 @@ NATIVE_KNOBS: dict[str, KnobDoc] = {
         physical="Changes whether a rippled meridian is accepted, not its shape.",
         code_ref=_FF,
         doc_ref=(_MESHER, "### 4c. Freeform config keys"),
+    ),
+    # ---------------------------------------------------------------- MEH mid-ports (OSSE)
+    "mid_ports": _make(
+        "mid_ports",
+        label="OSSE mid-port patches",
+        unit=None,
+        summary=("Opt-in L1 MEH mid-port recipe: walls, z_frac, across_frac, port_along_mm, "
+                 "slide_mm — re-tags flush exits as tag 10."),
+        detail=("Absent = byte-identical mesher config and mesh. When present the pinned "
+                "mesher fork `hornlab-search/osse-midports` cuts flush rectangles on the "
+                "named walls and tags them 10 for multi-source MEH solves. It is a mapping "
+                "recipe, not a searchable scalar."),
+        formula=None,
+        physical="Opens flush mid-range exits on the OSSE walls for MEH multi-source drive.",
+        code_ref=_FAM + "FAMILY_KEYS",
+        doc_ref=(_MESHER, "### 1b. OSSE parameters"),
+        flags=_NOT_KNOB,
     ),
 }
 

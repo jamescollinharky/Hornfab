@@ -907,6 +907,105 @@ No knob prose applies to this typology in the current domains (generators, rows,
 | `span` | Row span | — | — | — | — | — | How much of the azimuth circle the rows model covers. |
 | `wall_thickness_mm` | Shell thickness | mm | 3.0 | — | — | — | Outer-shell thickness of a freestanding rows model. |
 
+## `sawmod_control_osse`
+
+- **Family:** OSSE
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/sawmod_control_osse.yaml`
+- **Brief:** `examples/briefs/sawmod_control_1in_100x70.yaml`
+- **Documented:** true
+- **Knobs:** 20
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `L_mm` | OSSE main-section length | mm | 115.0 | 115.0 .. 115.0 | — | — | Length of the main OSSE section; extension and slot may add to the total. |
+| `a0_deg` | Throat half-angle | deg | 0.0 | 0.0 .. 0.0 | — | — | Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian. |
+| `a_deg` | Native coverage half-angle | deg | 50.0 | 50.0 .. 50.0 | — | — | OSSE/R-OSSE coverage half-angle in the mesher's own convention. |
+| `aspect_ratio` | Cross-section aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height scaling of the cross-section relative to the meridian radius. |
+| `exponent` | Native cross-section exponent | — | 2.0 | 2.0 .. 2.0 | — | — | Superellipse exponent of the outline; the documented default is disputed. |
+| `k` | OS-SE shape factor | — | 1.0 | 1.0 .. 1.0 | — | — | Blends the OS-SE base radius between its radius term and its tangent term. |
+| `morph_allow_shrinkage` | Allow morph shrinkage | — | 1 | 1 .. 1 | — | — | 0/1 flag that lets a morph target be smaller than the current mouth extent. |
+| `morph_corner_mm` | Morph corner radius | mm | 12.0 | 12.0 .. 12.0 | — | — | Corner radius of a rounded-rectangle morph target. |
+| `morph_exponent` | Morph superellipse exponent | — | 4.0 | 4.0 .. 4.0 | 2.0 | 16.0 | Superellipse exponent of a morph target 3 outline. |
+| `morph_fixed` | Morph fixed part | — | 0.0 | 0.0 .. 0.0 | — | — | Axial fraction where the morph begins; zero starts at the throat. |
+| `morph_height_mm` | Morph target height | mm | 196.0 | 196.0 .. 196.0 | — | — | Full target height of a rectangular or superellipse morph at the mouth. |
+| `morph_rate` | Morph rate | — | 4.0 | 4.0 .. 4.0 | 0.0 | — | Power-law rate of the morph blend from the fixed part to the mouth. |
+| `morph_target` | Morph target shape | — | 1 | 1 .. 1 | 0 | 3 | Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse. |
+| `morph_width_mm` | Morph target width | mm | 280.0 | 280.0 .. 280.0 | — | — | Full target width of a rectangular or superellipse morph at the mouth. |
+| `n` | OSSE termination exponent | — | 4.0 | 4.0 .. 4.0 | — | — | Superellipse exponent of the OSSE termination term. |
+| `q` | OSSE termination saturation | — | 0.996 | 0.996 .. 0.996 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
+| `r0_mm` | Throat radius | mm | 12.7 | 12.7 .. 12.7 | — | — | Throat radius every native family starts its meridian from. |
+| `s` | Termination amplitude | — | 0.8 | 0.8 .. 0.8 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+| `s1` | Throat stretch coefficient 1 | mm/deg | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping. |
+| `s2` | Throat stretch coefficient 2 | 1/mm | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Inverse-length scale inside the throat-stretch arctangent. |
+
+## `sawmod_knuckle_osse`
+
+- **Family:** OSSE
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/sawmod_knuckle_osse.yaml`
+- **Brief:** `examples/briefs/sawmod_control_1in_100x70.yaml`
+- **Documented:** true
+- **Knobs:** 32
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `L_mm` | OSSE main-section length | mm | 115.0 | 115.0 .. 115.0 | — | — | Length of the main OSSE section; extension and slot may add to the total. |
+| `a0_deg` | Throat half-angle | deg | 0.0 | 0.0 .. 0.0 | — | — | Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian. |
+| `a_deg` | Native coverage half-angle | deg | 50.0 | 50.0 .. 50.0 | — | — | OSSE/R-OSSE coverage half-angle in the mesher's own convention. |
+| `aspect_ratio` | Cross-section aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height scaling of the cross-section relative to the meridian radius. |
+| `exponent` | Native cross-section exponent | — | 2.0 | 2.0 .. 2.0 | — | — | Superellipse exponent of the outline; the documented default is disputed. |
+| `gcurve_aspect_ratio` | Guiding-curve aspect ratio | — | 0.7 | 0.7 .. 0.7 | — | — | Width-to-height ratio of the guiding-curve target section. |
+| `gcurve_dist` | Guiding-curve distance | — | 0.465 | 0.465 .. 0.465 | — | — | Axial placement of the guiding curve, as a fraction of the main length. |
+| `gcurve_rot_deg` | Guiding-curve rotation | deg | 0.0 | 0.0 .. 0.0 | — | — | In-plane rotation of the guiding-curve target outline. |
+| `gcurve_sf_a` | Superformula scale a | — | 1.0 | 1.0 .. 1.0 | — | — | First Gielis superformula scale, dividing the cosine term. |
+| `gcurve_sf_b` | Superformula scale b | — | 1.2 | 1.2 .. 1.2 | — | — | Second Gielis superformula scale, dividing the sine term. |
+| `gcurve_sf_m1` | Superformula frequency m1 | — | 4.0 | 4.0 .. 4.0 | — | — | Angular frequency of the cosine term in the superformula target. |
+| `gcurve_sf_m2` | Superformula frequency m2 | — | 4.0 | 4.0 .. 4.0 | — | — | Angular frequency of the sine term; the mesher falls back to m1 when absent. |
+| `gcurve_sf_n1` | Superformula exponent n1 | — | 1.5 | 1.5 .. 1.5 | — | — | Overall superformula exponent applied to the summed terms. |
+| `gcurve_sf_n2` | Superformula exponent n2 | — | 14.0 | 14.0 .. 14.0 | — | — | Exponent on the cosine term of the superformula target. |
+| `gcurve_sf_n3` | Superformula exponent n3 | — | 2.5 | 2.5 .. 2.5 | — | — | Exponent on the sine term of the superformula target. |
+| `gcurve_type` | Guiding-curve type | — | 2 | 2 .. 2 | — | — | Guiding-curve target: off, superellipse, or superformula. |
+| `gcurve_width_mm` | Guiding-curve width | mm | 120.0 | 120.0 .. 120.0 | — | — | Full width of the guiding-curve target section. |
+| `k` | OS-SE shape factor | — | 1.0 | 1.0 .. 1.0 | — | — | Blends the OS-SE base radius between its radius term and its tangent term. |
+| `morph_allow_shrinkage` | Allow morph shrinkage | — | 1 | 1 .. 1 | — | — | 0/1 flag that lets a morph target be smaller than the current mouth extent. |
+| `morph_corner_mm` | Morph corner radius | mm | 12.0 | 12.0 .. 12.0 | — | — | Corner radius of a rounded-rectangle morph target. |
+| `morph_exponent` | Morph superellipse exponent | — | 4.0 | 4.0 .. 4.0 | 2.0 | 16.0 | Superellipse exponent of a morph target 3 outline. |
+| `morph_fixed` | Morph fixed part | — | 0.0 | 0.0 .. 0.0 | — | — | Axial fraction where the morph begins; zero starts at the throat. |
+| `morph_height_mm` | Morph target height | mm | 196.0 | 196.0 .. 196.0 | — | — | Full target height of a rectangular or superellipse morph at the mouth. |
+| `morph_rate` | Morph rate | — | 4.0 | 4.0 .. 4.0 | 0.0 | — | Power-law rate of the morph blend from the fixed part to the mouth. |
+| `morph_target` | Morph target shape | — | 1 | 1 .. 1 | 0 | 3 | Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse. |
+| `morph_width_mm` | Morph target width | mm | 280.0 | 280.0 .. 280.0 | — | — | Full target width of a rectangular or superellipse morph at the mouth. |
+| `n` | OSSE termination exponent | — | 4.0 | 4.0 .. 4.0 | — | — | Superellipse exponent of the OSSE termination term. |
+| `q` | OSSE termination saturation | — | 0.996 | 0.996 .. 0.996 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
+| `r0_mm` | Throat radius | mm | 12.7 | 12.7 .. 12.7 | — | — | Throat radius every native family starts its meridian from. |
+| `s` | Termination amplitude | — | 0.8 | 0.8 .. 0.8 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+| `s1` | Throat stretch coefficient 1 | mm/deg | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping. |
+| `s2` | Throat stretch coefficient 2 | 1/mm | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Inverse-length scale inside the throat-stretch arctangent. |
+
+## `sawmod_meh_lr2`
+
+- **Family:** FREEFORM
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/sawmod_meh_lr2.yaml`
+- **Brief:** `examples/briefs/sawmod_meh_1in_100x70.yaml`
+- **Documented:** true
+- **Knobs:** 0
+
+No knob prose applies to this typology in the current domains (generators, rows, native). It is resolved, not fabricated.
+
 ## `search_smoke`
 
 - **Family:** OSSE
@@ -932,6 +1031,301 @@ No knob prose applies to this typology in the current domains (generators, rows,
 | `q` | OSSE termination saturation | — | 0.995 | 0.9 .. 1.0 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
 | `r0_mm` | Throat radius | mm | 17.78 | 17.78 .. 17.78 | — | — | Throat radius every native family starts its meridian from. |
 | `s` | Termination amplitude | — | 0.7 | 0.0 .. 1.0 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+
+## `solana_meh`
+
+- **Family:** FREEFORM
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_meh.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 0
+
+No knob prose applies to this typology in the current domains (generators, rows, native). It is resolved, not fabricated.
+
+## `solana_meh_search`
+
+- **Family:** FREEFORM
+- **Kind:** generator
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_meh_search.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 6
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `across_frac` | across_frac | — | — | — | — | — | No documentation authored for this knob name yet. |
+| `cov_h_deg` | cov_h_deg | — | — | — | — | — | No documentation authored for this knob name yet. |
+| `cov_v_deg` | cov_v_deg | — | — | — | — | — | No documentation authored for this knob name yet. |
+| `port_along_mm` | port_along_mm | — | — | — | — | — | No documentation authored for this knob name yet. |
+| `slide_mm` | slide_mm | — | — | — | — | — | No documentation authored for this knob name yet. |
+| `z_frac` | z_frac | — | — | — | — | — | No documentation authored for this knob name yet. |
+
+## `solana_meh_wg`
+
+- **Family:** FREEFORM
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_meh_wg.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 0
+
+No knob prose applies to this typology in the current domains (generators, rows, native). It is resolved, not fabricated.
+
+## `solana_osse`
+
+- **Family:** OSSE
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_osse.yaml`
+- **Brief:** `examples/briefs/solana_control_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 32
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `L_mm` | OSSE main-section length | mm | 140.0 | 140.0 .. 140.0 | — | — | Length of the main OSSE section; extension and slot may add to the total. |
+| `a0_deg` | Throat half-angle | deg | 0.0 | 0.0 .. 0.0 | — | — | Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian. |
+| `a_deg` | Native coverage half-angle | deg | 45.0 | 45.0 .. 45.0 | — | — | OSSE/R-OSSE coverage half-angle in the mesher's own convention. |
+| `aspect_ratio` | Cross-section aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height scaling of the cross-section relative to the meridian radius. |
+| `exponent` | Native cross-section exponent | — | 2.0 | 2.0 .. 2.0 | — | — | Superellipse exponent of the outline; the documented default is disputed. |
+| `gcurve_aspect_ratio` | Guiding-curve aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height ratio of the guiding-curve target section. |
+| `gcurve_dist` | Guiding-curve distance | — | 0.2776715106 | 0.2776715106 .. 0.2776715106 | — | — | Axial placement of the guiding curve, as a fraction of the main length. |
+| `gcurve_rot_deg` | Guiding-curve rotation | deg | 0.0 | 0.0 .. 0.0 | — | — | In-plane rotation of the guiding-curve target outline. |
+| `gcurve_sf_a` | Superformula scale a | — | 1.375827392 | 1.375827392 .. 1.375827392 | — | — | First Gielis superformula scale, dividing the cosine term. |
+| `gcurve_sf_b` | Superformula scale b | — | 1.437994835 | 1.437994835 .. 1.437994835 | — | — | Second Gielis superformula scale, dividing the sine term. |
+| `gcurve_sf_m1` | Superformula frequency m1 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the cosine term in the superformula target. |
+| `gcurve_sf_m2` | Superformula frequency m2 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the sine term; the mesher falls back to m1 when absent. |
+| `gcurve_sf_n1` | Superformula exponent n1 | — | 2.152737774 | 2.152737774 .. 2.152737774 | — | — | Overall superformula exponent applied to the summed terms. |
+| `gcurve_sf_n2` | Superformula exponent n2 | — | 5.245161223 | 5.245161223 .. 5.245161223 | — | — | Exponent on the cosine term of the superformula target. |
+| `gcurve_sf_n3` | Superformula exponent n3 | — | 3.01531782 | 3.01531782 .. 3.01531782 | — | — | Exponent on the sine term of the superformula target. |
+| `gcurve_type` | Guiding-curve type | — | 2 | 2 .. 2 | — | — | Guiding-curve target: off, superellipse, or superformula. |
+| `gcurve_width_mm` | Guiding-curve width | mm | 64.69512195 | 64.69512195 .. 64.69512195 | — | — | Full width of the guiding-curve target section. |
+| `k` | OS-SE shape factor | — | 2.326215907 | 2.326215907 .. 2.326215907 | — | — | Blends the OS-SE base radius between its radius term and its tangent term. |
+| `morph_allow_shrinkage` | Allow morph shrinkage | — | 1 | 1 .. 1 | — | — | 0/1 flag that lets a morph target be smaller than the current mouth extent. |
+| `morph_corner_mm` | Morph corner radius | mm | 14.0 | 14.0 .. 14.0 | — | — | Corner radius of a rounded-rectangle morph target. |
+| `morph_exponent` | Morph superellipse exponent | — | 4.0 | 4.0 .. 4.0 | 2.0 | 16.0 | Superellipse exponent of a morph target 3 outline. |
+| `morph_fixed` | Morph fixed part | — | 0.3455704293 | 0.3455704293 .. 0.3455704293 | — | — | Axial fraction where the morph begins; zero starts at the throat. |
+| `morph_height_mm` | Morph target height | mm | 353.0 | 353.0 .. 353.0 | — | — | Full target height of a rectangular or superellipse morph at the mouth. |
+| `morph_rate` | Morph rate | — | 3.693701077 | 3.693701077 .. 3.693701077 | 0.0 | — | Power-law rate of the morph blend from the fixed part to the mouth. |
+| `morph_target` | Morph target shape | — | 1 | 1 .. 1 | 0 | 3 | Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse. |
+| `morph_width_mm` | Morph target width | mm | 353.0 | 353.0 .. 353.0 | — | — | Full target width of a rectangular or superellipse morph at the mouth. |
+| `n` | OSSE termination exponent | — | 4.948341464 | 4.948341464 .. 4.948341464 | — | — | Superellipse exponent of the OSSE termination term. |
+| `q` | OSSE termination saturation | — | 0.8006927592 | 0.8006927592 .. 0.8006927592 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
+| `r0_mm` | Throat radius | mm | 12.7 | 12.7 .. 12.7 | — | — | Throat radius every native family starts its meridian from. |
+| `s` | Termination amplitude | — | 1.165551339 | 1.165551339 .. 1.165551339 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+| `s1` | Throat stretch coefficient 1 | mm/deg | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping. |
+| `s2` | Throat stretch coefficient 2 | 1/mm | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Inverse-length scale inside the throat-stretch arctangent. |
+
+## `solana_osse_meh_sf`
+
+- **Family:** OSSE
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_osse_meh_sf.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 33
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `L_mm` | OSSE main-section length | mm | 140.0 | 120.0 .. 180.0 | — | — | Length of the main OSSE section; extension and slot may add to the total. |
+| `a0_deg` | Throat half-angle | deg | 0.0 | 0.0 .. 0.0 | — | — | Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian. |
+| `a_deg` | Native coverage half-angle | deg | 45.0 | 35.0 .. 55.0 | — | — | OSSE/R-OSSE coverage half-angle in the mesher's own convention. |
+| `aspect_ratio` | Cross-section aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height scaling of the cross-section relative to the meridian radius. |
+| `exponent` | Native cross-section exponent | — | 2.0 | 2.0 .. 2.0 | — | — | Superellipse exponent of the outline; the documented default is disputed. |
+| `gcurve_aspect_ratio` | Guiding-curve aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height ratio of the guiding-curve target section. |
+| `gcurve_dist` | Guiding-curve distance | — | 0.2776715106 | 0.15 .. 0.45 | — | — | Axial placement of the guiding curve, as a fraction of the main length. |
+| `gcurve_rot_deg` | Guiding-curve rotation | deg | 0.0 | 0.0 .. 0.0 | — | — | In-plane rotation of the guiding-curve target outline. |
+| `gcurve_sf_a` | Superformula scale a | — | 1.375827392 | 0.9 .. 1.8 | — | — | First Gielis superformula scale, dividing the cosine term. |
+| `gcurve_sf_b` | Superformula scale b | — | 1.437994835 | 0.9 .. 1.8 | — | — | Second Gielis superformula scale, dividing the sine term. |
+| `gcurve_sf_m1` | Superformula frequency m1 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the cosine term in the superformula target. |
+| `gcurve_sf_m2` | Superformula frequency m2 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the sine term; the mesher falls back to m1 when absent. |
+| `gcurve_sf_n1` | Superformula exponent n1 | — | 2.152737774 | 1.2 .. 4.0 | — | — | Overall superformula exponent applied to the summed terms. |
+| `gcurve_sf_n2` | Superformula exponent n2 | — | 5.245161223 | 2.0 .. 10.0 | — | — | Exponent on the cosine term of the superformula target. |
+| `gcurve_sf_n3` | Superformula exponent n3 | — | 3.01531782 | 1.5 .. 6.0 | — | — | Exponent on the sine term of the superformula target. |
+| `gcurve_type` | Guiding-curve type | — | 2 | 2 .. 2 | — | — | Guiding-curve target: off, superellipse, or superformula. |
+| `gcurve_width_mm` | Guiding-curve width | mm | 64.69512195 | 40.0 .. 90.0 | — | — | Full width of the guiding-curve target section. |
+| `k` | OS-SE shape factor | — | 2.326215907 | 1.5 .. 3.0 | — | — | Blends the OS-SE base radius between its radius term and its tangent term. |
+| `mid_ports` | OSSE mid-port patches | — | {'walls': 'tblr', 'z_frac': 0.35, 'across_frac': 0.4, 'port_along_mm': 25.0, 'slide_mm': 30.0} | — | — | — | Opt-in L1 MEH mid-port recipe: walls, z_frac, across_frac, port_along_mm, slide_mm — re-tags flush exits as tag 10. |
+| `morph_allow_shrinkage` | Allow morph shrinkage | — | 1 | 1 .. 1 | — | — | 0/1 flag that lets a morph target be smaller than the current mouth extent. |
+| `morph_corner_mm` | Morph corner radius | mm | 14.0 | 6.0 .. 30.0 | — | — | Corner radius of a rounded-rectangle morph target. |
+| `morph_exponent` | Morph superellipse exponent | — | 4.0 | 4.0 .. 4.0 | 2.0 | 16.0 | Superellipse exponent of a morph target 3 outline. |
+| `morph_fixed` | Morph fixed part | — | 0.3455704293 | 0.0 .. 0.5 | — | — | Axial fraction where the morph begins; zero starts at the throat. |
+| `morph_height_mm` | Morph target height | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target height of a rectangular or superellipse morph at the mouth. |
+| `morph_rate` | Morph rate | — | 3.693701077 | 2.0 .. 6.0 | 0.0 | — | Power-law rate of the morph blend from the fixed part to the mouth. |
+| `morph_target` | Morph target shape | — | 1 | 1 .. 1 | 0 | 3 | Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse. |
+| `morph_width_mm` | Morph target width | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target width of a rectangular or superellipse morph at the mouth. |
+| `n` | OSSE termination exponent | — | 4.948341464 | 3.5 .. 7.0 | — | — | Superellipse exponent of the OSSE termination term. |
+| `q` | OSSE termination saturation | — | 0.8006927592 | 0.7 .. 0.95 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
+| `r0_mm` | Throat radius | mm | 12.7 | 12.7 .. 12.7 | — | — | Throat radius every native family starts its meridian from. |
+| `s` | Termination amplitude | — | 1.165551339 | 0.6 .. 1.4 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+| `s1` | Throat stretch coefficient 1 | mm/deg | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping. |
+| `s2` | Throat stretch coefficient 2 | 1/mm | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Inverse-length scale inside the throat-stretch arctangent. |
+
+## `solana_osse_meh_sf_cma1000`
+
+- **Family:** OSSE
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_osse_meh_sf_cma1000.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 33
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `L_mm` | OSSE main-section length | mm | 140.0 | 120.0 .. 180.0 | — | — | Length of the main OSSE section; extension and slot may add to the total. |
+| `a0_deg` | Throat half-angle | deg | 0.0 | 0.0 .. 0.0 | — | — | Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian. |
+| `a_deg` | Native coverage half-angle | deg | 45.0 | 35.0 .. 55.0 | — | — | OSSE/R-OSSE coverage half-angle in the mesher's own convention. |
+| `aspect_ratio` | Cross-section aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height scaling of the cross-section relative to the meridian radius. |
+| `exponent` | Native cross-section exponent | — | 2.0 | 2.0 .. 2.0 | — | — | Superellipse exponent of the outline; the documented default is disputed. |
+| `gcurve_aspect_ratio` | Guiding-curve aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height ratio of the guiding-curve target section. |
+| `gcurve_dist` | Guiding-curve distance | — | 0.2776715106 | 0.15 .. 0.45 | — | — | Axial placement of the guiding curve, as a fraction of the main length. |
+| `gcurve_rot_deg` | Guiding-curve rotation | deg | 0.0 | 0.0 .. 0.0 | — | — | In-plane rotation of the guiding-curve target outline. |
+| `gcurve_sf_a` | Superformula scale a | — | 1.375827392 | 0.9 .. 1.8 | — | — | First Gielis superformula scale, dividing the cosine term. |
+| `gcurve_sf_b` | Superformula scale b | — | 1.437994835 | 0.9 .. 1.8 | — | — | Second Gielis superformula scale, dividing the sine term. |
+| `gcurve_sf_m1` | Superformula frequency m1 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the cosine term in the superformula target. |
+| `gcurve_sf_m2` | Superformula frequency m2 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the sine term; the mesher falls back to m1 when absent. |
+| `gcurve_sf_n1` | Superformula exponent n1 | — | 2.152737774 | 1.2 .. 4.0 | — | — | Overall superformula exponent applied to the summed terms. |
+| `gcurve_sf_n2` | Superformula exponent n2 | — | 5.245161223 | 2.0 .. 10.0 | — | — | Exponent on the cosine term of the superformula target. |
+| `gcurve_sf_n3` | Superformula exponent n3 | — | 3.01531782 | 1.5 .. 6.0 | — | — | Exponent on the sine term of the superformula target. |
+| `gcurve_type` | Guiding-curve type | — | 2 | 2 .. 2 | — | — | Guiding-curve target: off, superellipse, or superformula. |
+| `gcurve_width_mm` | Guiding-curve width | mm | 64.69512195 | 40.0 .. 90.0 | — | — | Full width of the guiding-curve target section. |
+| `k` | OS-SE shape factor | — | 2.326215907 | 1.5 .. 3.0 | — | — | Blends the OS-SE base radius between its radius term and its tangent term. |
+| `mid_ports` | OSSE mid-port patches | — | {'walls': 'tblr', 'z_frac': 0.35, 'across_frac': 0.4, 'port_along_mm': 25.0, 'slide_mm': 30.0} | — | — | — | Opt-in L1 MEH mid-port recipe: walls, z_frac, across_frac, port_along_mm, slide_mm — re-tags flush exits as tag 10. |
+| `morph_allow_shrinkage` | Allow morph shrinkage | — | 1 | 1 .. 1 | — | — | 0/1 flag that lets a morph target be smaller than the current mouth extent. |
+| `morph_corner_mm` | Morph corner radius | mm | 14.0 | 6.0 .. 30.0 | — | — | Corner radius of a rounded-rectangle morph target. |
+| `morph_exponent` | Morph superellipse exponent | — | 4.0 | 4.0 .. 4.0 | 2.0 | 16.0 | Superellipse exponent of a morph target 3 outline. |
+| `morph_fixed` | Morph fixed part | — | 0.3455704293 | 0.0 .. 0.5 | — | — | Axial fraction where the morph begins; zero starts at the throat. |
+| `morph_height_mm` | Morph target height | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target height of a rectangular or superellipse morph at the mouth. |
+| `morph_rate` | Morph rate | — | 3.693701077 | 2.0 .. 6.0 | 0.0 | — | Power-law rate of the morph blend from the fixed part to the mouth. |
+| `morph_target` | Morph target shape | — | 1 | 1 .. 1 | 0 | 3 | Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse. |
+| `morph_width_mm` | Morph target width | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target width of a rectangular or superellipse morph at the mouth. |
+| `n` | OSSE termination exponent | — | 4.948341464 | 3.5 .. 7.0 | — | — | Superellipse exponent of the OSSE termination term. |
+| `q` | OSSE termination saturation | — | 0.8006927592 | 0.7 .. 0.95 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
+| `r0_mm` | Throat radius | mm | 12.7 | 12.7 .. 12.7 | — | — | Throat radius every native family starts its meridian from. |
+| `s` | Termination amplitude | — | 1.165551339 | 0.6 .. 1.4 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+| `s1` | Throat stretch coefficient 1 | mm/deg | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping. |
+| `s2` | Throat stretch coefficient 2 | 1/mm | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Inverse-length scale inside the throat-stretch arctangent. |
+
+## `solana_osse_meh_sf_cma300`
+
+- **Family:** OSSE
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_osse_meh_sf_cma300.yaml`
+- **Brief:** `examples/briefs/solana_meh_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 33
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `L_mm` | OSSE main-section length | mm | 140.0 | 120.0 .. 180.0 | — | — | Length of the main OSSE section; extension and slot may add to the total. |
+| `a0_deg` | Throat half-angle | deg | 0.0 | 0.0 .. 0.0 | — | — | Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian. |
+| `a_deg` | Native coverage half-angle | deg | 45.0 | 35.0 .. 55.0 | — | — | OSSE/R-OSSE coverage half-angle in the mesher's own convention. |
+| `aspect_ratio` | Cross-section aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height scaling of the cross-section relative to the meridian radius. |
+| `exponent` | Native cross-section exponent | — | 2.0 | 2.0 .. 2.0 | — | — | Superellipse exponent of the outline; the documented default is disputed. |
+| `gcurve_aspect_ratio` | Guiding-curve aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height ratio of the guiding-curve target section. |
+| `gcurve_dist` | Guiding-curve distance | — | 0.2776715106 | 0.15 .. 0.45 | — | — | Axial placement of the guiding curve, as a fraction of the main length. |
+| `gcurve_rot_deg` | Guiding-curve rotation | deg | 0.0 | 0.0 .. 0.0 | — | — | In-plane rotation of the guiding-curve target outline. |
+| `gcurve_sf_a` | Superformula scale a | — | 1.375827392 | 0.9 .. 1.8 | — | — | First Gielis superformula scale, dividing the cosine term. |
+| `gcurve_sf_b` | Superformula scale b | — | 1.437994835 | 0.9 .. 1.8 | — | — | Second Gielis superformula scale, dividing the sine term. |
+| `gcurve_sf_m1` | Superformula frequency m1 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the cosine term in the superformula target. |
+| `gcurve_sf_m2` | Superformula frequency m2 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the sine term; the mesher falls back to m1 when absent. |
+| `gcurve_sf_n1` | Superformula exponent n1 | — | 2.152737774 | 1.2 .. 4.0 | — | — | Overall superformula exponent applied to the summed terms. |
+| `gcurve_sf_n2` | Superformula exponent n2 | — | 5.245161223 | 2.0 .. 10.0 | — | — | Exponent on the cosine term of the superformula target. |
+| `gcurve_sf_n3` | Superformula exponent n3 | — | 3.01531782 | 1.5 .. 6.0 | — | — | Exponent on the sine term of the superformula target. |
+| `gcurve_type` | Guiding-curve type | — | 2 | 2 .. 2 | — | — | Guiding-curve target: off, superellipse, or superformula. |
+| `gcurve_width_mm` | Guiding-curve width | mm | 64.69512195 | 40.0 .. 90.0 | — | — | Full width of the guiding-curve target section. |
+| `k` | OS-SE shape factor | — | 2.326215907 | 1.5 .. 3.0 | — | — | Blends the OS-SE base radius between its radius term and its tangent term. |
+| `mid_ports` | OSSE mid-port patches | — | {'walls': 'tblr', 'z_frac': 0.35, 'across_frac': 0.4, 'port_along_mm': 25.0, 'slide_mm': 30.0} | — | — | — | Opt-in L1 MEH mid-port recipe: walls, z_frac, across_frac, port_along_mm, slide_mm — re-tags flush exits as tag 10. |
+| `morph_allow_shrinkage` | Allow morph shrinkage | — | 1 | 1 .. 1 | — | — | 0/1 flag that lets a morph target be smaller than the current mouth extent. |
+| `morph_corner_mm` | Morph corner radius | mm | 14.0 | 6.0 .. 30.0 | — | — | Corner radius of a rounded-rectangle morph target. |
+| `morph_exponent` | Morph superellipse exponent | — | 4.0 | 4.0 .. 4.0 | 2.0 | 16.0 | Superellipse exponent of a morph target 3 outline. |
+| `morph_fixed` | Morph fixed part | — | 0.3455704293 | 0.0 .. 0.5 | — | — | Axial fraction where the morph begins; zero starts at the throat. |
+| `morph_height_mm` | Morph target height | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target height of a rectangular or superellipse morph at the mouth. |
+| `morph_rate` | Morph rate | — | 3.693701077 | 2.0 .. 6.0 | 0.0 | — | Power-law rate of the morph blend from the fixed part to the mouth. |
+| `morph_target` | Morph target shape | — | 1 | 1 .. 1 | 0 | 3 | Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse. |
+| `morph_width_mm` | Morph target width | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target width of a rectangular or superellipse morph at the mouth. |
+| `n` | OSSE termination exponent | — | 4.948341464 | 3.5 .. 7.0 | — | — | Superellipse exponent of the OSSE termination term. |
+| `q` | OSSE termination saturation | — | 0.8006927592 | 0.7 .. 0.95 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
+| `r0_mm` | Throat radius | mm | 12.7 | 12.7 .. 12.7 | — | — | Throat radius every native family starts its meridian from. |
+| `s` | Termination amplitude | — | 1.165551339 | 0.6 .. 1.4 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+| `s1` | Throat stretch coefficient 1 | mm/deg | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping. |
+| `s2` | Throat stretch coefficient 2 | 1/mm | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Inverse-length scale inside the throat-stretch arctangent. |
+
+## `solana_osse_sf_search`
+
+- **Family:** OSSE
+- **Kind:** native
+- **Group:** uncatalogued
+- **Symmetry:** unknown
+- **Description:** Config present in examples/typologies/ but not listed in examples/catalog.yaml.
+- **Source status:** uncatalogued
+- **Config:** `examples/typologies/solana_osse_sf_search.yaml`
+- **Brief:** `examples/briefs/solana_control_1in_90x90.yaml`
+- **Documented:** true
+- **Knobs:** 32
+
+| Knob | Label | Unit | Default | Search | Hard lo | Hard hi | Summary |
+|---|---|---|---|---|---|---|---|
+| `L_mm` | OSSE main-section length | mm | 140.0 | 120.0 .. 180.0 | — | — | Length of the main OSSE section; extension and slot may add to the total. |
+| `a0_deg` | Throat half-angle | deg | 0.0 | 0.0 .. 0.0 | — | — | Wall half-angle at the throat, passed to the OSSE, R-OSSE and ICW meridian. |
+| `a_deg` | Native coverage half-angle | deg | 45.0 | 35.0 .. 55.0 | — | — | OSSE/R-OSSE coverage half-angle in the mesher's own convention. |
+| `aspect_ratio` | Cross-section aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height scaling of the cross-section relative to the meridian radius. |
+| `exponent` | Native cross-section exponent | — | 2.0 | 2.0 .. 2.0 | — | — | Superellipse exponent of the outline; the documented default is disputed. |
+| `gcurve_aspect_ratio` | Guiding-curve aspect ratio | — | 1.0 | 1.0 .. 1.0 | — | — | Width-to-height ratio of the guiding-curve target section. |
+| `gcurve_dist` | Guiding-curve distance | — | 0.2776715106 | 0.15 .. 0.45 | — | — | Axial placement of the guiding curve, as a fraction of the main length. |
+| `gcurve_rot_deg` | Guiding-curve rotation | deg | 0.0 | 0.0 .. 0.0 | — | — | In-plane rotation of the guiding-curve target outline. |
+| `gcurve_sf_a` | Superformula scale a | — | 1.375827392 | 0.9 .. 1.8 | — | — | First Gielis superformula scale, dividing the cosine term. |
+| `gcurve_sf_b` | Superformula scale b | — | 1.437994835 | 0.9 .. 1.8 | — | — | Second Gielis superformula scale, dividing the sine term. |
+| `gcurve_sf_m1` | Superformula frequency m1 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the cosine term in the superformula target. |
+| `gcurve_sf_m2` | Superformula frequency m2 | — | 8.0 | 8.0 .. 8.0 | — | — | Angular frequency of the sine term; the mesher falls back to m1 when absent. |
+| `gcurve_sf_n1` | Superformula exponent n1 | — | 2.152737774 | 1.2 .. 4.0 | — | — | Overall superformula exponent applied to the summed terms. |
+| `gcurve_sf_n2` | Superformula exponent n2 | — | 5.245161223 | 2.0 .. 10.0 | — | — | Exponent on the cosine term of the superformula target. |
+| `gcurve_sf_n3` | Superformula exponent n3 | — | 3.01531782 | 1.5 .. 6.0 | — | — | Exponent on the sine term of the superformula target. |
+| `gcurve_type` | Guiding-curve type | — | 2 | 2 .. 2 | — | — | Guiding-curve target: off, superellipse, or superformula. |
+| `gcurve_width_mm` | Guiding-curve width | mm | 64.69512195 | 40.0 .. 90.0 | — | — | Full width of the guiding-curve target section. |
+| `k` | OS-SE shape factor | — | 2.326215907 | 1.5 .. 3.0 | — | — | Blends the OS-SE base radius between its radius term and its tangent term. |
+| `morph_allow_shrinkage` | Allow morph shrinkage | — | 1 | 1 .. 1 | — | — | 0/1 flag that lets a morph target be smaller than the current mouth extent. |
+| `morph_corner_mm` | Morph corner radius | mm | 14.0 | 6.0 .. 30.0 | — | — | Corner radius of a rounded-rectangle morph target. |
+| `morph_exponent` | Morph superellipse exponent | — | 4.0 | 4.0 .. 4.0 | 2.0 | 16.0 | Superellipse exponent of a morph target 3 outline. |
+| `morph_fixed` | Morph fixed part | — | 0.3455704293 | 0.0 .. 0.5 | — | — | Axial fraction where the morph begins; zero starts at the throat. |
+| `morph_height_mm` | Morph target height | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target height of a rectangular or superellipse morph at the mouth. |
+| `morph_rate` | Morph rate | — | 3.693701077 | 2.0 .. 6.0 | 0.0 | — | Power-law rate of the morph blend from the fixed part to the mouth. |
+| `morph_target` | Morph target shape | — | 1 | 1 .. 1 | 0 | 3 | Cross-section shape the mouth morphs toward: off, rectangle, circle or superellipse. |
+| `morph_width_mm` | Morph target width | mm | 353.0 | 300.0 .. 420.0 | — | — | Full target width of a rectangular or superellipse morph at the mouth. |
+| `n` | OSSE termination exponent | — | 4.948341464 | 3.5 .. 7.0 | — | — | Superellipse exponent of the OSSE termination term. |
+| `q` | OSSE termination saturation | — | 0.8006927592 | 0.7 .. 0.95 | — | — | Superellipse saturation of the OSSE termination; positive while s is nonzero. |
+| `r0_mm` | Throat radius | mm | 12.7 | 12.7 .. 12.7 | — | — | Throat radius every native family starts its meridian from. |
+| `s` | Termination amplitude | — | 1.165551339 | 0.6 .. 1.4 | — | — | OSSE superellipse termination amplitude; zero leaves the plain OS wall. |
+| `s1` | Throat stretch coefficient 1 | mm/deg | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Strength of the OSSE/R-OSSE nonlinear throat-stretch mapping. |
+| `s2` | Throat stretch coefficient 2 | 1/mm | 0.0 | 0.0 .. 0.0 | 0.0 | 10.0 | Inverse-length scale inside the throat-stretch arctangent. |
 
 ## `spherical_salmon`
 

@@ -18,6 +18,9 @@ Updated in the same commit as `docs/CONTINUITY.md` on every push. Last synced 20
 | #11 | [Q] Collin: OK with the hornlab-search name? | closed (keep until objection) | user | `docs/plan/README.md` |
 | #13 | hardening-review: Stage A surrogate gate-integrity and real-data traps | **open — fixes MERGED to main** (FF to 6d1d5c7 on 2026-10-22 carries e0b9b61 + 11304f6 + cloud reconciliation 152a829 verbatim; oracle pre-merge sign-off; full offline suite 533 PASS at the merged tree; awaiting owner close) | phase-2 (cloud) | `docs/plan/11_PHASE2_SURROGATE.md` §4 |
 
+Local-only, updated 2026-11-05 (**CI param-catalog fix on PR #22; no GitHub issue state changed**):
+- Fixed `test_param_catalog` failures: `mid_ports` NATIVE_KNOBS, native-count/CAD-only gates, regenerated param catalog.
+
 Local-only, updated 2026-11-05 (**objective v6 loading_smooth; no GitHub issue state changed**):
 - **Landed:** `objective.version: 6` (`load_near`, `z_smooth`, `cov_pat`, `di_rise`) for Le Cléac'h / rollback; dossier + briefs + offline tests. Open: re-score full records that carry `z_throat` so load_near/z_smooth dominance can be confirmed; calibrate `di_slope_target` (seed slopes ~8 dB/dec vs default +5).
 
